@@ -74,6 +74,32 @@ class State:
     def next_player(self):
         return (self.current_player_i + 1) % len(self.player_piles)
 
+    @property
+    def is_terminal(self):
+        active_players = ~np.array(self.folded_players)
+        if np.sum(active_players) == 1:
+            # Only one player left, no more decisions to be made
+            return True
+        if np.any(np.array(self.player_piles)[active_players] == 0):
+            # A player has gone all in, no more decisions to be made, go to showdown
+            return True
+        if self.all_players_are_done and len(self.public_cards) == 5:
+            # All players have played and all cards are on the table
+            return True
+        return False
+
+    @property
+    def all_players_are_done(self):
+        """
+        Checks if the table is ready for more cards.
+        This is the case when all players have had their turn, and the bets of the non-folded players are equal.
+        """
+        return (
+            np.all(self.player_has_played)
+            and len(set(np.array(self.current_bets)[~np.array(self.folded_players)]))
+            == 1
+        )
+
     def to_array(self):
         if len(self.player_piles) > 9:
             raise ValueError("Too many players")
@@ -130,21 +156,6 @@ class State:
             current_bets=current_bets,
             folded_players=folded_players,
             first_better_i=first_better_i,
-        )
-
-    @classmethod
-    def generate_root_state(
-        cls, n_players: int, pile_size: int = 100, first_better_i: int = 0
-    ):
-        return cls(
-            public_cards=(),
-            player_piles=tuple(pile_size for _ in range(n_players)),
-            pot=0,
-            current_player_i=first_better_i,
-            current_bets=tuple(0 for _ in range(n_players)),
-            folded_players=tuple(False for _ in range(n_players)),
-            first_better_i=first_better_i,
-            player_has_played=tuple(False for _ in range(n_players)),
         )
 
     def get_cli_repr(self):
