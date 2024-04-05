@@ -80,8 +80,10 @@ class State:
         if np.sum(active_players) == 1:
             # Only one player left, no more decisions to be made
             return True
-        if np.any(np.array(self.player_piles)[active_players] == 0):
-            # A player has gone all in, no more decisions to be made, go to showdown
+        if self.all_players_are_done and np.any(
+            np.array(self.player_piles)[active_players] == 0
+        ):
+            # A player has gone all in, and all other players have matched the bet
             return True
         if self.all_players_are_done and len(self.public_cards) == 5:
             # All players have played and all cards are on the table
@@ -159,17 +161,7 @@ class State:
         )
 
     def get_cli_repr(self):
-        cards = "\n".join(
-            [
-                " ".join(parts)
-                for parts in zip(
-                    *[
-                        Card.from_index(c).get_cli_repr().split("\n")
-                        for c in self.public_cards
-                    ]
-                )
-            ]
-        )
+        cards = Card.get_cli_repr_for_cards(self.public_cards)
         player_status = pd.DataFrame(
             {
                 "Player": range(self.n_players),

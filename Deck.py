@@ -18,5 +18,5 @@ class Deck:
     def draw(self) -> int:
         return self.cards.pop()
 
-    def draw_n(self, n: int) -> List[int]:
-        return [self.draw() for _ in range(n)]
+    def draw_n(self, n: int) -> tuple[int, ...]:
+        return tuple(self.draw() for _ in range(n))

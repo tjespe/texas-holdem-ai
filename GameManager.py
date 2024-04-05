@@ -25,6 +25,12 @@ class GameManager:
         """
         Play a round of poker.
         """
+        # Get a new shuffled deck
+        self.deck = Deck()
+        # Give all players new cards
+        for player in self.players:
+            player.hand = self.deck.draw_n(2)
+        # Start game loop
         while not self.state.is_terminal:
             if sleep:
                 import time
@@ -52,11 +58,13 @@ class GameManager:
             self.state = place_bet(self.state, bet)
         if print_state:
             print(self.state.get_cli_repr())
+        # TODO: find winner, update bust_players, reset state, etc.
 
 
 if __name__ == "__main__":
+    from HumanPlayer import HumanPlayer
     from RandomPlayer import RandomPlayer
 
-    players = [RandomPlayer() for _ in range(2)]
+    players = [HumanPlayer(), RandomPlayer()]
     game_manager = GameManager(players)
-    game_manager.play_round(print_state=True, sleep=2)
+    game_manager.play_round(print_state=True)

@@ -1,3 +1,6 @@
+from typing import Iterable
+
+
 class Card:
     SUITS = ["♥", "♦", "♣", "♠"]
     VALUES = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
@@ -28,6 +31,17 @@ class Card:
         suit = i // 13
         rank = i % 13
         return cls(rank, suit)
+
+    @classmethod
+    def get_cli_repr_for_cards(cls, cards: Iterable[int]):
+        return "\n".join(
+            [
+                " ".join(parts)
+                for parts in zip(
+                    *[Card.from_index(c).get_cli_repr().split("\n") for c in cards]
+                )
+            ]
+        )
 
 
 if __name__ == "__main__":
