@@ -229,7 +229,6 @@ def rank_hand(cards: set[Card]):
         pair_ranks = list(
             sorted(
                 set(c.rank for c in two_pair_cards),
-                key=lambda card: card.rank,
                 reverse=True,
             )
         )
