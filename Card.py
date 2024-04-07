@@ -44,12 +44,17 @@ class Card:
         return cls.VALUES.index(value)
 
     @classmethod
-    def get_cli_repr_for_cards(cls, cards: Iterable[int]):
+    def get_cli_repr_for_cards(cls, cards: Iterable[int | "Card"]):
         return "\n".join(
             [
                 " ".join(parts)
                 for parts in zip(
-                    *[Card.from_index(c).get_cli_repr().split("\n") for c in cards]
+                    *[
+                        (c if isinstance(c, Card) else Card.from_index(c))
+                        .get_cli_repr()
+                        .split("\n")
+                        for c in cards
+                    ]
                 )
             ]
         )
