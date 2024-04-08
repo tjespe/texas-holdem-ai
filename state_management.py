@@ -237,7 +237,7 @@ def end_round(state: State, players: list[Player], print_result=False):
             for i, player in enumerate(players):
                 if state.player_is_active[i]:
                     print(
-                        f"Player {i}{' (winner)' if player in winners else ''}: {Card.get_cli_repr_for_cards(player.hand)}"
+                        f"{player.name}{' (WINNER 🥳)' if player in winners else ''}: {Card.get_cli_repr_for_cards(player.hand)}"
                     )
         else:
             print(

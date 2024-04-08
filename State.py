@@ -205,7 +205,7 @@ class State:
                     for i in range(self.n_players)
                 ],
                 "Pile": self.player_piles,
-                "Bet this round": self.current_bets,
+                "Bet this round": self.bet_in_round,
                 "Bet since last deal": self.current_bets,
                 "Played": self.player_has_played,
                 "Folded": self.player_is_folded,
