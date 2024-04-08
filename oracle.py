@@ -1,5 +1,7 @@
 from typing import Iterable
 import unittest
+
+import numpy as np
 from Card import Card
 from PlayerABC import Player
 
@@ -256,7 +258,9 @@ def compare_hands(hand1: set[Card], hand2: set[Card]):
 
 
 def find_winner(
-    table: Iterable[int], players: Iterable[Player], folded_players: tuple[bool]
+    table: Iterable[int],
+    players: list[Player],
+    player_is_active: tuple[bool],
 ) -> set[Player]:
     """
     Find the winner among a list of players.
@@ -268,8 +272,8 @@ def find_winner(
         cards = set(Card.from_index(c) for c in player.hand).union(
             set(Card.from_index(c) for c in table)
         )
-        has_folded = folded_players[i]
-        if has_folded:
+        if not player_is_active[i]:
+            # Player is bust or folded
             continue
         if best_hand is None:
             best_hand = cards
@@ -282,3 +286,23 @@ def find_winner(
             elif comparison == 0:
                 winners.add(player)
     return winners
+
+
+def get_max_bet_allowed(
+    player_has_played: tuple[bool],
+    current_player_i: int,
+    current_bets: tuple[int],
+    player_piles: tuple[int],
+    player_is_active: tuple[bool],
+):
+    """
+    To simplify the game, it is not allowed to bet more than the smallest stack.
+    Aditionally, a player who has already played cannot reraise, they can only call or fold.
+    """
+    max_stack_per_player = np.array(player_piles) + np.array(current_bets)
+    min_stack = min(max_stack_per_player[np.array(player_is_active)])
+    max_allowed = min_stack - current_bets[current_player_i]
+    if player_has_played[current_player_i]:
+        call_amount = max(current_bets) - current_bets[current_player_i]
+        return min(call_amount, max_allowed)
+    return max_allowed

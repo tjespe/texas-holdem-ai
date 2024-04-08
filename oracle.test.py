@@ -306,7 +306,7 @@ class OracleTestCase(unittest.TestCase):
         # Player 1 should win because of the high card (K > Q)
         self.assertEqual(
             oracle.find_winner(
-                [c.to_index() for c in table], {player1, player2}, (False, False)
+                [c.to_index() for c in table], [player1, player2], (True, True)
             ),
             {player1},
         )
@@ -334,7 +334,7 @@ class OracleTestCase(unittest.TestCase):
         # In this case, there is an actual tie, because only 5 cards should count for
         # each player, and the high card, from the table, is the same for both players.
         winner = oracle.find_winner(
-            [c.to_index() for c in table], {player1, player2}, (False, False)
+            [c.to_index() for c in table], [player1, player2], (True, True)
         )
         self.assertEqual(
             len(winner), 2, "Both players should win. Returned set was\n" + str(winner)
@@ -361,12 +361,71 @@ class OracleTestCase(unittest.TestCase):
                 Card("Q", "♦"),
             }
         )
-        # Player 2 should win because player 1 has folded
+        # Player 2 should win because player 1 has folded or is bust
         self.assertEqual(
             oracle.find_winner(
-                [c.to_index() for c in table], {player1, player2}, (True, False)
+                [c.to_index() for c in table],
+                [player1, player2],
+                (False, True),
             ),
             {player2},
+        )
+
+    def test_cannot_bet_more_than_smallest_stack(self):
+        player_played = (True, False, False)
+        current_player_i = 1
+        current_bets = (10, 1, 2)
+        player_piles = (200, 300, 30)
+        player_is_active = (True, True, True)
+
+        # It is not allowed to place a bet that cannot be matched by all other active players
+        self.assertEqual(
+            oracle.get_max_bet_allowed(
+                player_played,
+                current_player_i,
+                current_bets,
+                player_piles,
+                player_is_active,
+            ),
+            31,
+        )
+
+    def test_can_bet_even_if_players_are_bust(self):
+        player_played = (True, False, False)
+        current_player_i = 1
+        current_bets = (10, 0, 0)
+        player_piles = (200, 300, 0)
+        player_is_active = (True, True, False)
+
+        # The bust players should not be considered when calculating the max bet
+        self.assertEqual(
+            oracle.get_max_bet_allowed(
+                player_played,
+                current_player_i,
+                current_bets,
+                player_piles,
+                player_is_active,
+            ),
+            210,
+        )
+
+    def test_cannot_reraise(self):
+        player_played = (True, True, False)
+        current_player_i = 1
+        current_bets = (10, 5, 2)
+        player_piles = (200, 300, 30)
+        player_is_active = (True, True, True)
+
+        # It is not allowed to reraise
+        self.assertEqual(
+            oracle.get_max_bet_allowed(
+                player_played,
+                current_player_i,
+                current_bets,
+                player_piles,
+                player_is_active,
+            ),
+            5,
         )
 
 

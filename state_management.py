@@ -1,4 +1,5 @@
 import os
+from Card import Card
 from PlayerABC import Player
 from RandomPlayer import RandomPlayer
 from State import State
@@ -9,6 +10,10 @@ import numpy as np
 from time import sleep
 
 import oracle
+
+
+class BettingRuleViolation(Exception):
+    pass
 
 
 def _copy_and_modify(state: State, **kwargs):
@@ -147,22 +152,35 @@ def fold_current_player(state: State) -> State:
     )
 
 
-def place_bet(state: State, bet: int):
+def place_bet(state: State, bet: int, is_blind=False):
     min_required_bet = (
         max(state.current_bets) - state.current_bets[state.current_player_i]
     )
     if bet == 0 and min_required_bet > 0:
         return fold_current_player(state)
-    if bet < min_required_bet:
-        raise Exception("Bet is too low")
-    if bet > min_required_bet and bet < min_required_bet + state.big_blind:
-        print(
-            "Warning: Raising by less than the big blind is not allowed. Treating as a call instead."
+    if bet < min_required_bet and not is_blind:
+        raise BettingRuleViolation("Bet is too low")
+    if (
+        bet > min_required_bet
+        and bet < min_required_bet + state.big_blind
+        and not is_blind
+    ):
+        raise BettingRuleViolation("Raising by less than the big blind is not allowed.")
+    if bet > (
+        max_bet := oracle.get_max_bet_allowed(
+            state.player_has_played,
+            state.current_player_i,
+            state.current_bets,
+            state.player_piles,
+            state.player_is_active,
         )
-        bet = min_required_bet
+    ):
+        raise BettingRuleViolation(
+            f"Bet {bet} is higher than the maximum allowed ({max_bet}). This game does not allow re-raising, and it is not allowed to bet more than what the smallest stack can match."
+        )
     player_pile = state.player_piles[state.current_player_i]
     if bet > player_pile:
-        raise Exception("Bet is higher than the player's pile")
+        raise BettingRuleViolation("Bet is higher than the player's pile")
     return _copy_and_modify(
         state,
         current_player_i=state.next_player,
@@ -172,8 +190,10 @@ def place_bet(state: State, bet: int):
             state.current_bets[state.current_player_i] + bet,
         ),
         pot=state.pot + bet,
-        player_has_played=_update_tuple(
-            state.player_has_played, state.current_player_i, True
+        player_has_played=(
+            state.player_has_played
+            if is_blind
+            else _update_tuple(state.player_has_played, state.current_player_i, True)
         ),
         player_piles=_update_tuple(
             state.player_piles,
@@ -198,26 +218,57 @@ def skip_current_player(state: State):
     )
 
 
-def end_round(state: State, players: list[Player]):
+def end_round(state: State, players: list[Player], print_showdown=False):
     """
     End the round and distribute the pot to the winner(s).
     """
     if not state.is_terminal:
         raise Exception("The round is not over yet")
-    winners = oracle.find_winner(state.public_cards, players, state.folded_players)
+    winners = oracle.find_winner(state.public_cards, players, state.player_is_active)
+    if print_showdown:
+        print("Showdown!")
+        print("Public cards:", Card.get_cli_repr_for_cards(state.public_cards))
+        print("Player cards:")
+        for i, player in enumerate(players):
+            print(
+                f"Player {i}{' (winner)' if player in winners else ''}: {Card.get_cli_repr_for_cards(player.hand)}"
+            )
     pot_per_winner = state.pot // len(winners)
     new_piles = tuple(
         state.player_piles[i] + (pot_per_winner if player in winners else 0)
         for i, player in enumerate(players)
     )
-    bust_players = set()
-    for i, pile in enumerate(new_piles):
-        if pile < state.big_blind:
-            bust_players.add(players[i])
     new_state = _copy_and_modify(
-        generate_root_state(len(players)), player_piles=new_piles
+        generate_root_state(
+            len(players), first_better_i=(state.first_better_i + 1) % len(players)
+        ),
+        player_piles=new_piles,
+        folded_players=tuple(np.array(new_piles) < state.big_blind),
     )
-    return new_state, bust_players
+    return new_state
+
+
+def get_blind_bet(state: State):
+    """
+    Checks if the current player is forced to bet, and if so: returns the bet.
+    Otherwise returns None.
+    """
+    if state.public_cards == ():
+        is_small_blind = state.current_player_i == state.first_better_i
+        is_big_blind = (
+            state.current_player_i - 1
+        ) % state.n_players == state.first_better_i
+        has_played = state.player_has_played[state.current_player_i]
+        if has_played:
+            return None
+        has_placed_blind = state.current_bets[state.current_player_i] > 0
+        if has_placed_blind:
+            return None
+        if is_small_blind:
+            return state.big_blind // 2
+        if is_big_blind:
+            return state.big_blind
+    return None
 
 
 if __name__ == "__main__":

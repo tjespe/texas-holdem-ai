@@ -1,6 +1,7 @@
 import numpy as np
 from PlayerABC import Player
 from State import State
+import oracle
 
 
 class RandomPlayer(Player):
@@ -15,7 +16,16 @@ class RandomPlayer(Player):
             return 0
         call_bet = max(state.current_bets) - current_bet
         all_in_bet = player_pile
-        distribution = np.ones(all_in_bet + 1)
+        max_allowed_bet = oracle.get_max_bet_allowed(
+            state.player_has_played,
+            current_player_i,
+            state.current_bets,
+            state.player_piles,
+            state.player_is_active,
+        )
+        max_bet = min(max_allowed_bet, all_in_bet)
+        print("0 ->", max_bet)
+        distribution = np.ones(max_bet + 1)
         # Make higher bets less likely
         likelihood_decay = 0.5  # Higher values make higher bets less likely
         distribution = distribution / (

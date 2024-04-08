@@ -1,10 +1,13 @@
+import numpy as np
 from Deck import Deck
 from PlayerABC import Player
 from State import State
 from state_management import (
+    BettingRuleViolation,
     add_cards,
     end_round,
     generate_root_state,
+    get_blind_bet,
     place_bet,
     skip_current_player,
 )
@@ -14,13 +17,11 @@ class GameManager:
     players: list[Player]
     deck: Deck
     state: State
-    bust_players: set[Player]
 
     def __init__(self, players: list[Player], buy_in: int = 100, big_blind: int = 2):
         self.players = players
         self.deck = Deck()
         self.state = generate_root_state(len(self.players), buy_in, big_blind)
-        self.bust_players = set()
 
     def play_round(self, print_state: bool = False, sleep=0):
         """
@@ -49,22 +50,32 @@ class GameManager:
                     self.state = add_cards(self.state, (card,))
                 continue
             player = self.players[self.state.current_player_i]
-            if player in self.bust_players:
+            if not self.state.player_is_active[self.state.current_player_i]:
                 self.state = skip_current_player(self.state)
                 continue
-            if self.state.folded_players[self.state.current_player_i]:
-                self.state = skip_current_player(self.state)
-                continue
-            bet = player.play(self.state)
-            self.state = place_bet(self.state, bet)
+            if blind_bet := get_blind_bet(self.state):
+                self.state = place_bet(self.state, blind_bet, is_blind=True)
+            else:
+                bet = player.play(self.state)
+                try:
+                    self.state = place_bet(self.state, bet)
+                except BettingRuleViolation as e:
+                    print(
+                        "\n@@@@@@@@@@@@@@@@@@@@@@@@\nBetting rules violation:\n@@@@@@@@@@@@@@@@@@@@@@@@\n",
+                        e,
+                    )
+                    continue
         if print_state:
             print(self.state.get_cli_repr())
-        self.state, bust_players = end_round(self.state, self.players)
-        self.bust_players = self.bust_players.union(bust_players)
-        if len(self.bust_players) == len(self.players) - 1:
+        self.state = end_round(self.state, self.players, print_showdown=True)
+        bust_players = set()
+        for i, player in enumerate(self.players):
+            if self.state.player_piles[i] < self.state.big_blind:
+                bust_players.add(player)
+        if len(set(self.players) - bust_players) == 1:
             # Only one player left, end the game
             print("Game over!")
-            print("Winner:", next(iter(set(self.players) - self.bust_players)))
+            print("Winner:", set(self.players) - bust_players)
             print("Final state:")
             print(self.state.get_cli_repr())
         else:
@@ -73,7 +84,8 @@ class GameManager:
 
 if __name__ == "__main__":
     from RandomPlayer import RandomPlayer
+    from HumanPlayer import HumanPlayer
 
-    players = [RandomPlayer(), RandomPlayer()]
+    players = [RandomPlayer(), RandomPlayer(), HumanPlayer()]
     game_manager = GameManager(players)
-    game_manager.play_round(print_state=True, sleep=0.1)
+    game_manager.play_round(print_state=True, sleep=0)

@@ -30,7 +30,7 @@ class State:
     folded_players: Tuple[bool]
 
     # The player who made the first bet in the current round (under the gun-player)
-    first_better_i: int
+    _first_better_i: int
 
     # The big blind amount
     big_blind: int
@@ -57,7 +57,7 @@ class State:
         self.current_bets = current_bets
         self.player_has_played = player_has_played
         self.folded_players = folded_players
-        self.first_better_i = first_better_i
+        self._first_better_i = first_better_i
         self.n_players = len(player_piles)
         self.big_blind = big_blind
         assert len(folded_players) == len(player_piles)
@@ -76,17 +76,34 @@ class State:
         )
 
     @property
+    def previous_player_i(self):
+        i = (self.current_player_i - 1) % self.n_players
+        while not self.player_is_active[i]:
+            i = (i - 1) % self.n_players
+        return i
+
+    @property
     def next_player(self):
-        return (self.current_player_i + 1) % len(self.player_piles)
+        i = (self.current_player_i + 1) % self.n_players
+        while not self.player_is_active[i]:
+            i = (i + 1) % self.n_players
+        return i
+
+    @property
+    def first_better_i(self):
+        i = self._first_better_i
+        while not self.player_is_active[i]:
+            i = (i + 1) % self.n_players
+        return i
 
     @property
     def is_terminal(self):
-        active_players = ~np.array(self.folded_players)
-        if np.sum(active_players) == 1:
+        player_is_active = ~np.array(self.folded_players)
+        if np.sum(player_is_active) == 1:
             # Only one player left, no more decisions to be made
             return True
         if self.all_players_are_done and np.any(
-            np.array(self.player_piles)[active_players] == 0
+            np.array(self.player_piles)[player_is_active] == 0
         ):
             # A player has gone all in, and all other players have matched the bet
             return True
@@ -96,15 +113,18 @@ class State:
         return False
 
     @property
+    def player_is_active(self):
+        return ~np.array(self.folded_players)
+
+    @property
     def all_players_are_done(self):
         """
         Checks if the table is ready for more cards.
         This is the case when all players have had their turn, and the bets of the non-folded players are equal.
         """
         return (
-            np.all(self.player_has_played)
-            and len(set(np.array(self.current_bets)[~np.array(self.folded_players)]))
-            == 1
+            np.all(np.array(self.player_has_played)[self.player_is_active])
+            and len(set(np.array(self.current_bets)[self.player_is_active])) == 1
         )
 
     def to_array(self):
@@ -169,7 +189,10 @@ class State:
         cards = Card.get_cli_repr_for_cards(self.public_cards)
         player_status = pd.DataFrame(
             {
-                "Player": range(self.n_players),
+                "Player": [
+                    str(i) + ("*" if i == self.current_player_i else "")
+                    for i in range(self.n_players)
+                ],
                 "Pile": self.player_piles,
                 "Bet": self.current_bets,
                 "Played": self.player_has_played,
