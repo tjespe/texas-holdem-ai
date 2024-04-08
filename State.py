@@ -207,7 +207,6 @@ class State:
                 "Pile": self.player_piles,
                 "Bet this round": self.bet_in_round,
                 "Bet since last deal": self.current_bets,
-                "Played": self.player_has_played,
                 "Folded": self.player_is_folded,
             }
         ).set_index("Player")
