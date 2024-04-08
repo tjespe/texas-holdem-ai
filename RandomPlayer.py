@@ -24,7 +24,6 @@ class RandomPlayer(Player):
             state.player_is_active,
         )
         max_bet = min(max_allowed_bet, all_in_bet)
-        print("0 ->", max_bet)
         distribution = np.ones(max_bet + 1)
         # Make higher bets less likely
         likelihood_decay = 0.5  # Higher values make higher bets less likely

@@ -255,9 +255,7 @@ def get_blind_bet(state: State):
     """
     if state.public_cards == ():
         is_small_blind = state.current_player_i == state.first_better_i
-        is_big_blind = (
-            state.current_player_i - 1
-        ) % state.n_players == state.first_better_i
+        is_big_blind = state.previous_player_i == state.first_better_i
         has_played = state.player_has_played[state.current_player_i]
         if has_played:
             return None

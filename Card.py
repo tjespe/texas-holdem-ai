@@ -1,5 +1,5 @@
 from typing import Iterable, Union
-
+from TerminalColors import TerminalColors
 
 class Card:
     SUITS = ["♥", "♦", "♣", "♠"]
@@ -19,6 +19,12 @@ class Card:
     def __repr__(self) -> str:
         return f"Card({self.rank}, {self.suit})"
 
+    @property
+    def term_color(self):
+        if self.suit in (0, 1):
+            return TerminalColors.RED
+        return TerminalColors.BLUE
+
     def get_cli_repr(self):
         return """
 ┌───────┐
@@ -28,9 +34,9 @@ class Card:
 │       │
 │     {}│
 └───────┘""".format(
-            Card.VALUES[self.rank].ljust(2),
-            Card.SUITS[self.suit].ljust(2),
-            Card.VALUES[self.rank].rjust(2),
+            self.term_color + Card.VALUES[self.rank].ljust(2) + TerminalColors.DEFAULT,
+            self.term_color + Card.SUITS[self.suit].ljust(2) + TerminalColors.DEFAULT,
+            self.term_color + Card.VALUES[self.rank].rjust(2) + TerminalColors.DEFAULT,
         )
 
     @classmethod

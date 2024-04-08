@@ -5,6 +5,7 @@ from typing import Tuple
 import numpy as np
 
 from Card import Card
+from TerminalColors import TerminalColors
 
 
 class State:
@@ -186,11 +187,21 @@ class State:
         )
 
     def get_cli_repr(self):
-        cards = Card.get_cli_repr_for_cards(self.public_cards)
+        cards = (
+            Card.get_cli_repr_for_cards(self.public_cards)
+            if self.public_cards
+            else "No cards"
+        )
         player_status = pd.DataFrame(
             {
                 "Player": [
-                    str(i) + ("*" if i == self.current_player_i else "")
+                    (
+                        TerminalColors.FOLDED
+                        if self.folded_players[i]
+                        else TerminalColors.DEFAULT
+                    )
+                    + str(i)
+                    + ("*" if i == self.current_player_i else "")
                     for i in range(self.n_players)
                 ],
                 "Pile": self.player_piles,
@@ -203,7 +214,6 @@ class State:
 Pot: {self.pot}
 Table: {cards}
 
-{player_status}
-
+{player_status}{TerminalColors.DEFAULT}
 * = Current player
 """

@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from Deck import Deck
 from PlayerABC import Player
@@ -39,6 +40,7 @@ class GameManager:
 
                 time.sleep(sleep)
             if print_state:
+                os.system("clear")
                 print(self.state.get_cli_repr())
             if self.state.all_players_are_done:
                 # Deal cards
@@ -66,8 +68,11 @@ class GameManager:
                     )
                     continue
         if print_state:
+            os.system("clear")
             print(self.state.get_cli_repr())
         self.state = end_round(self.state, self.players, print_showdown=True)
+        if sleep:
+            time.sleep(10)
         bust_players = set()
         for i, player in enumerate(self.players):
             if self.state.player_piles[i] < self.state.big_blind:
@@ -88,4 +93,4 @@ if __name__ == "__main__":
 
     players = [RandomPlayer(), RandomPlayer(), HumanPlayer()]
     game_manager = GameManager(players)
-    game_manager.play_round(print_state=True, sleep=0)
+    game_manager.play_round(print_state=True, sleep=0.5)
