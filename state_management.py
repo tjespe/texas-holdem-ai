@@ -1,4 +1,3 @@
-import os
 from Card import Card
 from PlayerABC import Player
 from RandomPlayer import RandomPlayer
@@ -24,11 +23,11 @@ def _copy_and_modify(state: State, **kwargs):
     return State(
         kwargs.get("public_cards", state.public_cards),
         kwargs.get("player_piles", state.player_piles),
-        kwargs.get("pot", state.pot),
         kwargs.get("current_player_i", state.current_player_i),
         kwargs.get("current_bets", state.current_bets),
+        kwargs.get("bet_in_round", state.bet_in_round),
         kwargs.get("player_has_played", state.player_has_played),
-        kwargs.get("folded_players", state.folded_players),
+        kwargs.get("folded_players", state.player_is_folded),
         kwargs.get("first_better_i", state.first_better_i),
         kwargs.get("big_blind", state.big_blind),
     )
@@ -68,9 +67,9 @@ def generate_root_state(
     return State(
         public_cards=(),
         player_piles=tuple(pile_size for _ in range(n_players)),
-        pot=0,
         current_player_i=first_better_i,
         current_bets=tuple(0 for _ in range(n_players)),
+        bet_in_round=tuple(0 for _ in range(n_players)),
         folded_players=tuple(False for _ in range(n_players)),
         first_better_i=first_better_i,
         player_has_played=tuple(False for _ in range(n_players)),
@@ -110,7 +109,7 @@ def generate_successor_states(
             return []
     else:
         # Check if the current player has folded
-        if state.folded_players[state.current_player_i]:
+        if state.player_is_folded[state.current_player_i]:
             return [skip_current_player(state)]
         check_bet = max(state.current_bets) - state.current_bets[state.current_player_i]
         # A player has to make a decision, generate `max_successors` possible decisions
@@ -144,7 +143,7 @@ def fold_current_player(state: State) -> State:
         state,
         current_player_i=state.next_player,
         folded_players=_update_tuple(
-            state.folded_players, state.current_player_i, True
+            state.player_is_folded, state.current_player_i, True
         ),
         player_has_played=_update_tuple(
             state.player_has_played, state.current_player_i, True
@@ -176,7 +175,7 @@ def place_bet(state: State, bet: int, is_blind=False):
         )
     ):
         raise BettingRuleViolation(
-            f"Bet {bet} is higher than the maximum allowed ({max_bet}). This game does not allow re-raising, and it is not allowed to bet more than what the smallest stack can match."
+            f"Bet {bet} is higher than the maximum allowed ({max_bet}). This game does not allow re-raising, and it is not allowed to bet more than what another player can match."
         )
     player_pile = state.player_piles[state.current_player_i]
     if bet > player_pile:
@@ -189,7 +188,11 @@ def place_bet(state: State, bet: int, is_blind=False):
             state.current_player_i,
             state.current_bets[state.current_player_i] + bet,
         ),
-        pot=state.pot + bet,
+        bet_in_round=_update_tuple(
+            state.bet_in_round,
+            state.current_player_i,
+            state.bet_in_round[state.current_player_i] + bet,
+        ),
         player_has_played=(
             state.player_has_played
             if is_blind
@@ -205,7 +208,7 @@ def place_bet(state: State, bet: int, is_blind=False):
 
 def skip_current_player(state: State):
     if (
-        not state.folded_players[state.current_player_i]
+        not state.player_is_folded[state.current_player_i]
         and state.player_piles[state.current_player_i] >= state.big_blind
     ):
         raise Exception("Only bust or folded players can be skipped")
@@ -218,20 +221,29 @@ def skip_current_player(state: State):
     )
 
 
-def end_round(state: State, players: list[Player], print_showdown=False):
+def end_round(state: State, players: list[Player], print_result=False):
     """
     End the round and distribute the pot to the winner(s).
     """
     if not state.is_terminal:
         raise Exception("The round is not over yet")
     winners = oracle.find_winner(state.public_cards, players, state.player_is_active)
-    if print_showdown:
-        print("Showdown!")
-        print("Public cards:", Card.get_cli_repr_for_cards(state.public_cards))
-        print("Player cards:")
-        for i, player in enumerate(players):
+    if print_result:
+        showdown = np.sum(state.player_is_active) > 1
+        if showdown:
+            print("Showdown!")
+            print("Public cards:", Card.get_cli_repr_for_cards(state.public_cards))
+            print("Player cards:")
+            for i, player in enumerate(players):
+                if state.player_is_active[i]:
+                    print(
+                        f"Player {i}{' (winner)' if player in winners else ''}: {Card.get_cli_repr_for_cards(player.hand)}"
+                    )
+        else:
             print(
-                f"Player {i}{' (winner)' if player in winners else ''}: {Card.get_cli_repr_for_cards(player.hand)}"
+                "Player",
+                next(iter(winners)),
+                "won the round, as all other players folded.",
             )
     pot_per_winner = state.pot // len(winners)
     new_piles = tuple(

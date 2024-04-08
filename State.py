@@ -3,6 +3,7 @@ from typing import Tuple
 import numpy as np
 from typing import Tuple
 import numpy as np
+from tabulate import tabulate
 
 from Card import Card
 from TerminalColors import TerminalColors
@@ -15,20 +16,20 @@ class State:
     # The amount of money each player has
     player_piles: Tuple[int]
 
-    # The total amount of money in the pot
-    pot: int
-
     # The index of the player whose turn it is
     current_player_i: int
 
     # The bets from each player since the last deal
     current_bets: Tuple[int]
 
+    # The amount of money each player has bet in the current round
+    bet_in_round: Tuple[int]
+
     # Whether or not each player has had a turn in the current round
     player_has_played: Tuple[bool]
 
     # Players who have folded
-    folded_players: Tuple[bool]
+    player_is_folded: Tuple[bool]
 
     # The player who made the first bet in the current round (under the gun-player)
     _first_better_i: int
@@ -43,9 +44,9 @@ class State:
         self,
         public_cards: Tuple[int],
         player_piles: Tuple[int],
-        pot: int,
         current_player_i: int,
         current_bets: Tuple[int],
+        bet_in_round: Tuple[int],
         player_has_played: Tuple[bool],
         folded_players: Tuple[bool],
         first_better_i: int,
@@ -53,11 +54,11 @@ class State:
     ):
         self.public_cards = public_cards
         self.player_piles = player_piles
-        self.pot = pot
         self.current_player_i = current_player_i
         self.current_bets = current_bets
+        self.bet_in_round = bet_in_round
         self.player_has_played = player_has_played
-        self.folded_players = folded_players
+        self.player_is_folded = folded_players
         self._first_better_i = first_better_i
         self.n_players = len(player_piles)
         self.big_blind = big_blind
@@ -72,9 +73,13 @@ class State:
             and self.current_player_i == other.current_player_i
             and self.current_bets == other.current_bets
             and self.player_has_played == other.player_has_played
-            and self.folded_players == other.folded_players
+            and self.player_is_folded == other.folded_players
             and self.first_better_i == other.first_better_i
         )
+
+    @property
+    def pot(self):
+        return sum(self.bet_in_round)
 
     @property
     def previous_player_i(self):
@@ -99,14 +104,9 @@ class State:
 
     @property
     def is_terminal(self):
-        player_is_active = ~np.array(self.folded_players)
+        player_is_active = ~np.array(self.player_is_folded)
         if np.sum(player_is_active) == 1:
             # Only one player left, no more decisions to be made
-            return True
-        if self.all_players_are_done and np.any(
-            np.array(self.player_piles)[player_is_active] == 0
-        ):
-            # A player has gone all in, and all other players have matched the bet
             return True
         if self.all_players_are_done and len(self.public_cards) == 5:
             # All players have played and all cards are on the table
@@ -115,7 +115,7 @@ class State:
 
     @property
     def player_is_active(self):
-        return ~np.array(self.folded_players)
+        return ~np.array(self.player_is_folded)
 
     @property
     def all_players_are_done(self):
@@ -157,8 +157,8 @@ class State:
         arr[5 + 9] = self.pot
         arr[5 + 9 + 1] = self.current_player_i
         arr[5 + 9 + 1 + 1 : 5 + 9 + 1 + 1 + len(self.current_bets)] = self.current_bets
-        arr[5 + 9 + 1 + 1 + 9 : 5 + 9 + 1 + 1 + 9 + len(self.folded_players)] = (
-            self.folded_players
+        arr[5 + 9 + 1 + 1 + 9 : 5 + 9 + 1 + 1 + 9 + len(self.player_is_folded)] = (
+            self.player_is_folded
         )
         arr[5 + 9 + 1 + 1 + 9 + 9] = self.first_better_i
         arr[5 + 9 + 1 + 1 + 9 + 9 + 1] = self.n_players
@@ -197,7 +197,7 @@ class State:
                 "Player": [
                     (
                         TerminalColors.FOLDED
-                        if self.folded_players[i]
+                        if self.player_is_folded[i]
                         else TerminalColors.DEFAULT
                     )
                     + str(i)
@@ -205,15 +205,17 @@ class State:
                     for i in range(self.n_players)
                 ],
                 "Pile": self.player_piles,
-                "Bet": self.current_bets,
+                "Bet this round": self.current_bets,
+                "Bet since last deal": self.current_bets,
                 "Played": self.player_has_played,
-                "Folded": self.folded_players,
+                "Folded": self.player_is_folded,
             }
         ).set_index("Player")
+        player_status_string = tabulate(player_status, headers="keys", tablefmt="psql")
         return f"""
 Pot: {self.pot}
 Table: {cards}
 
-{player_status}{TerminalColors.DEFAULT}
+{player_status_string}{TerminalColors.DEFAULT}
 * = Current player
 """

@@ -8,6 +8,7 @@ from State import State
 
 class Player(ABC):
     hand: Union[tuple[int, int], None]
+    name: str
 
     @abstractmethod
     def play(self, state: State) -> int:

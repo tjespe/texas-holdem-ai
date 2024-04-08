@@ -66,13 +66,13 @@ class GameManager:
                         "\n@@@@@@@@@@@@@@@@@@@@@@@@\nBetting rules violation:\n@@@@@@@@@@@@@@@@@@@@@@@@\n",
                         e,
                     )
-                    continue
+                    input("Press enter to continue...")
         if print_state:
             os.system("clear")
             print(self.state.get_cli_repr())
-        self.state = end_round(self.state, self.players, print_showdown=True)
+        self.state = end_round(self.state, self.players, print_result=True)
         if sleep:
-            time.sleep(10)
+            input("Press enter to continue...")
         bust_players = set()
         for i, player in enumerate(self.players):
             if self.state.player_piles[i] < self.state.big_blind:
@@ -91,6 +91,10 @@ if __name__ == "__main__":
     from RandomPlayer import RandomPlayer
     from HumanPlayer import HumanPlayer
 
-    players = [RandomPlayer(), RandomPlayer(), HumanPlayer()]
+    players = [
+        RandomPlayer(name="Rando 1"),
+        RandomPlayer(name="Rando 2"),
+        HumanPlayer(name="Tord"),
+    ]
     game_manager = GameManager(players)
     game_manager.play_round(print_state=True, sleep=0.5)

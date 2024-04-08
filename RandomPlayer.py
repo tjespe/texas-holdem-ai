@@ -5,6 +5,10 @@ import oracle
 
 
 class RandomPlayer(Player):
+    def __init__(self, name: str = "Rando"):
+        super().__init__()
+        self.name = name
+
     def get_distribution(self, state: State):
         """
         Generate a general uninformed distribution for betting.
@@ -12,7 +16,7 @@ class RandomPlayer(Player):
         current_player_i = state.current_player_i
         current_bet = state.current_bets[current_player_i]
         player_pile = state.player_piles[current_player_i]
-        if state.folded_players[current_player_i]:
+        if state.player_is_folded[current_player_i]:
             return 0
         call_bet = max(state.current_bets) - current_bet
         all_in_bet = player_pile
@@ -51,3 +55,6 @@ class RandomPlayer(Player):
     def play(self, state: State) -> int:
         distribution = self.get_distribution(state)
         return np.random.choice(len(distribution), p=distribution)
+
+    def __repr__(self) -> str:
+        return f"RandomPlayer('{self.name}')"

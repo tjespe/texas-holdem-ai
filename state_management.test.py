@@ -28,9 +28,9 @@ class TestStateManager(unittest.TestCase):
         state = State(
             public_cards=(),
             player_piles=(100, 100),
-            pot=0,
             current_player_i=1,
             current_bets=(0, 0),
+            bet_in_round=(0, 0),
             folded_players=(False, False),
             player_has_played=(True, True),
             first_better_i=0,
@@ -45,9 +45,9 @@ class TestStateManager(unittest.TestCase):
         state = State(
             public_cards=(0, 1, 2),
             player_piles=(100, 100),
-            pot=1000,
             current_player_i=1,
             current_bets=(10, 10),
+            bet_in_round=(10, 10),
             folded_players=(False, False),
             first_better_i=0,
             big_blind=2,
@@ -62,24 +62,47 @@ class TestStateManager(unittest.TestCase):
         state = State(
             public_cards=(0, 1, 2, 3),
             player_piles=(100, 100, 100),
-            pot=200,
             current_player_i=2,
-            current_bets=(10, 0, 0),
-            player_has_played=(True, True, False),
+            current_bets=(10, 0, 10),
+            bet_in_round=(10, 0, 10),
+            player_has_played=(True, True, True),
             folded_players=(False, True, False),
             first_better_i=0,
             big_blind=2,
         )
         new_state = add_cards(state, (4,))
         self.assertEqual(new_state.public_cards, (0, 1, 2, 3, 4))
-        self.assertEqual(new_state.current_bets, (0, 0))
-        self.assertEqual(new_state.player_has_played, (False, False))
+        self.assertEqual(new_state.current_bets, (0, 0, 0))
+        self.assertEqual(new_state.bet_in_round, (10, 0, 10))
+        self.assertEqual(new_state.pot, 20)
+        self.assertEqual(new_state.player_has_played, (False, False, False))
+        self.assertEqual(new_state.player_is_folded, (False, True, False))
+
+    def test_end_round(self):
+        state = State(
+            public_cards=(0, 2, 4, 6, 8),
+            player_piles=(200, 100, 0),
+            current_player_i=2,
+            current_bets=(20, 20, 20),
+            bet_in_round=(40, 40, 40),
+            player_has_played=(True, True, True),
+            folded_players=(False, False, False),
+            first_better_i=0,
+            big_blind=2,
+        )
+        players = [
+            MockPlayer((1, 2)),
+            MockPlayer((3, 4)),
+            MockPlayer((5, 6)),
+        ]
+        new_state = end_round(state, players)
+        # Check that the pot was distributed correctly (player 3 should get 120)
+        self.assertEqual(new_state.player_piles, (200, 100, 120))
 
     def _vectorization(self):
         state = State(
             public_cards=(0, 1, 2, 3, 4),
             player_piles=(100, 200, 300, 400),
-            pot=200,
             current_player_i=2,
             current_bets=(10, 0, 0, 0),
             player_has_played=(True, True, False, False),
@@ -94,7 +117,7 @@ class TestStateManager(unittest.TestCase):
         self.assertEqual(state.pot, new_state.pot)
         self.assertEqual(state.current_player_i, new_state.current_player_i)
         self.assertEqual(state.current_bets, new_state.current_bets)
-        self.assertEqual(state.folded_players, new_state.folded_players)
+        self.assertEqual(state.player_is_folded, new_state.player_is_folded)
         self.assertEqual(state.first_better_i, new_state.first_better_i)
         self.assertEqual(state.n_players, new_state.n_players)
         self.assertEqual(state, new_state)
