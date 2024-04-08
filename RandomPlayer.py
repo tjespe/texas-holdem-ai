@@ -1,7 +1,6 @@
 import numpy as np
 from PlayerABC import Player
 from State import State
-from env_helpers import get_big_blind
 
 
 class RandomPlayer(Player):
@@ -23,13 +22,14 @@ class RandomPlayer(Player):
             (np.arange(distribution.shape[0]) + 1) * likelihood_decay
         )
         # Ensure illegal raises are not made
-        distribution[call_bet + 1 : call_bet + 1 + get_big_blind()] = 0
+        distribution[call_bet + 1 : call_bet + 1 + state.big_blind] = 0
         # Ensure too low bets are not made
         distribution[:call_bet] = 0
         # Add a chance of folding
         distribution[0] = 1
         # Add a chance of calling
-        distribution[call_bet] = 1
+        if call_bet < distribution.shape[0]:
+            distribution[call_bet] = 1
         # Ensure sum of distribution is 1
         distribution = distribution / np.sum(distribution)
         # Plotting for debugging

@@ -39,12 +39,15 @@ class Card:
         rank = i % 13
         return cls(rank, suit)
 
+    def to_index(self):
+        return self.suit * 13 + self.rank
+
     @classmethod
     def get_rank(cls, value: str):
         return cls.VALUES.index(value)
 
     @classmethod
-    def get_cli_repr_for_cards(cls, cards: Iterable[int | "Card"]):
+    def get_cli_repr_for_cards(cls, cards: Iterable[Union[int, "Card"]]):
         return "\n".join(
             [
                 " ".join(parts)
@@ -60,7 +63,7 @@ class Card:
         )
 
     def __hash__(self) -> int:
-        return self.rank + self.suit * 13
+        return self.to_index()
 
     def __gt__(self, other):
         return self.rank > other.rank

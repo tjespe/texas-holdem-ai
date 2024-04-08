@@ -8,7 +8,7 @@ import oracle
 
 class MockPlayer(Player):
     def __init__(self, hand: Iterable[Card]):
-        self.hand = hand
+        self.hand = tuple(card.to_index() for card in hand)
 
     def play(self, state):
         raise Exception("This method should not be called.")
@@ -284,61 +284,90 @@ class OracleTestCase(unittest.TestCase):
         )
 
     def test_tie_break_for_two_pair(self):
-        player1 = MockPlayer(
-            {
-                Card("10", "♥"),
-                Card("10", "♦"),
-                Card("J", "♣"),
-                Card("J", "♠"),
-                Card("K", "♥"),
-                Card("2", "♥"),
-                Card("3", "♥"),
-            }
-        )
-        player2 = MockPlayer(
-            {
-                Card("10", "♠"),
-                Card("10", "♣"),
-                Card("J", "♦"),
-                Card("J", "♥"),
-                Card("Q", "♦"),
-                Card("2", "♥"),
-                Card("3", "♥"),
-            }
-        )
-        # Player 1 should win because of the high card (K > Q)
-        self.assertEqual(oracle.find_winner({player1, player2}), {player1})
-
-    def test_actual_tie_with_two_pairs(self):
-        cards_on_table = {
-            Card("A", "♥"),
-            Card("K", "♦"),
+        table = {
+            Card("2", "♥"),
+            Card("3", "♥"),
+            Card("10", "♥"),
+            Card("10", "♦"),
+            Card("J", "♣"),
         }
         player1 = MockPlayer(
             {
-                Card("10", "♥"),
-                Card("10", "♦"),
-                Card("J", "♣"),
                 Card("J", "♠"),
-                Card("9", "♥"),
-            }.union(cards_on_table)
+                Card("K", "♥"),
+            }
         )
         player2 = MockPlayer(
             {
-                Card("10", "♠"),
-                Card("10", "♣"),
-                Card("J", "♦"),
+                Card("J", "♥"),
+                Card("Q", "♦"),
+            }
+        )
+        # Player 1 should win because of the high card (K > Q)
+        self.assertEqual(
+            oracle.find_winner(
+                [c.to_index() for c in table], {player1, player2}, (False, False)
+            ),
+            {player1},
+        )
+
+    def test_actual_tie_with_two_pairs(self):
+        table = {
+            Card("A", "♥"),
+            Card("K", "♦"),
+            Card("10", "♥"),
+            Card("10", "♦"),
+            Card("J", "♣"),
+        }
+        player1 = MockPlayer(
+            {
+                Card("J", "♠"),
+                Card("9", "♥"),
+            }
+        )
+        player2 = MockPlayer(
+            {
                 Card("J", "♥"),
                 Card("8", "♦"),
-            }.union(cards_on_table)
+            }
         )
         # In this case, there is an actual tie, because only 5 cards should count for
         # each player, and the high card, from the table, is the same for both players.
-        winner = oracle.find_winner({player1, player2})
+        winner = oracle.find_winner(
+            [c.to_index() for c in table], {player1, player2}, (False, False)
+        )
         self.assertEqual(
             len(winner), 2, "Both players should win. Returned set was\n" + str(winner)
         )
         self.assertEqual(winner, {player1, player2})
+
+    def test_folded_player_can_not_win(self):
+        table = {
+            Card("2", "♥"),
+            Card("3", "♥"),
+            Card("10", "♥"),
+            Card("10", "♦"),
+            Card("J", "♣"),
+        }
+        player1 = MockPlayer(
+            {
+                Card("J", "♠"),
+                Card("K", "♥"),
+            }
+        )
+        player2 = MockPlayer(
+            {
+                Card("J", "♥"),
+                Card("Q", "♦"),
+            }
+        )
+        # Player 2 should win because player 1 has folded
+        self.assertEqual(
+            oracle.find_winner(
+                [c.to_index() for c in table], {player1, player2}, (True, False)
+            ),
+            {player2},
+        )
 
 
 if __name__ == "__main__":

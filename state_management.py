@@ -1,4 +1,5 @@
 import os
+from PlayerABC import Player
 from RandomPlayer import RandomPlayer
 from State import State
 import numpy as np
@@ -7,7 +8,7 @@ from typing import Callable
 import numpy as np
 from time import sleep
 
-from env_helpers import get_big_blind
+import oracle
 
 
 def _copy_and_modify(state: State, **kwargs):
@@ -24,6 +25,7 @@ def _copy_and_modify(state: State, **kwargs):
         kwargs.get("player_has_played", state.player_has_played),
         kwargs.get("folded_players", state.folded_players),
         kwargs.get("first_better_i", state.first_better_i),
+        kwargs.get("big_blind", state.big_blind),
     )
 
 
@@ -55,7 +57,9 @@ def _update_tuple(t: tuple, i: int, new_value: any):
     return t[:i] + (new_value,) + t[i + 1 :]
 
 
-def generate_root_state(n_players: int, pile_size: int = 100, first_better_i: int = 0):
+def generate_root_state(
+    n_players: int, pile_size: int = 100, big_blind: int = 2, first_better_i: int = 0
+):
     return State(
         public_cards=(),
         player_piles=tuple(pile_size for _ in range(n_players)),
@@ -65,6 +69,7 @@ def generate_root_state(n_players: int, pile_size: int = 100, first_better_i: in
         folded_players=tuple(False for _ in range(n_players)),
         first_better_i=first_better_i,
         player_has_played=tuple(False for _ in range(n_players)),
+        big_blind=big_blind,
     )
 
 
@@ -150,14 +155,7 @@ def place_bet(state: State, bet: int):
         return fold_current_player(state)
     if bet < min_required_bet:
         raise Exception("Bet is too low")
-    big_blind = os.getenv("BIG_BLIND")
-    if big_blind is None:
-        print(
-            "Warning: BIG_BLIND environment variable not set, using default value of 2"
-        )
-        big_blind = 2
-    big_blind = int(big_blind)
-    if bet > min_required_bet and bet < min_required_bet + big_blind:
+    if bet > min_required_bet and bet < min_required_bet + state.big_blind:
         print(
             "Warning: Raising by less than the big blind is not allowed. Treating as a call instead."
         )
@@ -188,7 +186,7 @@ def place_bet(state: State, bet: int):
 def skip_current_player(state: State):
     if (
         not state.folded_players[state.current_player_i]
-        and state.player_piles[state.current_player_i] < get_big_blind()
+        and state.player_piles[state.current_player_i] >= state.big_blind
     ):
         raise Exception("Only bust or folded players can be skipped")
     return _copy_and_modify(
@@ -200,8 +198,30 @@ def skip_current_player(state: State):
     )
 
 
+def end_round(state: State, players: list[Player]):
+    """
+    End the round and distribute the pot to the winner(s).
+    """
+    if not state.is_terminal:
+        raise Exception("The round is not over yet")
+    winners = oracle.find_winner(state.public_cards, players, state.folded_players)
+    pot_per_winner = state.pot // len(winners)
+    new_piles = tuple(
+        state.player_piles[i] + (pot_per_winner if player in winners else 0)
+        for i, player in enumerate(players)
+    )
+    bust_players = set()
+    for i, pile in enumerate(new_piles):
+        if pile < state.big_blind:
+            bust_players.add(players[i])
+    new_state = _copy_and_modify(
+        generate_root_state(len(players)), player_piles=new_piles
+    )
+    return new_state, bust_players
+
+
 if __name__ == "__main__":
-    state = State.generate_root_state(3)
+    state = generate_root_state(3)
     while state:
         print(state.get_cli_repr())
         successors = generate_successor_states(state, max_successors=1)

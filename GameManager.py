@@ -3,6 +3,7 @@ from PlayerABC import Player
 from State import State
 from state_management import (
     add_cards,
+    end_round,
     generate_root_state,
     place_bet,
     skip_current_player,
@@ -15,10 +16,10 @@ class GameManager:
     state: State
     bust_players: set[Player]
 
-    def __init__(self, players: list[Player]):
+    def __init__(self, players: list[Player], buy_in: int = 100, big_blind: int = 2):
         self.players = players
         self.deck = Deck()
-        self.state = generate_root_state(len(self.players))
+        self.state = generate_root_state(len(self.players), buy_in, big_blind)
         self.bust_players = set()
 
     def play_round(self, print_state: bool = False, sleep=0):
@@ -58,13 +59,21 @@ class GameManager:
             self.state = place_bet(self.state, bet)
         if print_state:
             print(self.state.get_cli_repr())
-        # TODO: find winner, update bust_players, reset state, etc.
+        self.state, bust_players = end_round(self.state, self.players)
+        self.bust_players = self.bust_players.union(bust_players)
+        if len(self.bust_players) == len(self.players) - 1:
+            # Only one player left, end the game
+            print("Game over!")
+            print("Winner:", next(iter(set(self.players) - self.bust_players)))
+            print("Final state:")
+            print(self.state.get_cli_repr())
+        else:
+            self.play_round(print_state=print_state, sleep=sleep)
 
 
 if __name__ == "__main__":
-    from HumanPlayer import HumanPlayer
     from RandomPlayer import RandomPlayer
 
-    players = [HumanPlayer(), RandomPlayer()]
+    players = [RandomPlayer(), RandomPlayer()]
     game_manager = GameManager(players)
-    game_manager.play_round(print_state=True)
+    game_manager.play_round(print_state=True, sleep=0.1)

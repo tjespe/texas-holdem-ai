@@ -32,6 +32,9 @@ class State:
     # The player who made the first bet in the current round (under the gun-player)
     first_better_i: int
 
+    # The big blind amount
+    big_blind: int
+
     # Number of players (for vectorization)
     n_players: int
 
@@ -45,6 +48,7 @@ class State:
         player_has_played: Tuple[bool],
         folded_players: Tuple[bool],
         first_better_i: int,
+        big_blind: int,
     ):
         self.public_cards = public_cards
         self.player_piles = player_piles
@@ -55,6 +59,7 @@ class State:
         self.folded_players = folded_players
         self.first_better_i = first_better_i
         self.n_players = len(player_piles)
+        self.big_blind = big_blind
         assert len(folded_players) == len(player_piles)
         assert len(current_bets) <= len(player_piles)
 

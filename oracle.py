@@ -175,6 +175,7 @@ def check_for_one_pair(hand: set[Card]):
                 pair.add(Card(rank, suit))
         if len(pair) == 2:
             return True, pair
+    return False, None
 
 
 def get_n_high_cards(hand: set[Card], n: int):
@@ -254,22 +255,29 @@ def compare_hands(hand1: set[Card], hand2: set[Card]):
     return 0
 
 
-def find_winner(players: Iterable[Player]) -> set[Player]:
+def find_winner(
+    table: Iterable[int], players: Iterable[Player], folded_players: tuple[bool]
+) -> set[Player]:
     """
     Find the winner among a list of players.
     Returns a set of winners (can be more than one if there is a tie).
     """
     winners = set()
     best_hand = None
-    for player in players:
-        hand = set(player.hand)
+    for i, player in enumerate(players):
+        cards = set(Card.from_index(c) for c in player.hand).union(
+            set(Card.from_index(c) for c in table)
+        )
+        has_folded = folded_players[i]
+        if has_folded:
+            continue
         if best_hand is None:
-            best_hand = hand
+            best_hand = cards
             winners.add(player)
         else:
-            comparison = compare_hands(hand, best_hand)
+            comparison = compare_hands(cards, best_hand)
             if comparison == 1:
-                best_hand = hand
+                best_hand = cards
                 winners = {player}
             elif comparison == 0:
                 winners.add(player)
