@@ -128,6 +128,10 @@ class State:
             and len(set(np.array(self.current_bets)[self.player_is_active])) == 1
         )
 
+    @property
+    def small_blind(self):
+        return self.big_blind // 2
+
     def to_array(self):
         if len(self.player_piles) > 9:
             raise ValueError("Too many players")

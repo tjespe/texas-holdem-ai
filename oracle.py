@@ -4,6 +4,7 @@ import unittest
 import numpy as np
 from Card import Card
 from PlayerABC import Player
+from db_interface import get_value, set_value
 
 
 def check_for_royal_flush(hand: set[Card]):
@@ -259,17 +260,17 @@ def compare_hands(hand1: set[Card], hand2: set[Card]):
 
 def find_winner(
     table: Iterable[int],
-    players: list[Player],
+    player_hands: list[tuple[int, ...]],
     player_is_active: tuple[bool],
-) -> set[Player]:
+) -> set[int]:
     """
     Find the winner among a list of players.
     Returns a set of winners (can be more than one if there is a tie).
     """
     winners = set()
     best_hand = None
-    for i, player in enumerate(players):
-        cards = set(Card.from_index(c) for c in player.hand).union(
+    for i, player_hand in enumerate(player_hands):
+        cards = set(Card.from_index(c) for c in player_hand).union(
             set(Card.from_index(c) for c in table)
         )
         if not player_is_active[i]:
@@ -277,14 +278,14 @@ def find_winner(
             continue
         if best_hand is None:
             best_hand = cards
-            winners.add(player)
+            winners.add(i)
         else:
             comparison = compare_hands(cards, best_hand)
             if comparison == 1:
                 best_hand = cards
-                winners = {player}
+                winners = {i}
             elif comparison == 0:
-                winners.add(player)
+                winners.add(i)
     return winners
 
 
@@ -306,3 +307,58 @@ def get_max_bet_allowed(
         call_amount = max(current_bets) - current_bets[current_player_i]
         return min(call_amount, max_allowed)
     return max_allowed
+
+
+def _convert_cards_to_equiv_str(hand: set[int], table: list[int]):
+    hand_cards = [Card.from_index(c) for c in hand]
+    table_cards = [Card.from_index(c) for c in table]
+    sorted_hand = sorted(hand_cards, key=lambda c: c.rank, reverse=True)
+    sorted_table = sorted(table_cards, key=lambda c: c.rank, reverse=True)
+    suits_reencoding = {}
+    encountered_suits = set()
+    for card in sorted_hand + sorted_table:
+        if card.suit not in encountered_suits:
+            suits_reencoding[card.suit] = ["A", "B", "C", "D"][len(encountered_suits)]
+            encountered_suits.add(card.suit)
+    hand_str = "".join(
+        f"{card.rank}{suits_reencoding[card.suit]}" for card in sorted_hand
+    )
+    table_str = "".join(
+        f"{card.rank}{suits_reencoding[card.suit]}" for card in sorted_table
+    )
+    return f"hand:{hand_str}_table:{table_str}"
+
+
+def get_winning_prob(
+    player_hand: tuple[int], table: tuple[int], num_players: int, n_simulations=1000
+):
+    """
+    Get the statistical probability of winning with a given hand, the
+    current table, and the relevant number of players.
+    Disregards all other information, such as other players' hands.
+    """
+    cache_key = (
+        f"winning_prob_{_convert_cards_to_equiv_str(player_hand, table)}_{num_players}"
+    )
+    simulations = get_value(cache_key)
+    if simulations is None:
+        simulations = []
+    if len(simulations) < n_simulations:
+        print(f"Running {n_simulations - len(simulations)} simulations")
+        for _ in range(n_simulations - len(simulations)):
+            deck = list(set(range(52)) - set(player_hand) - set(table))
+            np.random.shuffle(deck)
+            new_table = table
+            while len(new_table) < 5:
+                new_table = new_table + (deck.pop(),)
+            player_hands = [player_hand]
+            while len(player_hands) < num_players:
+                player_hands.append((deck.pop(), deck.pop()))
+            winners = find_winner(new_table, player_hands, (True,) * num_players)
+            if 0 in winners:  # 0 is the index of the player
+                simulations.append(1)
+            else:
+                simulations.append(0)
+        print("Done!")
+        set_value(cache_key, simulations)
+    return np.mean(simulations)

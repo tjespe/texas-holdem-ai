@@ -227,7 +227,9 @@ def end_round(state: State, players: list[Player], print_result=False):
     """
     if not state.is_terminal:
         raise Exception("The round is not over yet")
-    winners = oracle.find_winner(state.public_cards, players, state.player_is_active)
+    winners = oracle.find_winner(
+        state.public_cards, [p.hand for p in players], state.player_is_active
+    )
     if print_result:
         showdown = np.sum(state.player_is_active) > 1
         if showdown:
@@ -237,7 +239,7 @@ def end_round(state: State, players: list[Player], print_result=False):
             for i, player in enumerate(players):
                 if state.player_is_active[i]:
                     print(
-                        f"{player.name}{' (WINNER 🥳)' if player in winners else ''}: {Card.get_cli_repr_for_cards(player.hand)}"
+                        f"{player.name}{' (WINNER 🥳)' if i in winners else ''}: {Card.get_cli_repr_for_cards(player.hand)}"
                     )
         else:
             print(
@@ -247,8 +249,8 @@ def end_round(state: State, players: list[Player], print_result=False):
             )
     pot_per_winner = state.pot // len(winners)
     new_piles = tuple(
-        state.player_piles[i] + (pot_per_winner if player in winners else 0)
-        for i, player in enumerate(players)
+        state.player_piles[i] + (pot_per_winner if i in winners else 0)
+        for i in range(state.n_players)
     )
     new_state = _copy_and_modify(
         generate_root_state(
@@ -275,7 +277,7 @@ def get_blind_bet(state: State):
         if has_placed_blind:
             return None
         if is_small_blind:
-            return state.big_blind // 2
+            return state.small_blind
         if is_big_blind:
             return state.big_blind
     return None

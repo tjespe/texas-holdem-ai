@@ -2,6 +2,7 @@ import os
 import numpy as np
 from Deck import Deck
 from PlayerABC import Player
+from RationalPlayer import RationalPlayer
 from State import State
 from state_management import (
     BettingRuleViolation,
@@ -93,8 +94,9 @@ if __name__ == "__main__":
 
     players = [
         RandomPlayer(name="Rando 1"),
-        RandomPlayer(name="Rando 2"),
-        HumanPlayer(name="Tord"),
+        # RandomPlayer(name="Rando 2"),
+        # HumanPlayer(name="Tord"),
+        RationalPlayer(),
     ]
     game_manager = GameManager(players)
-    game_manager.play_round(print_state=True, sleep=0.5)
+    game_manager.play_round(print_state=True, sleep=0)

@@ -306,9 +306,11 @@ class OracleTestCase(unittest.TestCase):
         # Player 1 should win because of the high card (K > Q)
         self.assertEqual(
             oracle.find_winner(
-                [c.to_index() for c in table], [player1, player2], (True, True)
+                [c.to_index() for c in table],
+                [player1.hand, player2.hand],
+                (True, True),
             ),
-            {player1},
+            {0},
         )
 
     def test_actual_tie_with_two_pairs(self):
@@ -334,12 +336,12 @@ class OracleTestCase(unittest.TestCase):
         # In this case, there is an actual tie, because only 5 cards should count for
         # each player, and the high card, from the table, is the same for both players.
         winner = oracle.find_winner(
-            [c.to_index() for c in table], [player1, player2], (True, True)
+            [c.to_index() for c in table], [player1.hand, player2.hand], (True, True)
         )
         self.assertEqual(
             len(winner), 2, "Both players should win. Returned set was\n" + str(winner)
         )
-        self.assertEqual(winner, {player1, player2})
+        self.assertEqual(winner, {0, 1})
 
     def test_folded_player_can_not_win(self):
         table = {
@@ -365,10 +367,10 @@ class OracleTestCase(unittest.TestCase):
         self.assertEqual(
             oracle.find_winner(
                 [c.to_index() for c in table],
-                [player1, player2],
+                [player1.hand, player2.hand],
                 (False, True),
             ),
-            {player2},
+            {1},
         )
 
     def test_cannot_bet_more_than_smallest_stack(self):
@@ -426,6 +428,29 @@ class OracleTestCase(unittest.TestCase):
                 player_is_active,
             ),
             5,
+        )
+
+    def test_get_pre_flop_aces_win_prob(self):
+        hand = (Card("A", "♦").to_index(), Card("A", "♠").to_index())
+        self.assertAlmostEqual(oracle.get_winning_prob(hand, (), 2), 0.86, delta=0.01)
+
+    def test_get_pre_flop_ace_king_unsuited_win_prob(self):
+        hand = (Card("A", "♦").to_index(), Card("K", "♠").to_index())
+        self.assertAlmostEqual(oracle.get_winning_prob(hand, (), 2), 0.65, delta=0.02)
+
+    def test_suits_do_not_matter(self):
+        # Two hands with the same cards but different suits should have the same win
+        # probability
+        hand1 = (Card("A", "♦").to_index(), Card("K", "♠").to_index())
+        hand2 = (Card("A", "♦").to_index(), Card("K", "♥").to_index())
+        table = [
+            Card("2", "♦").to_index(),
+            Card("3", "♦").to_index(),
+            Card("4", "♦").to_index(),
+        ]
+        self.assertEqual(
+            oracle._convert_cards_to_equiv_str(hand1, table),
+            oracle._convert_cards_to_equiv_str(hand2, table),
         )
 
 
