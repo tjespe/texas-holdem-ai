@@ -13,6 +13,7 @@ from state_management import (
     place_bet,
     skip_current_player,
 )
+from db_interface import get_value, set_value
 
 
 class GameManager:
@@ -81,9 +82,15 @@ class GameManager:
         if len(set(self.players) - bust_players) == 1:
             # Only one player left, end the game
             print("Game over!")
-            print("Winner:", set(self.players) - bust_players)
+            winner = list(set(self.players) - bust_players)[0]
+            print("Winner:", winner.name)
             print("Final state:")
             print(self.state.get_cli_repr())
+            winner_list = get_value("winners")
+            if winner_list is None:
+                winner_list = []
+            winner_list.append(winner.name)
+            set_value("winners", winner_list)
         else:
             self.play_round(print_state=print_state, sleep=sleep)
 
@@ -93,10 +100,10 @@ if __name__ == "__main__":
     from HumanPlayer import HumanPlayer
 
     players = [
-        RandomPlayer(name="Rando 1"),
-        # RandomPlayer(name="Rando 2"),
+        RandomPlayer(name="Random Randall"),
+        # RandomPlayer(name="Random Rhonda"),
         # HumanPlayer(name="Tord"),
-        RationalPlayer(),
+        RationalPlayer(name="Rational Rasmus"),
     ]
     game_manager = GameManager(players)
     game_manager.play_round(print_state=True, sleep=0)
