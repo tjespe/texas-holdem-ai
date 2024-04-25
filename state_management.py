@@ -4,7 +4,7 @@ from RandomPlayer import RandomPlayer
 from State import State
 import numpy as np
 from math import factorial
-from typing import Callable
+from typing import Callable, Union
 import numpy as np
 from time import sleep
 
@@ -81,7 +81,7 @@ def generate_successor_states(
     state: State,
     max_successors=100,
     betting_fn: Callable[["State"], int] = RandomPlayer().play,
-) -> list["State"]:
+) -> list[tuple[int, "State"]]:
     """
     Generate possible successor states from the given state.
     If the current state is a state where a player has to make a decision, then the number of successor states
@@ -89,6 +89,7 @@ def generate_successor_states(
     :param state: The current state
     :param max_successors: The maximum number of successor states to generate
     :param relative_bet_distribution: The distribution to sample from when generating bets
+    Returns a list of (action, child state)-tuples
     """
     if state.is_terminal:
         return []
@@ -96,12 +97,12 @@ def generate_successor_states(
         # It is time for more cards or to go to showdown
         if state.public_cards == ():
             return [
-                add_cards(state, draw)
+                (None, add_cards(state, draw))
                 for draw in _generate_possible_draws(state, 3, max_successors)
             ]
         elif len(state.public_cards) < 5:
             return [
-                add_cards(state, draw)
+                (None, add_cards(state, draw))
                 for draw in _generate_possible_draws(state, 1, max_successors)
             ]
         else:
@@ -110,11 +111,11 @@ def generate_successor_states(
     else:
         # Check if the current player has folded
         if state.player_is_folded[state.current_player_i]:
-            return [skip_current_player(state)]
+            return [(None, skip_current_player(state))]
         check_bet = max(state.current_bets) - state.current_bets[state.current_player_i]
         # A player has to make a decision, generate `max_successors` possible decisions
         return [
-            place_bet(state, bet)
+            (bet, place_bet(state, bet))
             for bet in set(
                 # Ensure folding is one of the options
                 [0]
@@ -151,7 +152,7 @@ def fold_current_player(state: State) -> State:
     )
 
 
-def place_bet(state: State, bet: int, is_blind=False):
+def place_bet(state: State, bet: int, is_blind=False) -> State:
     min_required_bet = (
         max(state.current_bets) - state.current_bets[state.current_player_i]
     )
@@ -206,7 +207,7 @@ def place_bet(state: State, bet: int, is_blind=False):
     )
 
 
-def skip_current_player(state: State):
+def skip_current_player(state: State) -> State:
     if (
         not state.player_is_folded[state.current_player_i]
         and state.player_piles[state.current_player_i] >= state.big_blind
@@ -221,7 +222,7 @@ def skip_current_player(state: State):
     )
 
 
-def end_round(state: State, players: list[Player], print_result=False):
+def end_round(state: State, players: list[Player], print_result=False) -> State:
     """
     End the round and distribute the pot to the winner(s).
     """
@@ -262,7 +263,7 @@ def end_round(state: State, players: list[Player], print_result=False):
     return new_state
 
 
-def get_blind_bet(state: State):
+def get_blind_bet(state: State) -> Union[int, None]:
     """
     Checks if the current player is forced to bet, and if so: returns the bet.
     Otherwise returns None.
@@ -291,7 +292,7 @@ if __name__ == "__main__":
         if not successors:
             print("Round over")
             break
-        state = np.random.choice(successors)
+        state = np.random.choice([child for action, child in successors])
         sleep(1)
     # plt.legend()
     # plt.show()

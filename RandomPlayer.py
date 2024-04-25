@@ -16,8 +16,6 @@ class RandomPlayer(Player):
         current_player_i = state.current_player_i
         current_bet = state.current_bets[current_player_i]
         player_pile = state.player_piles[current_player_i]
-        if state.player_is_folded[current_player_i]:
-            return 0
         call_bet = max(state.current_bets) - current_bet
         all_in_bet = player_pile
         max_allowed_bet = oracle.get_max_bet_allowed(

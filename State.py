@@ -1,5 +1,5 @@
 import pandas as pd
-from typing import Tuple
+from typing import Literal, Tuple, Union
 import numpy as np
 from typing import Tuple
 import numpy as np
@@ -7,7 +7,6 @@ from tabulate import tabulate
 
 from Card import Card
 from TerminalColors import TerminalColors
-
 
 class State:
     # The public cards on the table
@@ -76,6 +75,20 @@ class State:
             and self.player_is_folded == other.folded_players
             and self.first_better_i == other.first_better_i
         )
+    
+    StageType = Union[Literal["preflop"], Literal["flop"], Literal["turn"], Literal["river"]]
+
+    @property
+    def stage(self) -> StageType:
+        if len(self.public_cards) == 0:
+            return "preflop"
+        if len(self.public_cards) == 3:
+            return "flop"
+        if len(self.public_cards) == 4:
+            return "turn"
+        if len(self.public_cards) == 5:
+            return "river"
+        raise ValueError("Invalid number of public cards")
 
     @property
     def pot(self):
