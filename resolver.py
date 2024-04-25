@@ -12,9 +12,6 @@ def resolve(
     end_stage: State.StageType,
     end_depth: int,
     max_successors=100,
-    initial_strategy_generator: Callable[
-        [State], np.ndarray
-    ] = RandomPlayer().get_distribution,
     simulations=100,
 ):
     """
@@ -30,16 +27,16 @@ def resolve(
     """
     root = StateNode(state, end_stage, end_depth, max_successors)
     strategies = []
-    for t in range(simulations):
+    for _ in range(simulations):
         subtree_traversal_rollout(root, ranges)
         update_strategy(root)
         strategies.append(root.strategy)
-    strategy = strategies.mean(axis=0)
+    strategy = np.mean(strategies, axis=0)
     action_i = np.random.choice(len(strategy), p=strategy)
     action, child_state = root.children[action_i]
     updated_ranges = [ranges.copy() for _ in range(len(ranges))]
     updated_ranges[state.current_player_i] = bayesian_update(
-        updated_ranges[state.current_player_i], action, strategy
+        updated_ranges[state.current_player_i], action_i, strategy
     )
     return action, child_state, updated_ranges
 
@@ -71,11 +68,11 @@ def subtree_traversal_rollout(
         values_per_child = np.full(
             (len(node.children), node.state.n_players, len(POSSIBLE_HOLE_PAIRS)), np.nan
         )
-        for i, (action, child) in enumerate(node.children):
+        for action_i, (action, child) in enumerate(node.children):
             child_ranges = [r.copy() for r in ranges]
-            child_ranges[P] = bayesian_update(ranges[P], action, node.strategy)
+            child_ranges[P] = bayesian_update(ranges[P], action_i, node.strategy)
             subtree_traversal_rollout(child, child_ranges)
-            values_per_child[i] = child.values
+            values_per_child[action_i] = child.values
         node.values = node.strategy @ values_per_child
     else:
         # This is a chance node
@@ -86,6 +83,25 @@ def subtree_traversal_rollout(
             subtree_traversal_rollout(child, ranges)
             values_per_child[i] = child.values
         node.values = values_per_child.mean(axis=0)
+
+
+def bayesian_update(r, action_i, strategy: np.ndarray):
+    """
+    Update the range using Bayes' theorem, where:
+    prob(state | act) = (prob(act | state) * prob(state)) / prob(act)
+
+    Args:
+        r (h, ): The probability distribution over different hidden states (in Texas Hold Em: hole pairs)
+        action_i: The index of the action taken relative to the columns in the strategy matrix.
+        strategy (h, a): The strategy matrix giving the probability of taking each action with each possible hole pair (prob(act | pair)).
+
+    Returns:
+        The updated range (prob(state | act)).
+    """
+
+    prob_act_given_state = strategy[:, action_i] # (h, )
+    prob_act = r @ prob_act_given_state  # (h, ) @ (h, ) = (1, )
+    return (prob_act_given_state * r) / prob_act
 
 
 def update_strategy(node: StateNode):
@@ -105,7 +121,7 @@ def update_strategy(node: StateNode):
             child.values[P] - node.values[P]
             for action, child in node.children
         ],
-    ).T # (h, a)
+    ).T  # (h, a)
     positive_regrets = np.maximum(node.regrets, 0)  # (h, a)
     regret_sums = positive_regrets.sum(axis=1, keepdims=True)  # (h, 1)
     node.strategy = np.where(
