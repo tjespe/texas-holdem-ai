@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from Card import POSSIBLE_HOLE_PAIRS, Card
+from orcale import POSSIBLE_HOLE_PAIRS, Card
 from State import State
 from StateNode import StateNode
 from resolver import bayesian_update, update_strategy

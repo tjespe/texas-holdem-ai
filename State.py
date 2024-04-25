@@ -76,10 +76,12 @@ class State:
             and self.first_better_i == other.first_better_i
         )
     
-    StageType = Union[Literal["preflop"], Literal["flop"], Literal["turn"], Literal["river"]]
+    StageType = Union[Literal["preflop"], Literal["flop"], Literal["turn"], Literal["river"], Literal["terminal"]]
 
     @property
     def stage(self) -> StageType:
+        if self.is_terminal:
+            return "terminal"
         if len(self.public_cards) == 0:
             return "preflop"
         if len(self.public_cards) == 3:

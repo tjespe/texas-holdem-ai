@@ -1,5 +1,6 @@
 import numpy as np
-from Card import POSSIBLE_HOLE_PAIRS
+from Deck import Deck
+from orcale import POSSIBLE_HOLE_PAIRS
 from State import State
 from state_management import generate_successor_states
 import oracle
@@ -13,15 +14,22 @@ class StateNode:
 
     state: State
     parent: "StateNode"
-    children: list[tuple[int, "StateNode"]]  # (action, child)
-    strategy: np.ndarray  # (h, a)
-    values: (
-        np.ndarray
-    )  # (p, h) The value of having each hand at this node for each player
-    regrets: np.ndarray  # (h, a) The regret of not having taken each action at this node
-    _utility_matrix: (
-        np.ndarray
-    )  # (h,) The utility of having each hand at this node for the player whose perspective we have
+    deck: set[int]
+
+    # List of (action, StateNode) tuples
+    children: list[tuple[int, "StateNode"]]
+
+    # (h, a) The probability of taking each action at this node for each hand
+    strategy: np.ndarray
+
+    # (p, h) The value of having each hand at this node for each player
+    values: np.ndarray
+
+    # (h, a) The regret of not having taken each action at this node
+    regrets: np.ndarray
+
+    # (h,) The utility of having each hand at this node for the player whose perspective we have
+    _utility_matrix: np.ndarray = None
 
     def __init__(
         self,
@@ -30,19 +38,27 @@ class StateNode:
         max_depth: int = 0,
         max_successors=100,
         parent: "StateNode" = None,
+        deck=None,
     ):
+        if deck is None:
+            deck = set(range(52))
+        deck -= set(state.public_cards)
+        self.deck = deck
         self.state = state
         self.parent = parent
         self.values = np.full((state.n_players, len(POSSIBLE_HOLE_PAIRS)), np.nan)
         self.children = []
         self.strategy = None
         self.regrets = None
-        if end_stage != state.stage and max_depth > 0:
+        print(
+            "Creating StateNode for", state.stage, "with max_depth", max_depth, end="\r"
+        )
+        if end_stage != state.stage and max_depth > 0 and not state.is_terminal:
             self.children = [
                 (
                     action,
                     StateNode(
-                        successor, end_stage, max_depth - 1, max_successors, self
+                        successor, end_stage, max_depth - 1, max_successors, self, deck
                     ),
                 )
                 for action, successor in generate_successor_states(
@@ -57,5 +73,5 @@ class StateNode:
     @property
     def utility_matrix(self):
         if self._utility_matrix is None:
-            self._utility_matrix = oracle.get_utility_matrix(self.state)
+            self._utility_matrix = oracle.generate_utility_matrix(self.state)
         return self._utility_matrix

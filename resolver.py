@@ -1,7 +1,5 @@
-from typing import Callable
 import numpy as np
-from Card import POSSIBLE_HOLE_PAIRS
-from RandomPlayer import RandomPlayer
+from orcale import POSSIBLE_HOLE_PAIRS
 from State import State
 from StateNode import StateNode
 
@@ -11,7 +9,7 @@ def resolve(
     ranges: list[np.ndarray],
     end_stage: State.StageType,
     end_depth: int,
-    max_successors=100,
+    max_successors=10,
     simulations=100,
 ):
     """
@@ -25,10 +23,12 @@ def resolve(
         max_successors: The maximum number of successors to generate for each state.
         initial_strategy_generator: A function that generates the initial strategy for a state.
     """
+    print("Generating tree")
     root = StateNode(state, end_stage, end_depth, max_successors)
     strategies = []
-    for _ in range(simulations):
-        subtree_traversal_rollout(root, ranges)
+    for t in range(simulations):
+        print("Simulation", t, "of", simulations, end="\r")
+        subtree_traversal_rollout(root, ranges, state.current_player_i)
         update_strategy(root)
         strategies.append(root.strategy)
     strategy = np.mean(strategies, axis=0)
@@ -52,6 +52,7 @@ def subtree_traversal_rollout(
         ranges: The ranges per player (in Texas Hold Em: the probability distribution over possible hole pairs).
         perspective: The player for which to update the values and strategies.
     """
+    print("Traversing", node.state.stage, ", player", node.state.current_player_i, end="\r")
     if node.state.is_terminal:
         payoff = node.utility_matrix * ranges[perspective]
         node.values[:] = (
@@ -71,7 +72,7 @@ def subtree_traversal_rollout(
         for action_i, (action, child) in enumerate(node.children):
             child_ranges = [r.copy() for r in ranges]
             child_ranges[P] = bayesian_update(ranges[P], action_i, node.strategy)
-            subtree_traversal_rollout(child, child_ranges)
+            subtree_traversal_rollout(child, child_ranges, perspective)
             values_per_child[action_i] = child.values
         node.values = node.strategy @ values_per_child
     else:
@@ -80,7 +81,7 @@ def subtree_traversal_rollout(
             (len(node.children), node.state.n_players, len(POSSIBLE_HOLE_PAIRS))
         )
         for i, (action, child) in enumerate(node.children):
-            subtree_traversal_rollout(child, ranges)
+            subtree_traversal_rollout(child, ranges, perspective)
             values_per_child[i] = child.values
         node.values = values_per_child.mean(axis=0)
 

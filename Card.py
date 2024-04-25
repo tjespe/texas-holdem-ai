@@ -84,14 +84,6 @@ class Card:
     
 
 
-POSSIBLE_HOLE_PAIRS = [
-    (Card.from_index(i), Card.from_index(j))
-    for i in range(52)
-    for j in range(i + 1, 52)
-    if i != j
-]
-
-
 if __name__ == "__main__":
     # Example: card 0 is the 2 of hearts
     print(Card.from_index(0))
@@ -99,8 +91,3 @@ if __name__ == "__main__":
     # Example 2: card 51 is the ace of spades
     print(Card.from_index(51))
     print(Card.from_index(51).get_cli_repr())
-    print(len(POSSIBLE_HOLE_PAIRS))
-    for pair in POSSIBLE_HOLE_PAIRS[:100]:
-        print(Card.get_cli_repr_for_cards(pair))
-    for pair in POSSIBLE_HOLE_PAIRS:
-        assert pair[0] != pair[1]

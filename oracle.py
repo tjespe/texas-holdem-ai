@@ -1,3 +1,4 @@
+import itertools
 from typing import Iterable
 import unittest
 
@@ -265,7 +266,7 @@ def find_winner(
 ) -> set[int]:
     """
     Find the winner among a list of players.
-    Returns a set of winners (can be more than one if there is a tie).
+    Returns a set of indices for players that win (can be more than one if there is a tie).
     """
     winners = set()
     best_hand = None
@@ -362,3 +363,64 @@ def get_winning_prob(
         print("Done!")
         set_value(cache_key, simulations)
     return np.mean(simulations)
+
+
+POSSIBLE_HOLE_PAIRS = [(i, j) for i in range(52) for j in range(i + 1, 52) if i != j]
+
+
+def generate_utility_matrix(
+    table: tuple[int],
+    player_is_active: tuple[bool],
+    perspective: int,
+    deck: set[int] = None,
+):
+    """
+    Generate the utility matrix for a given table and number of players.
+    The utility matrix is a matrix of shape (n_players, n_players) where the
+    element at position (i, j) is the utility of player i if player j wins.
+    """
+    if deck is None:
+        deck = set(range(52))
+    deck = deck - set(table)
+    possible_hole_pair_indices = [
+        idx
+        for idx, pair in enumerate(POSSIBLE_HOLE_PAIRS)
+        if pair[0] in deck and pair[1] in deck
+    ]
+    n_players = len(player_is_active)
+    n_active_players = sum(player_is_active)
+    utility_matrix = np.zeros((len(POSSIBLE_HOLE_PAIRS),) * n_players)
+    if n_active_players == 1:
+        # If there is only one player left, they win
+        # The utility is 1 if the winner is the player whose perspective we have, -1 otherwise
+        utility_matrix[possible_hole_pair_indices * n_players] = (
+            1 if player_is_active[perspective] else -1
+        )
+        return utility_matrix
+    player_hand_combos = itertools.combinations(
+        possible_hole_pair_indices, n_active_players
+    )
+    hand_indices = {
+        player_i: sum(player_is_active[:player_i]) for player_i in range(n_players)
+    }
+    print(hand_indices)
+    print("Generating utility matrix for", n_players, "players")
+    est_total = len(possible_hole_pair_indices) ** n_active_players
+    for num, hole_pair_indices in enumerate(player_hand_combos):
+        if not (num % 1000):
+            print(
+                num,
+                "/ ~" + str(est_total),
+                "i.e.",
+                f"{100 * num / est_total:.2f}%",
+                end="\r",
+            )
+        matrix_indices = tuple(
+            hole_pair_indices[hand_indices[i]] if player_is_active[i] else slice(None)
+            for i in range(n_players)
+        )
+        player_hands = [POSSIBLE_HOLE_PAIRS[index] for index in hole_pair_indices]
+        winners = find_winner(table, player_hands, player_is_active)
+        utility_matrix[matrix_indices] = (1 if perspective in winners else -1) / len(
+            winners
+        )

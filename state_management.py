@@ -93,6 +93,8 @@ def generate_successor_states(
     """
     if state.is_terminal:
         return []
+    elif blind_bet := get_blind_bet(state):
+        return [(blind_bet, place_bet(state, blind_bet, is_blind=True))]
     elif state.all_players_are_done:
         # It is time for more cards or to go to showdown
         if state.public_cards == ():

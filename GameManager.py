@@ -98,12 +98,14 @@ class GameManager:
 if __name__ == "__main__":
     from RandomPlayer import RandomPlayer
     from HumanPlayer import HumanPlayer
+    from ResolverPlayer import ResolverPlayer
 
     players = [
-        RandomPlayer(name="Random Randall"),
+        # RandomPlayer(name="Random Randall"),
         # RandomPlayer(name="Random Rhonda"),
-        # HumanPlayer(name="Tord"),
-        RationalPlayer(name="Rational Rasmus"),
+        HumanPlayer(name="Tord"),
+        # RationalPlayer(name="Rational Rasmus"),
+        ResolverPlayer(name="Resa the Resolver"),
     ]
     game_manager = GameManager(players)
     game_manager.play_round(print_state=True, sleep=0)

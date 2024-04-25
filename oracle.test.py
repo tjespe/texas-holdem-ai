@@ -1,5 +1,7 @@
 from typing import Iterable
 import unittest
+
+import numpy as np
 from Card import Card
 from PlayerABC import Player
 
@@ -454,5 +456,62 @@ class OracleTestCase(unittest.TestCase):
         )
 
 
+class TestPokerUtilityMatrix(unittest.TestCase):
+    def setUp(self):
+        # This is your "full deck" setup
+        self.full_deck = set(range(52))
+
+    def test_single_active_player(self):
+        # Terminal state: Only one active player means they win automatically.
+        table = (5, 18, 32)
+        player_is_active = (True, False, False)
+        perspective = 0
+        result = oracle.generate_utility_matrix(
+            table, player_is_active, perspective, self.full_deck
+        )
+        expected = np.zeros((len(oracle.POSSIBLE_HOLE_PAIRS),))
+        # The only player (who is also the perspective) automatically wins, so the utility should be 1.
+        expected[:] = 1
+        np.testing.assert_array_equal(
+            result, expected, "Expected all ones for single active player"
+        )
+
+    def test_showdown_two_players(self):
+        # Terminal state: Showdown between two players
+        table = (2, 29, 31, 45, 50)
+        player_is_active = (True, True, False)
+        perspective = 0
+        # Assume the remaining deck considers the table cards are out
+        deck = self.full_deck - set(table)
+        result = oracle.generate_utility_matrix(
+            table, player_is_active, perspective, deck
+        )
+        # The exact values depend on the 'find_winner' function logic
+        self.assertEqual(
+            result.shape,
+            (len(oracle.POSSIBLE_HOLE_PAIRS), len(oracle.POSSIBLE_HOLE_PAIRS)),
+            "Unexpected shape for two-player showdown",
+        )
+
+    def test_deck_respect_table(self):
+        # Ensure the function respects the remaining deck after the table is dealt
+        table = (12, 7, 23)
+        player_is_active = (True, True)
+        perspective = 0
+        deck = self.full_deck - set(table)
+        result = oracle.generate_utility_matrix(
+            table, player_is_active, perspective, deck
+        )
+        # Check if any part of the result uses cards from the table
+        for pair_idx in np.argwhere(result != 0):
+            pair = oracle.POSSIBLE_HOLE_PAIRS[pair_idx[0]]
+            self.assertNotIn(
+                pair[0], table, "Utility matrix using cards already on the table"
+            )
+            self.assertNotIn(
+                pair[1], table, "Utility matrix using cards already on the table"
+            )
+
+
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(failfast=True)
