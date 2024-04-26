@@ -5,8 +5,7 @@ from typing import Tuple
 import numpy as np
 from tabulate import tabulate
 
-from Card import Card
-from TerminalColors import TerminalColors
+from cpp_poker.cpp_poker import TerminalColors, Card
 
 class State:
     # The public cards on the table
@@ -232,7 +231,8 @@ class State:
         player_status_string = tabulate(player_status, headers="keys", tablefmt="psql")
         return f"""
 Pot: {self.pot}
-Table: {cards}
+Table:
+{cards}
 
 {player_status_string}{TerminalColors.DEFAULT}
 * = Current player

@@ -1,6 +1,6 @@
 from typing import Iterable
 import unittest
-from Card import Card
+from cpp_poker.cpp_poker import Card
 from PlayerABC import Player
 from State import State
 from state_management import (

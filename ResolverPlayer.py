@@ -1,5 +1,5 @@
 import numpy as np
-from orcale import POSSIBLE_HOLE_PAIRS, Card
+from oracle import POSSIBLE_HOLE_PAIRS, Card
 from PlayerABC import Player
 import oracle
 from resolver import resolve

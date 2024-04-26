@@ -1,6 +1,6 @@
 import numpy as np
 from Deck import Deck
-from orcale import POSSIBLE_HOLE_PAIRS
+from oracle import POSSIBLE_HOLE_PAIRS
 from State import State
 from state_management import generate_successor_states
 import oracle

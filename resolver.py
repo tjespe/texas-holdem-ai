@@ -1,5 +1,5 @@
 import numpy as np
-from orcale import POSSIBLE_HOLE_PAIRS
+from oracle import POSSIBLE_HOLE_PAIRS
 from State import State
 from StateNode import StateNode
 

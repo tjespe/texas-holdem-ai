@@ -1,4 +1,4 @@
-from Card import Card
+from cpp_poker.cpp_poker import Card
 from PlayerABC import Player
 from RandomPlayer import RandomPlayer
 from State import State
@@ -237,12 +237,12 @@ def end_round(state: State, players: list[Player], print_result=False) -> State:
         showdown = np.sum(state.player_is_active) > 1
         if showdown:
             print("Showdown!")
-            print("Public cards:", Card.get_cli_repr_for_cards(state.public_cards))
+            print("Public cards:\n", Card.get_cli_repr_for_cards(state.public_cards))
             print("Player cards:")
             for i, player in enumerate(players):
                 if state.player_is_active[i]:
                     print(
-                        f"{player.name}{' (WINNER 🥳)' if i in winners else ''}: {Card.get_cli_repr_for_cards(player.hand)}"
+                        f"{player.name}{' (WINNER 🥳)' if i in winners else ''}:\n{Card.get_cli_repr_for_cards(player.hand)}"
                     )
         else:
             print(

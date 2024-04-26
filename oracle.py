@@ -1,10 +1,8 @@
 import itertools
 from typing import Iterable
-import unittest
 
 import numpy as np
-from Card import Card
-from PlayerABC import Player
+from cpp_poker.cpp_poker import Card
 from db_interface import get_value, set_value
 
 
@@ -271,8 +269,8 @@ def find_winner(
     winners = set()
     best_hand = None
     for i, player_hand in enumerate(player_hands):
-        cards = set(Card.from_index(c) for c in player_hand).union(
-            set(Card.from_index(c) for c in table)
+        cards = set(Card(c) for c in player_hand).union(
+            set(Card(c) for c in table)
         )
         if not player_is_active[i]:
             # Player is bust or folded
@@ -311,8 +309,8 @@ def get_max_bet_allowed(
 
 
 def _convert_cards_to_equiv_str(hand: set[int], table: list[int]):
-    hand_cards = [Card.from_index(c) for c in hand]
-    table_cards = [Card.from_index(c) for c in table]
+    hand_cards = [Card(c) for c in hand]
+    table_cards = [Card(c) for c in table]
     sorted_hand = sorted(hand_cards, key=lambda c: c.rank, reverse=True)
     sorted_table = sorted(table_cards, key=lambda c: c.rank, reverse=True)
     suits_reencoding = {}
@@ -376,8 +374,9 @@ def generate_utility_matrix(
 ):
     """
     Generate the utility matrix for a given table and number of players.
-    The utility matrix is a matrix of shape (n_players, n_players) where the
-    element at position (i, j) is the utility of player i if player j wins.
+    The utility matrix is a matrix of shape (h, h, ...) where the
+    element at position (i, j) is the utility of the player whose perspective
+    we have if player 1 has hole pair i and player 2 has hole pair j.
     """
     if deck is None:
         deck = set(range(52))
@@ -405,7 +404,7 @@ def generate_utility_matrix(
     }
     print(hand_indices)
     print("Generating utility matrix for", n_players, "players")
-    est_total = len(possible_hole_pair_indices) ** n_active_players
+    est_total = (len(possible_hole_pair_indices) ** n_active_players) / 2
     for num, hole_pair_indices in enumerate(player_hand_combos):
         if not (num % 1000):
             print(
@@ -424,3 +423,4 @@ def generate_utility_matrix(
         utility_matrix[matrix_indices] = (1 if perspective in winners else -1) / len(
             winners
         )
+    return utility_matrix

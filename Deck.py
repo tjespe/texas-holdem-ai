@@ -2,7 +2,7 @@ from math import factorial
 from typing import List
 import numpy as np
 
-from Card import Card
+from cpp_poker.cpp_poker import Card
 
 
 class Deck:

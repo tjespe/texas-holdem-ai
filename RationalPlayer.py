@@ -1,4 +1,4 @@
-from Card import Card
+from cpp_poker.cpp_poker import Card
 from PlayerABC import Player
 import oracle
 
@@ -25,7 +25,7 @@ class RationalPlayer(Player):
             state.public_cards,
             state.player_is_active.sum(),
         )
-        print(f"Hand: {Card.get_cli_repr_for_cards(self.hand)}")
+        print(f"Hand:\n{Card.get_cli_repr_for_cards(self.hand)}")
         print(f"Winning prob: {winning_prob}")
         rational_max = winning_prob * state.pot
         avg_forced_loss = (state.big_blind + state.small_blind) / state.n_players

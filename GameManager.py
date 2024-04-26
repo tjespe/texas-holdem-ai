@@ -104,8 +104,8 @@ if __name__ == "__main__":
         # RandomPlayer(name="Random Randall"),
         # RandomPlayer(name="Random Rhonda"),
         HumanPlayer(name="Tord"),
-        # RationalPlayer(name="Rational Rasmus"),
-        ResolverPlayer(name="Resa the Resolver"),
+        RationalPlayer(name="Rational Rasmus"),
+        # ResolverPlayer(name="Resa the Resolver"),
     ]
     game_manager = GameManager(players)
     game_manager.play_round(print_state=True, sleep=0)
