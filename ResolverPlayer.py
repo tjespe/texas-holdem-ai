@@ -14,8 +14,8 @@ class ResolverPlayer(Player):
         self.name = name
 
     def play(self, state) -> int:
-        r0 = np.ones(len(len(Hand.COMBINATIONS)))
-        for i, (card_a, card_b) in enumerate(len(Hand.COMBINATIONS)):
+        r0 = np.ones(len(Hand.COMBINATIONS))
+        for i, (card_a, card_b) in enumerate(Hand.COMBINATIONS):
             if (
                 card_a.to_index() in state.public_cards
                 or card_b.to_index() in state.public_cards

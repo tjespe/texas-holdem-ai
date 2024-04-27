@@ -235,7 +235,8 @@ def end_round(state: State, players: list[Player], print_result=False) -> State:
         showdown = np.sum(state.player_is_active) > 1
         if showdown:
             print("Showdown!")
-            print("Public cards:\n", Card.get_cli_repr_for_cards(state.public_cards))
+            print("Public cards:")
+            print(Card.get_cli_repr_for_cards(state.public_cards))
             print("Player cards:")
             for i, player in enumerate(players):
                 if state.player_is_active[i]:

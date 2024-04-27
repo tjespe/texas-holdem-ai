@@ -102,7 +102,7 @@ if __name__ == "__main__":
 
     players = [
         # RandomPlayer(name="Random Randall"),
-        # RandomPlayer(name="Random Rhonda"),
+        RandomPlayer(name="Random Rhonda"),
         HumanPlayer(name="Tord"),
         RationalPlayer(name="Rational Rasmus"),
         # ResolverPlayer(name="Resa the Resolver"),

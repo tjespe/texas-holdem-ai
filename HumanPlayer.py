@@ -10,7 +10,8 @@ class HumanPlayer(Player):
         self.name = name
 
     def play(self, state: State) -> int:
-        print("Your cards are\n", Card.get_cli_repr_for_cards(self.hand), "\n")
+        print("Your cards are")
+        print(Card.get_cli_repr_for_cards(self.hand))
         try:
             call_bet = (
                 max(state.bet_in_round) - state.bet_in_round[state.current_player_i]
