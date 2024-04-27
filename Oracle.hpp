@@ -3,10 +3,12 @@
 #include <set>
 #include <tuple>
 #include "Card.hpp"
+#include "CardCollection.hpp"
 
 class Oracle
 {
 public:
+    static std::vector<std::pair<int, int>> POSSIBLE_HOLE_PAIRS;
     static std::tuple<bool, std::set<Card>> check_for_royal_flush(const std::set<Card> &hand);
     static std::tuple<bool, std::set<Card>> check_for_straight_flush(const std::set<Card> &hand);
     static std::tuple<bool, std::set<Card>> check_for_four_of_a_kind(const std::set<Card> &hand);
@@ -18,7 +20,7 @@ public:
     static std::tuple<bool, std::set<Card>> check_for_one_pair(const std::set<Card> &hand);
     static std::vector<Card> get_n_high_cards(const std::set<Card> &hand, int n);
     static std::vector<int> get_n_high_ranks(const std::set<Card> &hand, int n);
-    static std::vector<int> rank_hand(const std::set<Card> &cards);
+    static std::vector<int> rank_hand(const std::set<Card> &cards, std::vector<int> *compare_to=NULL);
     static int compare_hands(const std::set<Card> &hand1, const std::set<Card> &hand2);
     static std::set<int> find_winner(const std::vector<int> &table, const std::vector<std::vector<int>> &player_hands, const std::vector<bool> &player_is_active);
     static int get_max_bet_allowed(
@@ -27,7 +29,7 @@ public:
         const std::vector<int> &current_bets,
         const std::vector<int> &player_piles,
         const std::vector<bool> &player_is_active);
-    static float get_winning_probability(const std::set<int> &hand, const std::vector<int> &table, int num_players, int num_simulations = 100);
-    static std::vector<std::vector<float>> generate_utility_matrix(const std::vector<int> &table, const std::vector<bool> &player_is_active);
-    static std::vector<std::vector<float>> generate_utility_matrix(const std::vector<int> &table, const std::vector<bool> &player_is_active, const std::set<int> &deck);
+    static float get_winning_probability(const std::set<int> &hand, const std::vector<int> &table, int num_players, int num_simulations);
+    static std::vector<std::vector<float>> generate_utility_matrix(const CardCollection &table, const std::vector<bool> &player_is_active, int perspective);
+    static std::vector<std::vector<float>> generate_utility_matrix(const CardCollection &table, const std::vector<bool> &player_is_active, int perspective, const CardCollection &deck);
 };

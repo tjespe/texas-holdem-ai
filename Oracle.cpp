@@ -3,14 +3,16 @@
 #include <numeric>
 #include <map>
 #include <random>
+#include <iostream>
+#include "Hand.hpp"
 
 std::tuple<bool, std::set<Card>> Oracle::check_for_royal_flush(const std::set<Card> &hand)
 {
     for (auto suit = 0; suit < 4; ++suit)
     {
         std::set<Card> royal_flush;
-        for (auto rank = 10; rank <= 14; ++rank)
-        { // Assuming Ace high as 14
+        for (auto rank = Card::get_rank("10"); rank <= Card::get_rank("A"); ++rank)
+        {
             Card card(rank, suit);
             if (hand.find(card) == hand.end())
             {
@@ -220,7 +222,7 @@ std::tuple<bool, std::set<Card>> Oracle::check_for_one_pair(const std::set<Card>
 std::vector<Card> Oracle::get_n_high_cards(const std::set<Card> &hand, int n)
 {
     std::vector<Card> sorted_cards(hand.begin(), hand.end());
-    std::sort(sorted_cards.begin(), sorted_cards.end(), CardSortingComparator());
+    std::sort(sorted_cards.begin(), sorted_cards.end(), std::greater<Card>());
     if (sorted_cards.size() > n)
     {
         sorted_cards.resize(n);
@@ -239,18 +241,31 @@ std::vector<int> Oracle::get_n_high_ranks(const std::set<Card> &hand, int n)
     return high_ranks;
 }
 
-std::vector<int> Oracle::rank_hand(const std::set<Card> &cards)
+std::vector<int> Oracle::rank_hand(const std::set<Card> &cards, std::vector<int> *compare_to)
 {
+    int stop_rank = 0;
+    if (compare_to != NULL && compare_to->size() > 0)
+    {
+        stop_rank = compare_to->at(0);
+    }
     auto [has_royal_flush, royal_flush] = check_for_royal_flush(cards);
     if (has_royal_flush)
     {
         return {9}; // Highest rank for royal flush, no tie-breakers as all royal flushes are equal
+    }
+    if (stop_rank == 9)
+    {
+        return {0}; // No royal flush, but the other hand has it, so this hand loses
     }
 
     auto [has_straight_flush, straight_flush] = check_for_straight_flush(cards);
     if (has_straight_flush)
     {
         return {8, max_element(straight_flush.begin(), straight_flush.end())->rank};
+    }
+    if (stop_rank == 8)
+    {
+        return {0}; // No straight flush, but the other hand has it, so this hand loses
     }
 
     auto [has_four_of_a_kind, quadruplet] = check_for_four_of_a_kind(cards);
@@ -259,6 +274,10 @@ std::vector<int> Oracle::rank_hand(const std::set<Card> &cards)
         int quad_rank = quadruplet.begin()->rank;
         std::vector<int> high_ranks = get_n_high_ranks(cards, 1);
         return {7, quad_rank, high_ranks[0]};
+    }
+    if (stop_rank == 7)
+    {
+        return {0}; // No four of a kind, but the other hand has it, so this hand loses
     }
 
     auto [has_full_house, full_house] = check_for_full_house(cards);
@@ -272,6 +291,10 @@ std::vector<int> Oracle::rank_hand(const std::set<Card> &cards)
         }
         return {6, triplet.begin()->rank, pair.begin()->rank};
     }
+    if (stop_rank == 6)
+    {
+        return {0}; // No full house, but the other hand has it, so this hand loses
+    }
 
     auto [has_flush, flush] = check_for_flush(cards);
     if (has_flush)
@@ -279,11 +302,19 @@ std::vector<int> Oracle::rank_hand(const std::set<Card> &cards)
         std::vector<int> high_ranks = get_n_high_ranks(flush, 5);
         return {5, high_ranks[0], high_ranks[1], high_ranks[2], high_ranks[3], high_ranks[4]};
     }
+    if (stop_rank == 5)
+    {
+        return {0}; // No flush, but the other hand has it, so this hand loses
+    }
 
     auto [has_straight, straight] = check_for_straight(cards);
     if (has_straight)
     {
         return {4, max_element(straight.begin(), straight.end())->rank};
+    }
+    if (stop_rank == 4)
+    {
+        return {0}; // No straight, but the other hand has it, so this hand loses
     }
 
     auto [has_three_of_a_kind, triplet] = check_for_three_of_a_kind(cards);
@@ -292,18 +323,27 @@ std::vector<int> Oracle::rank_hand(const std::set<Card> &cards)
         std::vector<int> high_ranks = get_n_high_ranks(cards, 2);
         return {3, triplet.begin()->rank, high_ranks[0], high_ranks[1]};
     }
+    if (stop_rank == 3)
+    {
+        return {0}; // No three of a kind, but the other hand has it, so this hand loses
+    }
 
     auto [has_two_pair, two_pair_cards] = check_for_two_pair(cards);
     if (has_two_pair)
     {
-        std::vector<int> pair_ranks;
+        std::set<int> pair_rank_set;
         for (const Card &card : two_pair_cards)
         {
-            pair_ranks.push_back(card.rank);
+            pair_rank_set.insert(card.rank);
         }
+        std::vector<int> pair_ranks(pair_rank_set.begin(), pair_rank_set.end());
         std::sort(pair_ranks.begin(), pair_ranks.end(), std::greater<int>());
         std::vector<int> high_ranks = get_n_high_ranks(cards, 1);
         return {2, pair_ranks[0], pair_ranks[1], high_ranks[0]};
+    }
+    if (stop_rank == 2)
+    {
+        return {0}; // No two pair, but the other hand has it, so this hand loses
     }
 
     auto [has_one_pair, pair] = check_for_one_pair(cards);
@@ -311,6 +351,10 @@ std::vector<int> Oracle::rank_hand(const std::set<Card> &cards)
     {
         std::vector<int> high_ranks = get_n_high_ranks(cards, 3);
         return {1, pair.begin()->rank, high_ranks[0], high_ranks[1], high_ranks[2]};
+    }
+    if (stop_rank == 1)
+    {
+        return {0}; // No one pair, but the other hand has it, so this hand loses
     }
 
     std::vector<int> high_ranks = get_n_high_ranks(cards, 5);
@@ -323,7 +367,7 @@ std::vector<int> Oracle::rank_hand(const std::set<Card> &cards)
 int Oracle::compare_hands(const std::set<Card> &hand1, const std::set<Card> &hand2)
 {
     std::vector<int> rank1 = rank_hand(hand1);
-    std::vector<int> rank2 = rank_hand(hand2);
+    std::vector<int> rank2 = rank_hand(hand2, &rank1);
     for (size_t i = 0; i < rank1.size(); ++i)
     {
         if (rank1[i] > rank2[i])
@@ -341,6 +385,8 @@ int Oracle::compare_hands(const std::set<Card> &hand1, const std::set<Card> &han
 std::set<int> Oracle::find_winner(const std::vector<int> &table, const std::vector<std::vector<int>> &player_hands, const std::vector<bool> &player_is_active)
 {
     std::set<int> winners;
+    std::set<Card> best_hand;
+
     for (size_t i = 0; i < player_hands.size(); ++i)
     {
         if (player_is_active[i])
@@ -357,36 +403,18 @@ std::set<int> Oracle::find_winner(const std::vector<int> &table, const std::vect
             if (winners.empty())
             {
                 winners.insert(i);
+                best_hand = hand;
             }
             else
             {
-                std::set<Card> winning_hand;
-                for (int winner : winners)
-                {
-                    std::set<Card> winner_hand;
-                    for (int card : table)
-                    {
-                        winner_hand.insert(Card(card));
-                    }
-                    for (int card : player_hands[winner])
-                    {
-                        winner_hand.insert(Card(card));
-                    }
-                    if (compare_hands(hand, winner_hand) == 1)
-                    {
-                        winning_hand = hand;
-                    }
-                    else
-                    {
-                        winning_hand = winner_hand;
-                    }
-                }
-                if (compare_hands(hand, winning_hand) == 1)
+                int comparison = compare_hands(hand, best_hand);
+                if (comparison == 1)
                 {
                     winners.clear();
                     winners.insert(i);
+                    best_hand = hand;
                 }
-                else if (compare_hands(hand, winning_hand) == 0)
+                else if (comparison == 0)
                 {
                     winners.insert(i);
                 }
@@ -444,8 +472,8 @@ std::string _convert_cards_to_equiv_str(const std::set<int> &hand, const std::ve
     {
         table_cards.push_back(Card(c));
     }
-    std::sort(hand_cards.begin(), hand_cards.end(), CardSortingComparator());
-    std::sort(table_cards.begin(), table_cards.end(), CardSortingComparator());
+    std::sort(hand_cards.begin(), hand_cards.end());
+    std::sort(table_cards.begin(), table_cards.end());
     std::map<int, std::string> suits_reencoding;
     std::set<int> encountered_suits;
     for (const Card &card : hand_cards)
@@ -484,119 +512,132 @@ std::string _convert_cards_to_equiv_str(const std::set<int> &hand, const std::ve
 float Oracle::get_winning_probability(const std::set<int> &hand, const std::vector<int> &table, int num_players, int num_simulations)
 {
     std::vector<int> simulations;
+    std::vector<int> deck;
+    for (int i = 0; i < 52; ++i)
+    {
+        if (hand.find(i) == hand.end() && std::find(table.begin(), table.end(), i) == table.end())
+        {
+            deck.push_back(i);
+        }
+    }
     for (int i = 0; i < num_simulations; ++i)
     {
-        std::vector<int> deck;
-        for (int i = 0; i < 52; ++i)
-        {
-            if (hand.find(i) == hand.end() && std::find(table.begin(), table.end(), i) == table.end())
-            {
-                deck.push_back(i);
-            }
-        }
+        std::vector<int> deck_copy = deck;
         std::random_device rd;
         std::mt19937 g(rd());
-        std::shuffle(deck.begin(), deck.end(), g);
+        std::shuffle(deck_copy.begin(), deck_copy.end(), g);
         std::vector<int> new_table = table;
         while (new_table.size() < 5)
         {
-            new_table.push_back(deck.back());
-            deck.pop_back();
+            new_table.push_back(deck_copy.back());
+            deck_copy.pop_back();
         }
+        std::cout << "Table:\n"
+                  << Card::get_cli_repr_for_cards(new_table) << std::endl;
         std::vector<std::vector<int>> player_hands;
         player_hands.push_back(std::vector<int>(hand.begin(), hand.end()));
         while (player_hands.size() < num_players)
         {
-            player_hands.push_back({deck.back(), deck.back()});
-            deck.pop_back();
+            player_hands.push_back({deck_copy.back(), deck_copy.back()});
+            deck_copy.pop_back();
         }
+        for (int pi = 0; pi < num_players; ++pi)
+        {
+            std::cout << "Player " << pi << " hand:\n"
+                      << Card::get_cli_repr_for_cards(player_hands[pi]) << std::endl;
+        }
+        std::cout << "In total, " << player_hands.size() << " players.\n";
+        std::cout << "Requested num of players: " << num_players << std::endl;
         std::set<int> winners = Oracle::find_winner(new_table, player_hands, std::vector<bool>(num_players, true));
         if (winners.find(0) != winners.end())
         {
+            std::cout << "Player 0 wins!" << std::endl;
             simulations.push_back(1);
         }
         else
         {
+            std::cout << "Player 0 loses!" << std::endl;
             simulations.push_back(0);
         }
     }
     return std::accumulate(simulations.begin(), simulations.end(), 0) / (float)num_simulations;
 }
 
-std::vector<std::vector<float>> Oracle::generate_utility_matrix(const std::vector<int> &table, const std::vector<bool> &player_is_active)
+std::vector<std::vector<float>> Oracle::generate_utility_matrix(const CardCollection &table, const std::vector<bool> &player_is_active, int perspective)
 {
-    std::set<int> deck;
-    for (int i = 0; i < 52; ++i)
-    {
-        deck.insert(i);
-    }
-    return generate_utility_matrix(table, player_is_active, deck);
+    CardCollection deck = CardCollection::generate_deck();
+    return generate_utility_matrix(table, player_is_active, perspective, deck);
 }
 
-std::vector<std::vector<float>> Oracle::generate_utility_matrix(const std::vector<int> &table, const std::vector<bool> &player_is_active, const std::set<int> &deck)
+std::vector<std::vector<float>> Oracle::generate_utility_matrix(const CardCollection &table, const std::vector<bool> &player_is_active, int perspective, const CardCollection &deck)
 {
     if (player_is_active.size() != 2)
     {
         throw std::invalid_argument("generate_utility_matrix is implemented for two players only.");
     }
 
-    std::set<int> remaining_deck = deck; // Copy of deck to modify
-    for (int card : table)
-    {
-        remaining_deck.erase(card); // Remove table cards from the deck
-    }
-
-    std::vector<std::pair<int, int>> possible_hole_cards;
-    for (auto it1 = remaining_deck.begin(); it1 != remaining_deck.end(); ++it1)
-    {
-        auto it2 = it1;
-        for (++it2; it2 != remaining_deck.end(); ++it2)
-        {
-            possible_hole_cards.emplace_back(*it1, *it2);
-        }
-    }
+    CardCollection remaining_deck = deck - table;
 
     // Initialize utility matrix
-    std::vector<std::vector<float>> utility_matrix(possible_hole_cards.size(), std::vector<float>(possible_hole_cards.size(), 0.0));
-
-    // Map each pair of cards to an index for easy access in the matrix
-    std::map<std::pair<int, int>, int> card_pair_to_index;
-    for (int i = 0; i < possible_hole_cards.size(); ++i)
-    {
-        card_pair_to_index[possible_hole_cards[i]] = i;
-    }
+    std::vector<std::vector<float>> utility_matrix(Hand::COMBINATIONS.size(), std::vector<float>(Hand::COMBINATIONS.size(), 0.0));
 
     // Generate combinations of hands for the two players
-    for (const auto &player1_hand : possible_hole_cards)
+    int overlaps = 0;
+    int skips_by_active = 0;
+    int comparison_count = 0;
+    for (int i = 0; i < Hand::COMBINATIONS.size(); ++i)
     {
-        for (const auto &player2_hand : possible_hole_cards)
+        auto player_hand = Hand(i);
+        if (player_hand.get_cards().intersects(table))
         {
-            if (player1_hand.first == player2_hand.first || player1_hand.first == player2_hand.second ||
-                player1_hand.second == player2_hand.first || player1_hand.second == player2_hand.second)
+            // std::cout << "Player hand " << player_hand.str() << " overlaps with table " << table.str() << std::endl;
+            overlaps++;
+            continue;
+        }
+        if ((i % 100) == 0)
+        {
+            std::cout << "i: " << i << std::endl;
+        }
+        for (int j = i + 1; j < Hand::COMBINATIONS.size(); ++j)
+        {
+            auto opponent_hand = Hand(j);
+            if (player_hand.get_cards().intersects(opponent_hand.get_cards()))
             {
-                continue; // Skip overlapping card pairs
+                // std::cout << "Overlapping hands: " << player_hand.str() << " and " << opponent_hand.str() << std::endl;
+                overlaps++;
+                continue;
             }
-
-            std::vector<std::vector<int>> player_hands(2);
-            player_hands[0] = {player1_hand.first, player1_hand.second};
-            player_hands[1] = {player2_hand.first, player2_hand.second};
-
-            std::set<int> winners = Oracle::find_winner(table, player_hands, player_is_active);
-
-            if (winners.find(0) != winners.end() && winners.find(1) != winners.end())
+            if (player_hand.get_cards().intersects(table) || opponent_hand.get_cards().intersects(table))
             {
-                utility_matrix[card_pair_to_index[player1_hand]][card_pair_to_index[player2_hand]] = 0; // Tie
+                // std::cout << "Player hand " << player_hand.str() << " overlaps with table " << table.str() << std::endl;
+                overlaps++;
+                continue;
             }
-            else if (winners.find(0) != winners.end())
+            if (player_hand.get_cards().intersects(table) || opponent_hand.get_cards().intersects(table))
             {
-                utility_matrix[card_pair_to_index[player1_hand]][card_pair_to_index[player2_hand]] = 1; // Player 1 wins
+                // std::cout << "Opponent hand " << opponent_hand.str() << " overlaps with table " << table.str() << std::endl;
+                overlaps++;
+                continue;
             }
-            else
+            if (player_is_active[perspective] && !player_is_active[1 - perspective])
             {
-                utility_matrix[card_pair_to_index[player1_hand]][card_pair_to_index[player2_hand]] = -1; // Player 2 wins
+                utility_matrix[i][j] = 1.0;
+                utility_matrix[j][i] = 1.0;
+                skips_by_active++;
+                continue;
             }
+            auto player_cards = table + player_hand.get_cards();
+            auto opponents_cards = table + opponent_hand.get_cards();
+            // Calculate the utility of the player's hand against the opponent's hand (1 if player wins, -1 if opponent wins, 0 if tie)
+            int utility = player_cards.beats(opponents_cards);
+            utility_matrix[i][j] = utility;
+            utility_matrix[j][i] = -utility;
+            comparison_count++;
         }
     }
+    std::cout << "Overlaps: " << overlaps << std::endl;
+    std::cout << "Skips by active: " << skips_by_active << std::endl;
+    std::cout << "Comparisons: " << comparison_count << std::endl;
 
     return utility_matrix;
 }

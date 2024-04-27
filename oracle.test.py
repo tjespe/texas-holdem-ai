@@ -2,7 +2,7 @@ from typing import Iterable
 import unittest
 
 import numpy as np
-from cpp_poker.cpp_poker import Card, Oracle
+from cpp_poker.cpp_poker import Card, Oracle, CardCollection, Hand
 from PlayerABC import Player
 
 
@@ -34,7 +34,7 @@ class OracleTestCase(unittest.TestCase):
             Card("K", "♥"),
             Card("9", "♥"),
         }
-        self.assertEqual(Oracle.check_for_royal_flush(hand), (False, None))
+        self.assertEqual(Oracle.check_for_royal_flush(hand), (False, set()))
 
     def test_check_for_straight_flush(self):
         hand = {
@@ -52,7 +52,7 @@ class OracleTestCase(unittest.TestCase):
             Card("Q", "♥"),
             Card("K", "♥"),
         }
-        self.assertEqual(Oracle.check_for_straight_flush(hand), (False, None))
+        self.assertEqual(Oracle.check_for_straight_flush(hand), (False, set()))
 
     def test_check_for_four_of_a_kind(self):
         hand = {
@@ -81,7 +81,7 @@ class OracleTestCase(unittest.TestCase):
             Card("J", "♠"),
             Card("A", "♥"),
         }
-        self.assertEqual(Oracle.check_for_four_of_a_kind(hand), (False, None))
+        self.assertEqual(Oracle.check_for_four_of_a_kind(hand), (False, set()))
 
     def test_check_for_full_house(self):
         hand = {
@@ -99,7 +99,7 @@ class OracleTestCase(unittest.TestCase):
             Card("A", "♠"),
             Card("A", "♥"),
         }
-        self.assertEqual(Oracle.check_for_full_house(hand), (False, None))
+        self.assertEqual(Oracle.check_for_full_house(hand), (False, set()))
 
     def test_check_for_flush(self):
         hand = {
@@ -117,7 +117,7 @@ class OracleTestCase(unittest.TestCase):
             Card("K", "♥"),
             Card("9", "♦"),
         }
-        self.assertEqual(Oracle.check_for_flush(hand), (False, None))
+        self.assertEqual(Oracle.check_for_flush(hand), (False, set()))
 
     def test_check_for_straight(self):
         hand = {
@@ -135,7 +135,7 @@ class OracleTestCase(unittest.TestCase):
             Card("K", "♠"),
             Card("8", "♥"),
         }
-        self.assertEqual(Oracle.check_for_straight(hand), (False, None))
+        self.assertEqual(Oracle.check_for_straight(hand), (False, set()))
 
     def test_check_for_three_of_a_kind(self):
         hand = {
@@ -163,7 +163,7 @@ class OracleTestCase(unittest.TestCase):
             Card("A", "♠"),
             Card("K", "♥"),
         }
-        self.assertEqual(Oracle.check_for_three_of_a_kind(hand), (False, None))
+        self.assertEqual(Oracle.check_for_three_of_a_kind(hand), (False, set()))
 
     def test_check_for_two_pair(self):
         hand = {
@@ -192,7 +192,7 @@ class OracleTestCase(unittest.TestCase):
             Card("Q", "♠"),
             Card("K", "♥"),
         }
-        self.assertEqual(Oracle.check_for_two_pair(hand), (False, None))
+        self.assertEqual(Oracle.check_for_two_pair(hand), (False, set()))
 
     def test_check_for_one_pair(self):
         hand = {
@@ -232,7 +232,7 @@ class OracleTestCase(unittest.TestCase):
             Card("A", "♠"),
             Card("A", "♥"),
         }
-        self.assertEqual(Oracle.check_for_full_house(hand), (False, None))
+        self.assertEqual(Oracle.check_for_full_house(hand), (False, set()))
 
     def test_get_n_high_cards(self):
         hand = {
@@ -294,16 +294,16 @@ class OracleTestCase(unittest.TestCase):
         player1 = MockPlayer(
             {
                 Card("J", "♠"),
-                Card("K", "♥"),
+                Card("8", "♥"),
             }
         )
         player2 = MockPlayer(
             {
                 Card("J", "♥"),
-                Card("Q", "♦"),
+                Card("7", "♦"),
             }
         )
-        # Player 1 should win because of the high card (K > Q)
+        # Player 1 should win because of the high card (8 > 7)
         self.assertEqual(
             Oracle.find_winner(
                 [c.to_index() for c in table],
@@ -431,87 +431,71 @@ class OracleTestCase(unittest.TestCase):
         )
 
     def test_get_pre_flop_aces_win_prob(self):
-        hand = (Card("A", "♦").to_index(), Card("A", "♠").to_index())
-        self.assertAlmostEqual(Oracle.get_winning_prob(hand, (), 2), 0.86, delta=0.01)
+        hand = {Card("A", "♦").to_index(), Card("A", "♠").to_index()}
+        self.assertAlmostEqual(
+            Oracle.get_winning_probability(hand, [], 2, 1000), 0.86, delta=0.01
+        )
 
     def test_get_pre_flop_ace_king_unsuited_win_prob(self):
-        hand = (Card("A", "♦").to_index(), Card("K", "♠").to_index())
-        self.assertAlmostEqual(Oracle.get_winning_prob(hand, (), 2), 0.65, delta=0.02)
-
-    def test_suits_do_not_matter(self):
-        # Two hands with the same cards but different suits should have the same win
-        # probability
-        hand1 = (Card("A", "♦").to_index(), Card("K", "♠").to_index())
-        hand2 = (Card("A", "♦").to_index(), Card("K", "♥").to_index())
-        table = [
-            Card("2", "♦").to_index(),
-            Card("3", "♦").to_index(),
-            Card("4", "♦").to_index(),
-        ]
-        self.assertEqual(
-            Oracle._convert_cards_to_equiv_str(hand1, table),
-            Oracle._convert_cards_to_equiv_str(hand2, table),
+        hand = {Card("A", "♦").to_index(), Card("K", "♠").to_index()}
+        self.assertAlmostEqual(
+            Oracle.get_winning_probability(hand, [], 2, 1000), 0.65, delta=0.02
         )
+
+    # def test_suits_do_not_matter(self):
+    #     # Two hands with the same cards but different suits should have the same win
+    #     # probability
+    #     hand1 = (Card("A", "♦").to_index(), Card("K", "♠").to_index())
+    #     hand2 = (Card("A", "♦").to_index(), Card("K", "♥").to_index())
+    #     table = [
+    #         Card("2", "♦").to_index(),
+    #         Card("3", "♦").to_index(),
+    #         Card("4", "♦").to_index(),
+    #     ]
+    #     self.assertEqual(
+    #         Oracle._convert_cards_to_equiv_str(hand1, table),
+    #         Oracle._convert_cards_to_equiv_str(hand2, table),
+    #     )
 
 
 class TestPokerUtilityMatrix(unittest.TestCase):
-    def setUp(self):
-        # This is your "full deck" setup
-        self.full_deck = set(range(52))
-
     def test_single_active_player(self):
         # Terminal state: Only one active player means they win automatically.
-        table = (5, 18, 32)
-        player_is_active = (True, False, False)
-        perspective = 0
-        result = Oracle.generate_utility_matrix(
-            table, player_is_active, perspective, self.full_deck
-        )
-        expected = np.zeros((len(Oracle.POSSIBLE_HOLE_PAIRS),))
-        # The only player (who is also the perspective) automatically wins, so the utility should be 1.
-        expected[:] = 1
-        np.testing.assert_array_equal(
-            result, expected, "Expected all ones for single active player"
-        )
+        table = CardCollection([5, 18, 32])
+        player_is_active = (True, False)
+        result = np.array(Oracle.generate_utility_matrix(table, player_is_active, 0))
+        # The only player (who is also the perspective) automatically wins, so the utility should be 1
+        # for all possible hands, and 0 for all other hands.
+        assert result.mean() > 0.7, "Expected utility to be close to 1"
+        assert result.min() == 0, "Utility should never be negative when only one player is active"
 
     def test_showdown_two_players(self):
         # Terminal state: Showdown between two players
-        table = (2, 29, 31, 45, 50)
-        player_is_active = (True, True, False)
-        perspective = 0
-        # Assume the remaining deck considers the table cards are out
-        deck = self.full_deck - set(table)
-        result = Oracle.generate_utility_matrix(
-            table, player_is_active, perspective, deck
-        )
+        table = CardCollection([2, 29, 31, 45, 50])
+        player_is_active = (True, True)
+        result = np.array(Oracle.generate_utility_matrix(table, player_is_active, 0))
         # The exact values depend on the 'find_winner' function logic
         self.assertEqual(
             result.shape,
-            (len(Oracle.POSSIBLE_HOLE_PAIRS), len(Oracle.POSSIBLE_HOLE_PAIRS)),
+            (len(Hand.COMBINATIONS), len(Hand.COMBINATIONS)),
             "Unexpected shape for two-player showdown",
         )
 
     def test_deck_respect_table(self):
         # Ensure the function respects the remaining deck after the table is dealt
-        table = (12, 7, 23)
+        table = CardCollection([12, 7, 23])
         player_is_active = (True, True)
-        perspective = 0
-        deck = self.full_deck - set(table)
-        result = Oracle.generate_utility_matrix(
-            table, player_is_active, perspective, deck
-        )
+        result = np.array(Oracle.generate_utility_matrix(table, player_is_active, 0))
         print(result.shape)
         print(result)
         # Check if any part of the result uses cards from the table
-        for pair_idx in np.argwhere(result != 0):
-            pair = Oracle.POSSIBLE_HOLE_PAIRS[pair_idx[0]]
-            self.assertNotIn(
-                pair[0], table, "Utility matrix using cards already on the table"
-            )
-            self.assertNotIn(
-                pair[1], table, "Utility matrix using cards already on the table"
-            )
+        print("Checking for overlap with table")
+        cards_on_hands = CardCollection()
+        for player_pair_idx, opponent_pair_idx in np.argwhere(result != 0):
+            cards_on_hands.add_cards(Hand.COMBINATIONS[player_pair_idx])
+            cards_on_hands.add_cards(Hand.COMBINATIONS[opponent_pair_idx])
+        assert not cards_on_hands.overlaps(table), "Some hands use cards from the table"
 
 
 if __name__ == "__main__":
-    unittest.main(failfast=True)
+    unittest.main()

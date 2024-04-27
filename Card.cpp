@@ -80,6 +80,11 @@ std::string Card::get_cli_repr_for_cards(const std::vector<int> &cards)
     return get_cli_repr_for_cards(card_objs);
 }
 
+int Card::get_rank(const std::string &rank)
+{
+    return std::distance(VALUES.begin(), std::find(VALUES.begin(), VALUES.end(), rank));
+}
+
 std::string Card::str() const
 {
     return SUITS[suit] + " " + VALUES[rank];
@@ -87,12 +92,16 @@ std::string Card::str() const
 
 bool Card::operator<(const Card &other) const
 {
-    return rank < other.rank;
+    if (rank != other.rank)
+        return rank < other.rank;
+    return suit < other.suit;
 }
 
 bool Card::operator>(const Card &other) const
 {
-    return rank > other.rank;
+    if (rank != other.rank)
+        return rank > other.rank;
+    return suit > other.suit;
 }
 
 bool Card::operator==(const Card &other) const
