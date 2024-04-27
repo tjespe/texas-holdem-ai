@@ -2,7 +2,6 @@ import os
 import numpy as np
 from Deck import Deck
 from PlayerABC import Player
-from RationalPlayer import RationalPlayer
 from State import State
 from state_management import (
     BettingRuleViolation,
@@ -96,14 +95,15 @@ class GameManager:
 
 
 if __name__ == "__main__":
-    from RandomPlayer import RandomPlayer
-    from HumanPlayer import HumanPlayer
-    from ResolverPlayer import ResolverPlayer
+    from players.RandomPlayer import RandomPlayer
+    from players.HumanPlayer import HumanPlayer
+    from players.ResolverPlayer import ResolverPlayer
+    from players.RationalPlayer import RationalPlayer
 
     players = [
-        # RandomPlayer(name="Random Randall"),
+        RandomPlayer(name="Random Randall"),
         RandomPlayer(name="Random Rhonda"),
-        HumanPlayer(name="Tord"),
+        # HumanPlayer(name="Tord"),
         RationalPlayer(name="Rational Rasmus"),
         # ResolverPlayer(name="Resa the Resolver"),
     ]

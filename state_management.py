@@ -1,6 +1,6 @@
 from cpp_poker.cpp_poker import Card, Oracle, CardCollection
 from PlayerABC import Player
-from RandomPlayer import RandomPlayer
+from players.RandomPlayer import RandomPlayer
 from State import State
 import numpy as np
 from math import factorial
