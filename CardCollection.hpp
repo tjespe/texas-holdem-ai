@@ -21,6 +21,8 @@ public:
     void add_cards(const CardCollection &other);
     void remove_card(const Card &card);
     void remove_cards(const CardCollection &other);
+    Card draw_random_card();
+    CardCollection draw_random_cards(int n);
 
     /** Operations constructing new collections */
     CardCollection operator+(const CardCollection &other) const;
@@ -46,7 +48,7 @@ public:
     HandRank get_high_card_rank() const;
     std::vector<Card> get_n_high_cards(int n) const;
     std::vector<int> get_n_high_ranks(int n) const;
-    std::vector<int> get_n_high_ranks(int n, std::set<int> ignore_ranks) const;
+    std::vector<int> get_n_high_ranks_except(int n, std::set<int> ignore_ranks) const;
     HandRank rank_hand() const;
     std::vector<Card> to_vector() const;
 
@@ -61,9 +63,6 @@ public:
     int size() const;
 
     class Iterator {
-    private:
-        int index;
-
     public:
         using iterator_category = std::input_iterator_tag;
         using value_type = Card;
@@ -72,6 +71,7 @@ public:
         using reference = Card&;
         Iterator(const CardCollection& coll, int pos);
         const CardCollection& collection;
+        int index;
 
         Card operator*() const;
         Iterator& operator++();

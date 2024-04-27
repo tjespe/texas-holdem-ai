@@ -4,6 +4,7 @@
 #include <iterator>  // For std::next
 #include <sstream>
 #include <iostream>
+#include <random>
 
 CardCollection::CardCollection() : cards(0) {}
 
@@ -64,6 +65,36 @@ void CardCollection::remove_cards(const CardCollection &other)
     this->cards &= ~other.cards;
 }
 
+Card CardCollection::draw_random_card()
+{
+    return Card(draw_random_cards(1).begin().index);
+}
+
+CardCollection CardCollection::draw_random_cards(int n)
+{
+    if (this->size() < n)
+    {
+        throw std::runtime_error("Cannot draw more cards than are in the collection");
+    }
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0, this->size() - 1);
+    CardCollection result;
+    int n_remaining = n;
+    while (n_remaining > 0)
+    {
+        int index = dist(gen);
+        if (this->cards.test(index))
+        {
+            Card card(index);
+            result.add_card(card);
+            n_remaining--;
+            this->remove_card(card);
+        }
+    }
+    return result;
+}
+
 CardCollection CardCollection::operator+(const CardCollection &other) const
 {
     CardCollection result(*this);
@@ -109,7 +140,7 @@ bool CardCollection::intersects(const CardCollection &other) const
 
 std::optional<HandRank> CardCollection::check_for_royal_flush() const
 {
-    std::bitset<13> royal_bits(0b11111);
+    std::bitset<13> royal_bits(0b1111100000000);
     for (int suit = 0; suit < 4; ++suit)
     {
         // Extract the bits for the current suit from the cards bitstring using shifting
@@ -117,7 +148,7 @@ std::optional<HandRank> CardCollection::check_for_royal_flush() const
         // Check if the bits for the current suit match the royal flush bits
         if ((suit_bits & royal_bits) == royal_bits)
         {
-            std::array<int, 5> tiebreakers; // No tiebreakers needed for royal flush
+            std::array<int, 5> tiebreakers{}; // No tiebreakers needed for royal flush
             return HandRank(HandRank::ROYAL_FLUSH, tiebreakers);
         }
     }
@@ -136,7 +167,7 @@ std::optional<HandRank> CardCollection::check_for_straight_flush() const
             std::bitset<13> straight_bits(0b11111 << i);
             if ((suit_bits & straight_bits) == straight_bits)
             {
-                std::array<int, 5> tiebreakers;
+                std::array<int, 5> tiebreakers{};
                 tiebreakers[0] = i + 4; // Highest card in the straight
                 return HandRank(HandRank::STRAIGHT_FLUSH, tiebreakers);
             }
@@ -145,7 +176,7 @@ std::optional<HandRank> CardCollection::check_for_straight_flush() const
         std::bitset<13> ace_low_straight_bits(0b1111000000001);
         if ((suit_bits & ace_low_straight_bits) == ace_low_straight_bits)
         {
-            std::array<int, 5> tiebreakers;
+            std::array<int, 5> tiebreakers{};
             tiebreakers[0] = Card::get_rank("5"); // Highest card in the straight
             return HandRank(HandRank::STRAIGHT_FLUSH, tiebreakers);
         }
@@ -167,7 +198,7 @@ std::optional<HandRank> CardCollection::check_for_four_of_a_kind() const
     // Check if a bit is set in the mask
     if (mask.any())
     {
-        std::array<int, 5> tiebreakers;
+        std::array<int, 5> tiebreakers{};
         // Primary tie breaker: rank of the four of a kind
         for (int i = 0; i < 13; ++i)
         {
@@ -198,7 +229,7 @@ std::optional<HandRank> CardCollection::check_for_full_house() const
         auto pair = remaining_cards.check_for_one_pair();
         if (pair)
         {
-            std::array<int, 5> tiebreakers;
+            std::array<int, 5> tiebreakers{};
             tiebreakers[0] = triplet_rank;
             tiebreakers[1] = (*pair).get_tiebreakers()[0];
             return HandRank(HandRank::FULL_HOUSE, tiebreakers);
@@ -216,7 +247,7 @@ std::optional<HandRank> CardCollection::check_for_flush() const
         // Check if the number of bits set in the suit bits is at least 5
         if (suit_bits.count() >= 5)
         {
-            std::array<int, 5> tiebreakers;
+            std::array<int, 5> tiebreakers{};
             // Get the indices of the five highest cards in the suit
             std::vector<int> high_ranks = CardCollection(suit_bits.to_ulong() << (suit * 13)).get_n_high_ranks(5);
             // Set the tiebreakers to the ranks of the five highest cards
@@ -246,7 +277,7 @@ std::optional<HandRank> CardCollection::check_for_straight() const
         std::bitset<13> straight_bits(0b11111 << i);
         if ((ranks_in_hand & straight_bits) == straight_bits)
         {
-            std::array<int, 5> tiebreakers;
+            std::array<int, 5> tiebreakers{};
             tiebreakers[0] = i + 4; // Highest card in the straight
             return HandRank(HandRank::STRAIGHT, tiebreakers);
         }
@@ -255,7 +286,7 @@ std::optional<HandRank> CardCollection::check_for_straight() const
     std::bitset<13> ace_low_straight_bits(0b1111000000001);
     if ((ranks_in_hand & ace_low_straight_bits) == ace_low_straight_bits)
     {
-        std::array<int, 5> tiebreakers;
+        std::array<int, 5> tiebreakers{};
         tiebreakers[0] = Card::get_rank("5"); // Highest card in the straight
         return HandRank(HandRank::STRAIGHT, tiebreakers);
     }
@@ -271,7 +302,7 @@ std::optional<HandRank> CardCollection::check_for_three_of_a_kind() const
     std::bitset<13> triplets = ((suit1_bits & suit2_bits & suit3_bits) | (suit1_bits & suit2_bits & suit4_bits) | (suit1_bits & suit3_bits & suit4_bits) | (suit2_bits & suit3_bits & suit4_bits));
     if (triplets.any())
     {
-        std::array<int, 5> tiebreakers;
+        std::array<int, 5> tiebreakers{};
         // Primary tie breaker: rank of the three of a kind
         for (int i = 0; i < 13; ++i)
         {
@@ -304,14 +335,14 @@ std::optional<HandRank> CardCollection::check_for_two_pair() const
         auto pair2 = remaining_cards.check_for_one_pair();
         if (pair2)
         {
-            std::array<int, 5> tiebreakers;
+            std::array<int, 5> tiebreakers{};
             int pair2_rank = (*pair2).get_tiebreakers()[0];
             // Primary tie breaker: highest rank of the two pairs
             tiebreakers[0] = std::max(pair1_rank, pair2_rank);
             // Secondary tie breaker: rank of the other pair
             tiebreakers[1] = std::min(pair1_rank, pair2_rank);
             // Tertiary tie breaker: rank of the kicker
-            tiebreakers[2] = remaining_cards.get_n_high_ranks(1, {pair1_rank, pair2_rank})[0];
+            tiebreakers[2] = remaining_cards.get_n_high_ranks_except(1, {pair1_rank, pair2_rank})[0];
             return HandRank(HandRank::TWO_PAIR, tiebreakers);
         }
     }
@@ -327,7 +358,7 @@ std::optional<HandRank> CardCollection::check_for_one_pair() const
     std::bitset<13> pairs = ((suit1_bits & suit2_bits) | (suit1_bits & suit3_bits) | (suit1_bits & suit4_bits) | (suit2_bits & suit3_bits) | (suit2_bits & suit4_bits) | (suit3_bits & suit4_bits));
     if (pairs.any())
     {
-        std::array<int, 5> tiebreakers;
+        std::array<int, 5> tiebreakers{};
         // Primary tie breaker: rank of the pair
         for (int i = 0; i < 13; ++i)
         {
@@ -338,7 +369,7 @@ std::optional<HandRank> CardCollection::check_for_one_pair() const
             }
         }
         // Secondary tie breaker: ranks of the three highest kickers
-        std::vector<int> high_ranks = this->get_n_high_ranks(3, {tiebreakers[0]});
+        std::vector<int> high_ranks = this->get_n_high_ranks_except(3, {tiebreakers[0]});
         tiebreakers[1] = high_ranks[0];
         tiebreakers[2] = high_ranks[1];
         tiebreakers[3] = high_ranks[2];
@@ -349,7 +380,7 @@ std::optional<HandRank> CardCollection::check_for_one_pair() const
 
 HandRank CardCollection::get_high_card_rank() const
 {
-    std::array<int, 5> tiebreakers;
+    std::array<int, 5> tiebreakers{};
     std::vector<int> high_ranks = this->get_n_high_ranks(5);
     return HandRank(HandRank::HIGH_CARD, high_ranks);
 }
@@ -371,10 +402,10 @@ std::vector<Card> CardCollection::get_n_high_cards(int n) const
 
 std::vector<int> CardCollection::get_n_high_ranks(int n) const
 {
-    return CardCollection::get_n_high_ranks(n, std::set<int>());
+    return CardCollection::get_n_high_ranks_except(n, std::set<int>());
 }
 
-std::vector<int> CardCollection::get_n_high_ranks(int n, std::set<int> ignore_ranks) const
+std::vector<int> CardCollection::get_n_high_ranks_except(int n, std::set<int> ignore_ranks) const
 {
     std::vector<int> high_ranks;
     for (int i = 0; i < 52; ++i)

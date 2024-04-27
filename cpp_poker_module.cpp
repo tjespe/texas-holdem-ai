@@ -29,18 +29,18 @@ PYBIND11_MODULE(cpp_poker, m)
         .def("__gt__", [](const Card &a, const Card &b)
              { return a > b; });
 
-
     py::class_<CardCollection::Iterator>(m, "Iterator")
-        .def("__iter__", [](CardCollection::Iterator &it) -> CardCollection::Iterator& { return it; })
-        .def("__next__", [](CardCollection::Iterator &it) {
+        .def("__iter__", [](CardCollection::Iterator &it) -> CardCollection::Iterator &
+             { return it; })
+        .def("__next__", [](CardCollection::Iterator &it)
+             {
             if (it != it.collection.end()) {
                 Card result = *it;
                 ++it;
                 return result;
             } else {
                 throw py::stop_iteration();
-            }
-        });
+            } });
 
     py::class_<CardCollection>(m, "CardCollection")
         .def(py::init<>())
@@ -70,14 +70,16 @@ PYBIND11_MODULE(cpp_poker, m)
         .def("check_for_two_pair", &CardCollection::check_for_two_pair)
         .def("check_for_one_pair", &CardCollection::check_for_one_pair)
         .def("get_n_high_cards", &CardCollection::get_n_high_cards)
+        .def("get_n_high_ranks", &CardCollection::get_n_high_ranks)
+        .def("get_n_high_ranks_except", &CardCollection::get_n_high_ranks_except)
         .def("rank_hand", &CardCollection::rank_hand)
         .def("beats", &CardCollection::beats)
         .def("str", &CardCollection::str)
         .def("get_cli_repr", &CardCollection::get_cli_repr)
         .def("size", &CardCollection::size)
         .def("to_vector", &CardCollection::to_vector)
-        .def("__iter__", [](const CardCollection &c) { return c.begin(); },
-             py::keep_alive<0, 1>());
+        .def("__iter__", [](const CardCollection &c)
+             { return c.begin(); }, py::keep_alive<0, 1>());
 
     py::class_<Hand>(m, "Hand")
         .def(py::init<>())
@@ -100,6 +102,7 @@ PYBIND11_MODULE(cpp_poker, m)
         .def_readonly_static("TWO_PAIR", &HandRank::TWO_PAIR)
         .def_readonly_static("ONE_PAIR", &HandRank::ONE_PAIR)
         .def_readonly_static("HIGH_CARD", &HandRank::HIGH_CARD)
+        .def(py::init<int, std::vector<int>>(), py::arg("rank"), py::arg("tiebreakers"))
         .def("get_rank", &HandRank::get_rank)
         .def("get_tiebreakers", &HandRank::get_tiebreakers)
         .def("__lt__", &HandRank::operator<)
@@ -107,6 +110,7 @@ PYBIND11_MODULE(cpp_poker, m)
         .def("__gt__", &HandRank::operator>)
         .def("beats", &HandRank::beats)
         .def("__str__", &HandRank::str)
+        .def("__repr__", &HandRank::str)
         .def("get_rank_name", &HandRank::get_rank_name);
 
     py::class_<TerminalColors>(m, "TerminalColors")
@@ -116,9 +120,16 @@ PYBIND11_MODULE(cpp_poker, m)
         .def_readonly_static("FOLDED", &TerminalColors::FOLDED);
 
     py::class_<Oracle>(m, "Oracle")
-        .def_static("compare_hands", &Oracle::compare_hands)
+        .def_static("find_winner", &Oracle::find_winner)
         .def_static("get_max_bet_allowed", &Oracle::get_max_bet_allowed)
         .def_static("get_winning_probability", &Oracle::get_winning_probability,
+                    py::arg("hand"), py::arg("table"), py::arg("num_players"),
+                    "Get the winning probability of a hand given a table and number of players\n"
+                    ":param hand: A set of integers representing the hand\n"
+                    ":param table: A list of integers representing the table cards\n"
+                    ":param num_players: An integer representing the number of players\n"
+                    ":return: A float representing the winning probability")
+        .def_static("get_winning_probability_n_simulations", &Oracle::get_winning_probability_n_simulations,
                     py::arg("hand"), py::arg("table"), py::arg("num_players"), py::arg("num_simulations"),
                     "Get the winning probability of a hand given a table and number of players\n"
                     ":param hand: A set of integers representing the hand\n"
