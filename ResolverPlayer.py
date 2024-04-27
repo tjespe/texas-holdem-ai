@@ -1,7 +1,6 @@
 import numpy as np
-from oracle import POSSIBLE_HOLE_PAIRS, Card
+from cpp_poker.cpp_poker import Hand
 from PlayerABC import Player
-import oracle
 from resolver import resolve
 
 
@@ -15,8 +14,8 @@ class ResolverPlayer(Player):
         self.name = name
 
     def play(self, state) -> int:
-        r0 = np.ones(len(POSSIBLE_HOLE_PAIRS))
-        for i, (card_a, card_b) in enumerate(POSSIBLE_HOLE_PAIRS):
+        r0 = np.ones(len(len(Hand.COMBINATIONS)))
+        for i, (card_a, card_b) in enumerate(len(Hand.COMBINATIONS)):
             if (
                 card_a.to_index() in state.public_cards
                 or card_b.to_index() in state.public_cards

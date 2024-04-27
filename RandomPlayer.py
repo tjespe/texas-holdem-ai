@@ -1,8 +1,7 @@
 import numpy as np
 from PlayerABC import Player
 from State import State
-import oracle
-
+from cpp_poker.cpp_poker import Oracle
 
 class RandomPlayer(Player):
     def __init__(self, name: str = "Rando"):
@@ -18,7 +17,7 @@ class RandomPlayer(Player):
         player_pile = state.player_piles[current_player_i]
         call_bet = max(state.current_bets) - current_bet
         all_in_bet = player_pile
-        max_allowed_bet = oracle.get_max_bet_allowed(
+        max_allowed_bet = Oracle.get_max_bet_allowed(
             state.player_has_played,
             current_player_i,
             state.current_bets,

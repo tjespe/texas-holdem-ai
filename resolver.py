@@ -1,7 +1,7 @@
 import numpy as np
-from oracle import POSSIBLE_HOLE_PAIRS
 from State import State
 from StateNode import StateNode
+from cpp_poker.cpp_poker import Hand
 
 
 def resolve(
@@ -67,7 +67,7 @@ def subtree_traversal_rollout(
         # Player P is the acting player
         P = node.state.current_player_i
         values_per_child = np.full(
-            (len(node.children), node.state.n_players, len(POSSIBLE_HOLE_PAIRS)), np.nan
+            (len(node.children), node.state.n_players, len(Hand.COMBINATIONS)), np.nan
         )
         for action_i, (action, child) in enumerate(node.children):
             child_ranges = [r.copy() for r in ranges]
@@ -78,7 +78,7 @@ def subtree_traversal_rollout(
     else:
         # This is a chance node
         values_per_child = np.zeros(
-            (len(node.children), node.state.n_players, len(POSSIBLE_HOLE_PAIRS))
+            (len(node.children), node.state.n_players, len(Hand.COMBINATIONS))
         )
         for i, (action, child) in enumerate(node.children):
             subtree_traversal_rollout(child, ranges, perspective)

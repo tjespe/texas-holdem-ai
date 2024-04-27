@@ -1,4 +1,4 @@
-from cpp_poker.cpp_poker import Card
+from cpp_poker.cpp_poker import Card, Oracle, CardCollection
 from PlayerABC import Player
 from RandomPlayer import RandomPlayer
 from State import State
@@ -7,8 +7,6 @@ from math import factorial
 from typing import Callable, Union
 import numpy as np
 from time import sleep
-
-import oracle
 
 
 class BettingRuleViolation(Exception):
@@ -169,7 +167,7 @@ def place_bet(state: State, bet: int, is_blind=False) -> State:
     ):
         raise BettingRuleViolation("Raising by less than the big blind is not allowed.")
     if bet > (
-        max_bet := oracle.get_max_bet_allowed(
+        max_bet := Oracle.get_max_bet_allowed(
             state.player_has_played,
             state.current_player_i,
             state.current_bets,
@@ -230,8 +228,8 @@ def end_round(state: State, players: list[Player], print_result=False) -> State:
     """
     if not state.is_terminal:
         raise Exception("The round is not over yet")
-    winners = oracle.find_winner(
-        state.public_cards, [p.hand for p in players], state.player_is_active
+    winners = Oracle.find_winner(
+        CardCollection(state.public_cards), [CardCollection(p.hand) for p in players], state.player_is_active
     )
     if print_result:
         showdown = np.sum(state.player_is_active) > 1

@@ -1,8 +1,7 @@
-from cpp_poker.cpp_poker import Card
+from cpp_poker.cpp_poker import Card, Oracle
 from PlayerABC import Player
 from State import State
 import inquirer
-import oracle
 
 
 class HumanPlayer(Player):
@@ -16,7 +15,7 @@ class HumanPlayer(Player):
             call_bet = (
                 max(state.bet_in_round) - state.bet_in_round[state.current_player_i]
             )
-            max_raise = oracle.get_max_bet_allowed(
+            max_raise = Oracle.get_max_bet_allowed(
                 state.player_has_played,
                 state.current_player_i,
                 state.current_bets,

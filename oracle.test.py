@@ -1,9 +1,7 @@
-from typing import Iterable
 import unittest
 
 import numpy as np
 from cpp_poker.cpp_poker import Card, Oracle, CardCollection, Hand, HandRank
-from PlayerABC import Player
 
 
 class HandCheckTestCase(unittest.TestCase):

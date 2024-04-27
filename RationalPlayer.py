@@ -1,6 +1,5 @@
-from cpp_poker.cpp_poker import Card
+from cpp_poker.cpp_poker import Card, Oracle
 from PlayerABC import Player
-import oracle
 
 
 class RationalPlayer(Player):
@@ -20,7 +19,7 @@ class RationalPlayer(Player):
             return 0
         current_bet = state.current_bets[current_player_i]
         call_bet = max(state.current_bets) - current_bet
-        winning_prob = oracle.get_winning_prob(
+        winning_prob = Oracle.get_winning_probability(
             self.hand,
             state.public_cards,
             state.player_is_active.sum(),

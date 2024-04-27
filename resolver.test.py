@@ -2,8 +2,7 @@ import unittest
 
 import numpy as np
 
-from cpp_poker.cpp_poker import Card
-from oracle import POSSIBLE_HOLE_PAIRS
+from cpp_poker.cpp_poker import Card, Hand
 from State import State
 from StateNode import StateNode
 from resolver import bayesian_update, update_strategy
@@ -44,17 +43,17 @@ class UpdateStrategyTest(unittest.TestCase):
         )
         np.random.seed(0)
         self.example_node.strategy = np.random.rand(
-            len(POSSIBLE_HOLE_PAIRS), len(self.example_node.children)
+            len(Hand.COMBINATIONS), len(self.example_node.children)
         )
         self.example_node.strategy /= np.sum(self.example_node.strategy, axis=1)[
             :, np.newaxis
         ]
         self.example_node.values = np.random.rand(
-            self.example_node.state.n_players, len(POSSIBLE_HOLE_PAIRS)
+            self.example_node.state.n_players, len(Hand.COMBINATIONS)
         )
         for action, child in self.example_node.children:
             child.values = np.random.rand(
-                self.example_node.state.n_players, len(POSSIBLE_HOLE_PAIRS)
+                self.example_node.state.n_players, len(Hand.COMBINATIONS)
             )
 
     def test_update_strategy_terminal_node(self):
@@ -66,7 +65,7 @@ class UpdateStrategyTest(unittest.TestCase):
 
     def test_update_strategy_normalization(self):
         update_strategy(self.example_node)
-        for i, h in enumerate(POSSIBLE_HOLE_PAIRS):
+        for i, h in enumerate(Hand.COMBINATIONS):
             strategy_sum = np.sum(self.example_node.strategy[i])
             assert np.isclose(
                 strategy_sum, 1

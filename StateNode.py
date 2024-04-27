@@ -1,9 +1,8 @@
 import numpy as np
 from Deck import Deck
-from oracle import POSSIBLE_HOLE_PAIRS
+from cpp_poker.cpp_poker import Hand, Oracle
 from State import State
 from state_management import generate_successor_states
-import oracle
 
 
 class StateNode:
@@ -46,7 +45,7 @@ class StateNode:
         self.deck = deck
         self.state = state
         self.parent = parent
-        self.values = np.full((state.n_players, len(POSSIBLE_HOLE_PAIRS)), np.nan)
+        self.values = np.full((state.n_players, len(Hand.COMBINATIONS)), np.nan)
         self.children = []
         self.strategy = None
         self.regrets = None
@@ -65,13 +64,14 @@ class StateNode:
                     state, max_successors
                 )
             ]
-            self.strategy = np.ones(
-                (len(POSSIBLE_HOLE_PAIRS), len(self.children))
-            ) / len(self.children)
-            self.regrets = np.zeros((len(POSSIBLE_HOLE_PAIRS), len(self.children)))
+            self.strategy = np.ones((len(Hand.COMBINATIONS), len(self.children))) / len(
+                self.children
+            )
+            self.regrets = np.zeros((len(Hand.COMBINATIONS), len(self.children)))
 
-    @property
-    def utility_matrix(self):
+    def get_utility_matrix(self, perspective: int):
         if self._utility_matrix is None:
-            self._utility_matrix = oracle.generate_utility_matrix(self.state)
+            self._utility_matrix = Oracle.generate_utility_matrix(
+                self.state.public_cards, self.state.player_is_active, perspective
+            )
         return self._utility_matrix

@@ -1,10 +1,32 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>       // Needed for bindings of STL containers
 #include <pybind11/operators.h> // Needed for binding of comparison operators
+#include <pybind11/numpy.h>     // Needed for bindings of numpy arrays
 #include "Card.hpp"
 #include "Oracle.hpp"
 #include "TerminalColors.hpp"
 #include "Hand.hpp"
+
+namespace py = pybind11;
+
+py::array_t<float> matrix_to_numpy(const std::vector<std::vector<float>> &matrix)
+{
+    if (matrix.empty() || matrix[0].empty())
+    {
+        return py::array_t<float>(0);
+    }
+    size_t rows = matrix.size();
+    size_t cols = matrix[0].size();
+    py::array_t<float> np_arr({rows, cols});
+    float *np_arr_ptr = static_cast<float *>(np_arr.request().ptr);
+
+    for (size_t i = 0; i < rows; i++)
+    {
+        std::memcpy(np_arr_ptr + i * cols, matrix[i].data(), cols * sizeof(float));
+    }
+
+    return np_arr;
+}
 
 namespace py = pybind11;
 
@@ -137,19 +159,16 @@ PYBIND11_MODULE(cpp_poker, m)
                     ":param num_players: An integer representing the number of players\n"
                     ":param num_simulations: An integer representing the number of simulations to run\n"
                     ":return: A float representing the winning probability")
-        .def_static("generate_utility_matrix",
-                    py::overload_cast<const CardCollection &, const std::vector<bool> &, int>(&Oracle::generate_utility_matrix),
-                    py::arg("table"), py::arg("player_is_active"), py::arg("perspective"),
-                    "Generate a utility matrix for the given table and player states\n"
-                    ":param table: A list of integers representing the table cards\n"
-                    ":param player_is_active: A list of booleans representing whether each player is active\n"
-                    ":return: A 2D list of floats representing the utility matrix")
-        .def_static("generate_utility_matrix",
-                    py::overload_cast<const CardCollection &, const std::vector<bool> &, int, const CardCollection &>(&Oracle::generate_utility_matrix),
-                    py::arg("table"), py::arg("player_is_active"), py::arg("perspective"), py::arg("deck"),
-                    "Generate a utility matrix for the given table, player states, and deck\n"
-                    ":param table: A list of integers representing the table cards\n"
-                    ":param player_is_active: A list of booleans representing whether each player is active\n"
-                    ":param deck: A set of integers representing the deck\n"
-                    ":return: A 2D list of floats representing the utility matrix");
+        .def_static("generate_utility_matrix", [](const CardCollection &table, const std::vector<bool> &player_is_active, int perspective)
+                    {
+        auto matrix = Oracle::generate_utility_matrix(table, player_is_active, perspective);
+        return matrix_to_numpy(matrix); }, py::arg("table"), py::arg("player_is_active"), py::arg("perspective"), "Generate a utility matrix for the given table and player states\n"
+                                                                                                ":param table: A list of integers representing the table cards\n"
+                                                                                                ":param player_is_active: A list of booleans representing whether each player is active\n"
+                                                                                                ":return: A 2D NumPy array representing the utility matrix")
+        .def_static("generate_utility_matrix", py::overload_cast<const CardCollection &, const std::vector<bool> &, int, const CardCollection &>(&Oracle::generate_utility_matrix), py::arg("table"), py::arg("player_is_active"), py::arg("perspective"), py::arg("deck"), "Generate a utility matrix for the given table, player states, and deck\n"
+                                                                                                                                                                                                                                                                            ":param table: A list of integers representing the table cards\n"
+                                                                                                                                                                                                                                                                            ":param player_is_active: A list of booleans representing whether each player is active\n"
+                                                                                                                                                                                                                                                                            ":param deck: A set of integers representing the deck\n"
+                                                                                                                                                                                                                                                                            ":return: A 2D list of floats representing the utility matrix");
 }
