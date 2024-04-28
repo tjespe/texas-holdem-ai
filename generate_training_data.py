@@ -6,8 +6,7 @@ import numpy as np
 from cpp_poker.cpp_poker import Hand, Oracle
 from datetime import datetime
 
-
-def generate_data_point(stage: State.StageType, end_stage: State.StageType):
+def generate_data_point(stage: State.StageType, end_stage: State.StageType, stage_of_stage=None):
     """
     Generate training data for a given stage.
 
@@ -33,11 +32,12 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType):
         pot += 1
     bet_in_game = (pot // 2, pot // 2)
     player_piles = tuple(np.random.randint(0, 1000, n_players))
-    stage_of_stage = np.random.choice(
-        ["first_bet", "respond", "respond_to_raise"],
-        # More often respond to raise because that is cheaper to simulate
-        p=[0.1, 0.3, 0.6],
-    )
+    if stage_of_stage is None:
+        stage_of_stage = np.random.choice(
+            ["first_bet", "respond", "respond_to_raise"],
+            # More often respond to raise because that is cheaper to simulate
+            p=[0.05, 0.1, 0.85],
+        )
     if stage_of_stage == "first_bet":
         bet_in_stage = (0, 0)
         player_has_played = (False, False)
@@ -118,7 +118,7 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType):
     print(state.get_cli_repr())
     print("Stage:", stage)
     print("Stage of stage:", stage_of_stage)
-    action, child_state, updated_ranges, mean_values = resolve(
+    action, child_state, updated_ranges, df_row = resolve(
         state,
         ranges,
         end_stage,
@@ -128,9 +128,7 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType):
         max_simulations=1000,
         strat_convergence_threshold=convergence_threshold,
     )
-    node = StateNode(state, stage, generate_utility_matrix=False)
-    node.values = mean_values
-    return node.to_df_row(ranges, 0)
+    return df_row
 
 
 def save_df(data, fname: str):
@@ -139,7 +137,7 @@ def save_df(data, fname: str):
 
 
 def generate_training_data(
-    stage: State.StageType, end_stage: State.StageType, n_points: int
+    stage: State.StageType, end_stage: State.StageType, n_points: int, stage_of_stage=None
 ):
     """
     Generate training data for a given stage.
@@ -154,10 +152,10 @@ def generate_training_data(
     )
     for i in range(n_points):
         print("Generating data point", i, "of", n_points)
-        data.append(generate_data_point(stage, end_stage))
+        data.append(generate_data_point(stage, end_stage, stage_of_stage))
         save_df(data, fname)
     save_df(data, fname)
 
 
 if __name__ == "__main__":
-    generate_training_data("river", "terminal", 1000)
+    generate_training_data("river", "terminal", 1000, stage_of_stage="respond_to_raise")

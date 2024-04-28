@@ -194,6 +194,7 @@ std::vector<std::vector<float>> Oracle::generate_utility_matrix(const CardCollec
             }
             if (!both_players_active)
             {
+                // The active player wins all possible hands
                 utility_matrix[i][j] = 1.0;
                 utility_matrix[j][i] = 1.0;
                 continue;

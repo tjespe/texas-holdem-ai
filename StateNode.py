@@ -87,6 +87,10 @@ class StateNode:
             self.strategy = np.ones((len(Hand.COMBINATIONS), len(self.children))) / len(
                 self.children
             )
+            print(
+                "Initial strategy:",
+                self.strategy,
+            )
             self.regrets = np.zeros((len(Hand.COMBINATIONS), len(self.children)))
 
     def get_utility_matrix(self, perspective: int):
@@ -95,6 +99,8 @@ class StateNode:
             self._utility_matrix = Oracle.generate_utility_matrix(
                 CardCollection(self.state.public_cards), False
             )
+            assert self._utility_matrix.min() == 0 # No negative payoffs for the active player
+            assert self._utility_matrix.max() == 1 # There should be plenty of 
             if not self.state.player_is_active[perspective]:
                 self._utility_matrix = -self._utility_matrix
         elif self._utility_matrix is None:
@@ -110,10 +116,13 @@ class StateNode:
         :param perspective: The player whose perspective to use.
         """
         if np.isnan(self.values).all():
+            print("Warning: Values are NaN")
             return None
         if sum(self.state.player_is_active) != 2:
+            print("Only one player active, skipping.")
             return None
         if not self.state.player_is_active[perspective]:
+            print("Player not active, skipping.")
             return None
         player_range = ranges[perspective]
         opponent = next(

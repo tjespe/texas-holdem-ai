@@ -1,7 +1,10 @@
 import numpy as np
+import pandas as pd
+from StateNode import StateNode
 from cpp_poker.cpp_poker import Hand, CardCollection
 from PlayerABC import Player
 from resolver import generate_uniform_ranges, resolve
+from datetime import datetime
 
 
 class ResolverPlayer(Player):
@@ -9,7 +12,15 @@ class ResolverPlayer(Player):
     This player resolves a full game tree to determine the best action.
     """
 
-    def __init__(self, name: str = "Resa", max_successors_at_action_nodes=4,max_successors_at_chance_nodes=50, simulations=100, max_depth=100, end_stage="terminal"):
+    def __init__(
+        self,
+        name: str = "Resa",
+        max_successors_at_action_nodes=10,
+        max_successors_at_chance_nodes=50,
+        simulations=200,
+        max_depth=100,
+        end_stage="terminal",
+    ):
         super().__init__()
         self.name = name
         self.ranges = None
@@ -19,6 +30,10 @@ class ResolverPlayer(Player):
         self.simulations = simulations
         self.max_depth = max_depth
         self.end_stage = end_stage
+        self.cache_fname = (
+            "dfs/df_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".parquet"
+        )
+        self.cached_rows = []
 
     @property
     def hand_index(self):
@@ -33,13 +48,18 @@ class ResolverPlayer(Player):
     def play(self, state) -> int:
         if self.ranges is None:
             self.ranges = generate_uniform_ranges(state)
-        action, child_state, self.ranges = resolve(
+        action, child_state, self.ranges, df_row = resolve(
             state,
             self.ranges,
             end_stage=self.end_stage,
             end_depth=self.max_depth,
             max_successors_at_action_nodes=self.max_successors_at_action_nodes,
             max_successors_at_chance_nodes=self.max_successors_at_chance_nodes,
-            simulations=self.simulations,
+            max_simulations=self.simulations,
+            strat_convergence_threshold=2
         )
+        self.cached_rows.append(df_row)
+        print(self.cached_rows)
+        df = pd.DataFrame(self.cached_rows, columns=StateNode.get_df_headers())
+        df.to_parquet(self.cache_fname)
         return action
