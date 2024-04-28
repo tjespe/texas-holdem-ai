@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from Deck import Deck
 from cpp_poker.cpp_poker import Hand, Oracle, CardCollection
 from State import State
@@ -87,3 +88,79 @@ class StateNode:
                 CardCollection(self.state.public_cards)
             )
         return self._utility_matrix
+
+    def to_df_row(self, ranges: list[np.ndarray], perspective: int):
+        """
+        Returns a pandas DataFrame representation of the node.
+        :param ranges: The ranges per player (in Texas Hold Em: the probability distribution over possible hole pairs).
+        :param perspective: The player whose perspective to use.
+        """
+        if np.isnan(self.values).all():
+            return None
+        if sum(self.state.player_is_active) != 2:
+            return None
+        if not self.state.player_is_active[perspective]:
+            return None
+        player_range = ranges[perspective]
+        opponent = next(
+            i
+            for i, active in enumerate(self.state.player_is_active)
+            if active and i != perspective
+        )
+        opponent_range = ranges[opponent]
+        player_values = self.values[
+            perspective
+        ]  # (h,): The value of having each hand at this node for the player
+        player_bet = self.state.current_bets[perspective]
+        player_bet_in_round = self.state.bet_in_round[perspective]
+        opponent_bet = self.state.current_bets[opponent]
+        opponent_bet_in_round = self.state.bet_in_round[opponent]
+        player_turn = self.state.current_player_i == perspective
+        player_has_bet = self.state.player_has_played[perspective]
+        opponent_has_bet = self.state.player_has_played[opponent]
+        public_cards_one_hot = np.zeros(52)
+        for card in self.state.public_cards:
+            public_cards_one_hot[card] = 1
+        arrays = [
+            player_range,
+            opponent_range,
+            player_values,
+            public_cards_one_hot,
+        ]
+        other_props = [
+            player_bet,
+            player_bet_in_round,
+            opponent_bet,
+            opponent_bet_in_round,
+            player_turn,
+            player_has_bet,
+            opponent_has_bet,
+            self.state.pot,
+            self.state.game_size,
+            self.state.stage,
+        ]
+        arr = [item for array in arrays for item in array] + other_props
+        return arr
+
+    @classmethod
+    def get_df_headers(cls):
+        headers = []
+        for i in range(len(Hand.COMBINATIONS)):
+            headers.append(f"prob_P_has_hand_{i}")
+        for i in range(len(Hand.COMBINATIONS)):
+            headers.append(f"prob_O_has_hand_{i}")
+        for i in range(len(Hand.COMBINATIONS)):
+            headers.append(f"value_of_hand_{i}")
+        for i in range(52):
+            headers.append(f"public_card_{i}")
+        headers.append("player_bet")
+        headers.append("player_bet_in_round")
+        headers.append("opponent_bet")
+        headers.append("opponent_bet_in_round")
+        headers.append("player_turn")
+        headers.append("player_has_bet")
+        headers.append("opponent_has_bet")
+        headers.append("pot")
+        headers.append("game_size")
+        headers.append("stage")
+        return headers

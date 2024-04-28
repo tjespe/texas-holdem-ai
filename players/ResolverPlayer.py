@@ -9,11 +9,15 @@ class ResolverPlayer(Player):
     This player resolves a full game tree to determine the best action.
     """
 
-    def __init__(self, name: str = "Resa"):
+    def __init__(self, name: str = "Resa", max_successors=4, simulations=100, max_depth=100, end_stage="terminal"):
         super().__init__()
         self.name = name
         self.ranges = None
         self._hand_index = None
+        self.max_successors = max_successors
+        self.simulations = simulations
+        self.max_depth = max_depth
+        self.end_stage = end_stage
 
     @property
     def hand_index(self):
@@ -31,9 +35,9 @@ class ResolverPlayer(Player):
         action, child_state, self.ranges = resolve(
             state,
             self.ranges,
-            end_stage="terminal",
-            end_depth=100,
-            max_successors=3,
-            simulations=100,
+            end_stage=self.end_stage,
+            end_depth=self.max_depth,
+            max_successors=self.max_successors,
+            simulations=self.simulations,
         )
         return action

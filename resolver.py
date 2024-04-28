@@ -1,7 +1,11 @@
+from typing import Union
 import numpy as np
+import pandas as pd
 from State import State
 from StateNode import StateNode
 from cpp_poker.cpp_poker import Hand, CardCollection
+from neural_net import to_X_and_Y
+from datetime import datetime
 
 
 def generate_uniform_ranges(state: State):
@@ -12,6 +16,10 @@ def generate_uniform_ranges(state: State):
             r[i] = 0
     r /= r.sum()
     return [r.copy() for _ in range(state.n_players)]
+
+
+df_file = open("dfs/df_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".parquet", "wb")
+df_rows = []
 
 
 def resolve(
@@ -54,10 +62,10 @@ def resolve(
     updated_ranges[state.current_player_i] = bayesian_update(
         updated_ranges[state.current_player_i], action_i, strategies_per_hand
     )
-    print(
-        "Update to ranges:",
-        updated_ranges[state.current_player_i] - ranges[state.current_player_i],
-    )
+    # Write the dataframe
+    global df_rows
+    df = pd.DataFrame(df_rows, columns=StateNode.get_df_headers())
+    df.to_parquet(df_file)
     return action, child_state, updated_ranges
 
 
@@ -79,9 +87,7 @@ def subtree_traversal_rollout(
         )  # TODO: what is the correct payoff for the other players if there are more than 2 players?
         node.values[perspective] = payoff
     elif not node.children:
-        payoff = ranges[perspective] @ ml_model(node.state)
-        node.values[:] = -payoff
-        node.values[perspective] = payoff
+        node.values = ml_model(node.state)
     elif not node.state.all_players_are_done:
         # Player P is the acting player
         P = node.state.current_player_i
@@ -118,6 +124,11 @@ def subtree_traversal_rollout(
             subtree_traversal_rollout(child, ranges, perspective)
             values_per_child[i] = child.values
         node.values = values_per_child.mean(axis=0)
+    # Append the data frame representation of the node to the global combined_df
+    global df_rows
+    df_row = node.to_df_row(ranges, perspective)
+    if df_row is not None:
+        df_rows.append(df_row)
 
 
 def bayesian_update(r: np.ndarray, action_i, strategy: np.ndarray):

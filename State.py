@@ -7,6 +7,7 @@ from tabulate import tabulate
 
 from cpp_poker.cpp_poker import TerminalColors, Card
 
+
 class State:
     # The public cards on the table
     public_cards: Tuple[int]
@@ -74,8 +75,14 @@ class State:
             and self.player_is_folded == other.folded_players
             and self.first_better_i == other.first_better_i
         )
-    
-    StageType = Union[Literal["preflop"], Literal["flop"], Literal["turn"], Literal["river"], Literal["terminal"]]
+
+    StageType = Union[
+        Literal["preflop"],
+        Literal["flop"],
+        Literal["turn"],
+        Literal["river"],
+        Literal["terminal"],
+    ]
 
     @property
     def stage(self) -> StageType:
@@ -94,6 +101,10 @@ class State:
     @property
     def pot(self):
         return sum(self.bet_in_round)
+    
+    @property
+    def game_size(self):
+        return sum(self.player_piles) + self.pot
 
     @property
     def previous_player_i(self):
@@ -145,64 +156,6 @@ class State:
     @property
     def small_blind(self):
         return self.big_blind // 2
-
-    def to_array(self):
-        if len(self.player_piles) > 9:
-            raise ValueError("Too many players")
-        if len(self.public_cards) > 5:
-            raise ValueError("Too many public cards")
-        arr = np.full(
-            # Max. 5 public cards
-            5
-            # Max 9 players
-            + 9
-            # Pot
-            + 1
-            # Current player index
-            + 1
-            # Current bets
-            + 9
-            # Folded players
-            + 9
-            # First better index
-            + 1
-            # Number of players
-            + 1,
-            np.nan,
-        )
-        arr[: len(self.public_cards)] = self.public_cards
-        arr[5 : 5 + len(self.player_piles)] = self.player_piles
-        arr[5 + 9] = self.pot
-        arr[5 + 9 + 1] = self.current_player_i
-        arr[5 + 9 + 1 + 1 : 5 + 9 + 1 + 1 + len(self.current_bets)] = self.current_bets
-        arr[5 + 9 + 1 + 1 + 9 : 5 + 9 + 1 + 1 + 9 + len(self.player_is_folded)] = (
-            self.player_is_folded
-        )
-        arr[5 + 9 + 1 + 1 + 9 + 9] = self.first_better_i
-        arr[5 + 9 + 1 + 1 + 9 + 9 + 1] = self.n_players
-        return arr
-
-    @classmethod
-    def from_array(cls, arr):
-        n_players = int(arr[5 + 9 + 1 + 1 + 9 + 9 + 1])
-        public_cards = tuple(arr[:5])
-        player_piles = tuple(arr[5 : 5 + n_players])
-        pot = int(arr[5 + 9])
-        current_player_i = int(arr[5 + 9 + 1])
-        first_better_i = int(arr[5 + 9 + 1 + 1 + 9 + 9])
-        num_bets_placed = (current_player_i - first_better_i) % n_players
-        current_bets = arr[5 + 9 + 1 + 1 : 5 + 9 + 1 + 1 + num_bets_placed]
-        current_bets = tuple(np.where(np.isnan(current_bets), None, current_bets))
-        folded_players = tuple(arr[5 + 9 + 1 + 1 + 9 : 5 + 9 + 1 + 1 + 9 + n_players])
-        return cls(
-            public_cards=public_cards,
-            player_piles=player_piles,
-            pot=pot,
-            current_player_i=current_player_i,
-            current_bets=current_bets,
-            folded_players=folded_players,
-            first_better_i=first_better_i,
-        )
 
     def get_cli_repr(self):
         cards = (
