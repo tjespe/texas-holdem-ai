@@ -1,4 +1,5 @@
 #include "HandRank.hpp"
+#include <stdexcept>
 
 const int HandRank::ROYAL_FLUSH;
 const int HandRank::STRAIGHT_FLUSH;

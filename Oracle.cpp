@@ -4,6 +4,7 @@
 #include <map>
 #include <random>
 #include <iostream>
+#include <climits>
 #include "Hand.hpp"
 
 std::set<int> Oracle::find_winner(const CardCollection &table, const std::vector<CardCollection> &player_hands, const std::vector<bool> &player_is_active)
