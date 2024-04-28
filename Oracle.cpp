@@ -154,19 +154,19 @@ float Oracle::get_winning_probability_n_simulations(const CardCollection &hand, 
     return (float)wins / num_simulations;
 }
 
-std::vector<std::vector<float>> Oracle::generate_utility_matrix(const CardCollection &table, const std::vector<bool> &player_is_active, int perspective)
+std::vector<std::vector<float>> Oracle::generate_utility_matrix(const CardCollection &table)
 {
-    CardCollection deck = CardCollection::generate_deck();
-    return generate_utility_matrix(table, player_is_active, perspective, deck);
+    return generate_utility_matrix(table, true);
 }
 
-std::vector<std::vector<float>> Oracle::generate_utility_matrix(const CardCollection &table, const std::vector<bool> &player_is_active, int perspective, const CardCollection &deck)
+std::vector<std::vector<float>> Oracle::generate_utility_matrix(const CardCollection &table, bool both_players_active)
 {
-    if (player_is_active.size() != 2)
-    {
-        throw std::invalid_argument("generate_utility_matrix is implemented for two players only.");
-    }
+    CardCollection deck = CardCollection::generate_deck();
+    return generate_utility_matrix(table, both_players_active, deck);
+}
 
+std::vector<std::vector<float>> Oracle::generate_utility_matrix(const CardCollection &table, bool both_players_active, const CardCollection &deck)
+{
     CardCollection remaining_deck = deck - table;
 
     // Initialize utility matrix
@@ -180,7 +180,7 @@ std::vector<std::vector<float>> Oracle::generate_utility_matrix(const CardCollec
         {
             continue;
         }
-        if ((i % 10) == 0)
+        if (both_players_active && (i % 50) == 0)
         {
             std::cout << "\r" << 100 * i / Hand::COMBINATIONS.size() << "%" << std::flush;
         }
@@ -191,7 +191,7 @@ std::vector<std::vector<float>> Oracle::generate_utility_matrix(const CardCollec
             {
                 continue;
             }
-            if (player_is_active[perspective] && !player_is_active[1 - perspective])
+            if (!both_players_active)
             {
                 utility_matrix[i][j] = 1.0;
                 utility_matrix[j][i] = 1.0;

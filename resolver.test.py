@@ -5,7 +5,7 @@ import numpy as np
 from cpp_poker.cpp_poker import Card, Hand
 from State import State
 from StateNode import StateNode
-from resolver import bayesian_update, update_strategy
+from resolver import bayesian_update, generate_uniform_ranges, resolve, update_strategy
 
 example_terminal_state = State(
     public_cards=(0, 1, 2, 3, 4),
@@ -21,6 +21,18 @@ example_terminal_state = State(
 
 example_non_terminal_state = State(
     public_cards=(0, 1, 2),
+    player_piles=(100, 100),
+    current_player_i=1,
+    current_bets=(100, 100),
+    bet_in_round=(100, 100),
+    player_has_played=(True, False),
+    folded_players=(False, False),
+    first_better_i=0,
+    big_blind=2,
+)
+
+example_turn_state = State(
+    public_cards=(0, 1, 2, 3),
     player_piles=(100, 100),
     current_player_i=1,
     current_bets=(100, 100),
@@ -83,6 +95,45 @@ class UpdateStrategyTest(unittest.TestCase):
         assert not np.array_equal(self.example_node.strategy, old_strategy), (
             "Strategy didn't update with positive regret.\nOld strategy = New strategy = \n"
             + str(self.example_node.strategy)
+        )
+
+
+class FullResolverTest(unittest.TestCase):
+    def test_full_resolver(self):
+        hand_index = 500
+        ranges = generate_uniform_ranges(example_turn_state)
+        print(ranges)
+        action, child_state, updated_ranges = resolve(
+            example_turn_state,
+            ranges,
+            end_stage="terminal",
+            end_depth=100,
+            max_successors=1,
+        )
+        print("Action", action)
+        print("Child state", child_state)
+        print("Updated ranges", updated_ranges)
+        self.assertIsNotNone(action, "No action returned.")
+        self.assertIsNotNone(child_state, "No child state returned.")
+        self.assertIsNotNone(updated_ranges, "No updated ranges returned.")
+
+
+class UtilityMatrixTest(unittest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.example_node = StateNode(
+            state=example_terminal_state,
+            end_stage="river",
+            max_depth=3,
+            max_successors=3,
+        )
+        self.example_node._utility_matrix = None
+
+    def test_utility_matrix_two_players(self):
+        self.example_node.get_utility_matrix(0)
+        self.assertIsNotNone(
+            self.example_node._utility_matrix,
+            "Utility matrix not generated for two players.",
         )
 
 

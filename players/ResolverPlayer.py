@@ -1,7 +1,7 @@
 import numpy as np
-from cpp_poker.cpp_poker import Hand
+from cpp_poker.cpp_poker import Hand, CardCollection
 from PlayerABC import Player
-from resolver import resolve
+from resolver import generate_uniform_ranges, resolve
 
 
 class ResolverPlayer(Player):
@@ -12,20 +12,25 @@ class ResolverPlayer(Player):
     def __init__(self, name: str = "Resa"):
         super().__init__()
         self.name = name
+        self.ranges = None
+        self._hand_index = None
+
+    @property
+    def hand_index(self):
+        if self._hand_index is None:
+            hand_cards = CardCollection(self.hand)
+            for i, hand in enumerate(Hand.COMBINATIONS):
+                if hand_cards == hand.get_cards():
+                    self._hand_index = i
+                    break
+        return self._hand_index
 
     def play(self, state) -> int:
-        r0 = np.ones(len(Hand.COMBINATIONS))
-        for i, (card_a, card_b) in enumerate(Hand.COMBINATIONS):
-            if (
-                card_a.to_index() in state.public_cards
-                or card_b.to_index() in state.public_cards
-            ):
-                r0[i] = 0
-        r0 /= r0.sum()
-        initial_ranges = [r0.copy() for _ in range(state.n_players)]
-        action, child_state, updated_ranges = resolve(
+        if self.ranges is None:
+            self.ranges = generate_uniform_ranges(state)
+        action, child_state, self.ranges = resolve(
             state,
-            initial_ranges,
+            self.ranges,
             end_stage="terminal",
             end_depth=100,
             max_successors=3,

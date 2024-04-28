@@ -24,16 +24,9 @@ class RationalPlayer(Player):
             CardCollection(state.public_cards),
             state.player_is_active.sum(),
         )
-        print(f"Hand:\n{Card.get_cli_repr_for_cards(self.hand)}")
-        print(f"Winning prob: {winning_prob}")
         rational_max = winning_prob * state.pot
         avg_forced_loss = (state.big_blind + state.small_blind) / state.n_players
         rational_max += avg_forced_loss
-        print(f"Rational max: {rational_max}")
         if call_bet > rational_max:
-            print(
-                f"Folding, as call bet {call_bet} is greater than rational max {rational_max}"
-            )
             return 0
-        print(f"Calling {call_bet}")
         return call_bet

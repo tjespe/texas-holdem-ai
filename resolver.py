@@ -1,7 +1,17 @@
 import numpy as np
 from State import State
 from StateNode import StateNode
-from cpp_poker.cpp_poker import Hand
+from cpp_poker.cpp_poker import Hand, CardCollection
+
+
+def generate_uniform_ranges(state: State):
+    r = np.ones(len(Hand.COMBINATIONS))
+    table = CardCollection(state.public_cards)
+    for i, hand in enumerate(Hand.COMBINATIONS):
+        if hand.intersects(table):
+            r[i] = 0
+    r /= r.sum()
+    return [r.copy() for _ in range(state.n_players)]
 
 
 def resolve(
@@ -11,17 +21,19 @@ def resolve(
     end_depth: int,
     max_successors=10,
     simulations=100,
+    hand_index=None,
 ):
     """
     Resolve a state using the CFR algorithm.
 
     Args:
         state: The state to resolve.
-        ranges: The ranges per player (in Texas Hold Em: the probability distribution over possible hole pairs).
         end_stage: The stage at which to stop resolving (in Texas Hold Em: preflop, flop, etc.)
         end_depth: The tree depth at which to stop resolving, and use NN instead.
+        ranges: The ranges per player (in Texas Hold Em: the probability distribution over possible hole pairs). Can be None if uninformed, in which case the ranges are assumed to be uniform.
         max_successors: The maximum number of successors to generate for each state.
-        initial_strategy_generator: A function that generates the initial strategy for a state.
+        simulations: The number of simulations to run.
+        hand_index: The index of the hand in the Hand.COMBINATIONS list, if known.
     """
     print("Generating tree")
     root = StateNode(state, end_stage, end_depth, max_successors)
@@ -31,12 +43,20 @@ def resolve(
         subtree_traversal_rollout(root, ranges, state.current_player_i)
         update_strategy(root)
         strategies.append(root.strategy)
-    strategy = np.mean(strategies, axis=0)
+    strategies_per_hand = np.mean(strategies, axis=0)
+    if hand_index:
+        strategy = strategies_per_hand[hand_index]
+    else:
+        strategy = ranges[state.current_player_i] @ strategies_per_hand
     action_i = np.random.choice(len(strategy), p=strategy)
     action, child_state = root.children[action_i]
-    updated_ranges = [ranges.copy() for _ in range(len(ranges))]
+    updated_ranges = [r.copy() for r in ranges]
     updated_ranges[state.current_player_i] = bayesian_update(
-        updated_ranges[state.current_player_i], action_i, strategy
+        updated_ranges[state.current_player_i], action_i, strategies_per_hand
+    )
+    print(
+        "Update to ranges:",
+        updated_ranges[state.current_player_i] - ranges[state.current_player_i],
     )
     return action, child_state, updated_ranges
 
@@ -52,15 +72,14 @@ def subtree_traversal_rollout(
         ranges: The ranges per player (in Texas Hold Em: the probability distribution over possible hole pairs).
         perspective: The player for which to update the values and strategies.
     """
-    print("Traversing", node.state.stage, ", player", node.state.current_player_i, end="\r")
     if node.state.is_terminal:
-        payoff = node.utility_matrix * ranges[perspective]
+        payoff = ranges[perspective] @ node.get_utility_matrix(perspective)
         node.values[:] = (
             -payoff
         )  # TODO: what is the correct payoff for the other players if there are more than 2 players?
         node.values[perspective] = payoff
     elif not node.children:
-        payoff = ml_model(node.state) * ranges[perspective]
+        payoff = ranges[perspective] @ ml_model(node.state)
         node.values[:] = -payoff
         node.values[perspective] = payoff
     elif not node.state.all_players_are_done:
@@ -73,8 +92,23 @@ def subtree_traversal_rollout(
             child_ranges = [r.copy() for r in ranges]
             child_ranges[P] = bayesian_update(ranges[P], action_i, node.strategy)
             subtree_traversal_rollout(child, child_ranges, perspective)
-            values_per_child[action_i] = child.values
-        node.values = node.strategy @ values_per_child
+            values_per_child[action_i] = child.values  # (p, h)
+        # node.strategy has shape (h, a), add an axis to make it (h, a, 1) for broadcasting
+        strategy_expanded = node.strategy[:, :, np.newaxis]
+
+        # values_per_child has shape (a, p, h), transpose it to (h, a, p) to align for multiplication
+        values_per_child_transposed = np.transpose(values_per_child, (2, 0, 1))
+
+        # Multiply, which will broadcast strategy_expanded across the p dimension
+        # After multiplication, sum over the action axis (axis=1) to collapse the actions
+        # The resulting shape will be (h, p)
+        expected_values = np.sum(
+            strategy_expanded * values_per_child_transposed, axis=1
+        )
+
+        # The final output shape (p, h) aligns with the pseudo code's structure where
+        # there's no direct multiplication with the range at this stage.
+        node.values = expected_values.T
     else:
         # This is a chance node
         values_per_child = np.zeros(
@@ -86,7 +120,7 @@ def subtree_traversal_rollout(
         node.values = values_per_child.mean(axis=0)
 
 
-def bayesian_update(r, action_i, strategy: np.ndarray):
+def bayesian_update(r: np.ndarray, action_i, strategy: np.ndarray):
     """
     Update the range using Bayes' theorem, where:
     prob(state | act) = (prob(act | state) * prob(state)) / prob(act)
@@ -100,7 +134,7 @@ def bayesian_update(r, action_i, strategy: np.ndarray):
         The updated range (prob(state | act)).
     """
 
-    prob_act_given_state = strategy[:, action_i] # (h, )
+    prob_act_given_state = strategy[:, action_i]  # (h, )
     prob_act = r @ prob_act_given_state  # (h, ) @ (h, ) = (1, )
     return (prob_act_given_state * r) / prob_act
 

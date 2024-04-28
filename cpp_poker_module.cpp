@@ -159,16 +159,25 @@ PYBIND11_MODULE(cpp_poker, m)
                     ":param num_players: An integer representing the number of players\n"
                     ":param num_simulations: An integer representing the number of simulations to run\n"
                     ":return: A float representing the winning probability")
-        .def_static("generate_utility_matrix", [](const CardCollection &table, const std::vector<bool> &player_is_active, int perspective)
+        .def_static("generate_utility_matrix", [](const CardCollection &table)
                     {
-        auto matrix = Oracle::generate_utility_matrix(table, player_is_active, perspective);
-        return matrix_to_numpy(matrix); }, py::arg("table"), py::arg("player_is_active"), py::arg("perspective"), "Generate a utility matrix for the given table and player states\n"
-                                                                                                ":param table: A list of integers representing the table cards\n"
-                                                                                                ":param player_is_active: A list of booleans representing whether each player is active\n"
-                                                                                                ":return: A 2D NumPy array representing the utility matrix")
-        .def_static("generate_utility_matrix", py::overload_cast<const CardCollection &, const std::vector<bool> &, int, const CardCollection &>(&Oracle::generate_utility_matrix), py::arg("table"), py::arg("player_is_active"), py::arg("perspective"), py::arg("deck"), "Generate a utility matrix for the given table, player states, and deck\n"
-                                                                                                                                                                                                                                                                            ":param table: A list of integers representing the table cards\n"
-                                                                                                                                                                                                                                                                            ":param player_is_active: A list of booleans representing whether each player is active\n"
-                                                                                                                                                                                                                                                                            ":param deck: A set of integers representing the deck\n"
-                                                                                                                                                                                                                                                                            ":return: A 2D list of floats representing the utility matrix");
+        auto matrix = Oracle::generate_utility_matrix(table);
+        return matrix_to_numpy(matrix); }, py::arg("table"), "Generate a utility matrix for the given table\n"
+                                           ":param table: A list of integers representing the table cards\n"
+                                           ":return: A 2D NumPy array representing the utility matrix")
+        .def_static("generate_utility_matrix", [](const CardCollection &table, bool both_players_active)
+                    {
+        auto matrix = Oracle::generate_utility_matrix(table, both_players_active);
+        return matrix_to_numpy(matrix); }, py::arg("table"), py::arg("both_players_active"), "Generate a utility matrix for the given table and player states\n"
+                                                                           ":param table: A list of integers representing the table cards\n"
+                                                                           ":param both_players_active: A boolean representing whether both players are active\n"
+                                                                           ":return: A 2D NumPy array representing the utility matrix. If only 1 player is active, the matrix will have 1s in every possible combo and 0s in the impossible ones")
+        .def_static("generate_utility_matrix", [](const CardCollection &table, bool both_players_active, const CardCollection &deck)
+                    {
+        auto matrix = Oracle::generate_utility_matrix(table, both_players_active, deck);
+        return matrix_to_numpy(matrix); }, py::arg("table"), py::arg("both_players_active"), py::arg("deck"), "Generate a utility matrix for the given table, player states, and deck\n"
+                                                                                            ":param table: A list of integers representing the table cards\n"
+                                                                                            ":param both_players_active: A boolean representing whether both players are active\n"
+                                                                                            ":param deck: A list of integers representing the deck\n"
+                                                                                            ":return: A 2D NumPy array representing the utility matrix. If only 1 player is active, the matrix will have 1s in every possible combo and 0s in the impossible ones");
 }
