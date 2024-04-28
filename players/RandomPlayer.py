@@ -13,14 +13,14 @@ class RandomPlayer(Player):
         Generate a general uninformed distribution for betting.
         """
         current_player_i = state.current_player_i
-        current_bet = state.current_bets[current_player_i]
+        current_bet = state.bet_in_stage[current_player_i]
         player_pile = state.player_piles[current_player_i]
-        call_bet = max(state.current_bets) - current_bet
+        call_bet = max(state.bet_in_stage) - current_bet
         all_in_bet = player_pile
         max_allowed_bet = Oracle.get_max_bet_allowed(
             state.player_has_played,
             current_player_i,
-            state.current_bets,
+            state.bet_in_stage,
             state.player_piles,
             state.player_is_active,
         )

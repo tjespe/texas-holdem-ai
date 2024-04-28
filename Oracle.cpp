@@ -49,14 +49,14 @@ std::set<int> Oracle::find_winner(const CardCollection &table, const std::vector
 int Oracle::get_max_bet_allowed(
     const std::vector<bool> &player_has_played,
     int current_player_i,
-    const std::vector<int> &current_bets,
+    const std::vector<int> &bet_in_stage,
     const std::vector<int> &player_piles,
     const std::vector<bool> &player_is_active)
 {
     std::vector<int> max_stack_per_player;
     for (size_t i = 0; i < player_piles.size(); ++i)
     {
-        max_stack_per_player.push_back(player_piles[i] + current_bets[i]);
+        max_stack_per_player.push_back(player_piles[i] + bet_in_stage[i]);
     }
     int min_stack = INT_MAX;
     for (size_t i = 0; i < player_is_active.size(); ++i)
@@ -66,10 +66,10 @@ int Oracle::get_max_bet_allowed(
             min_stack = std::min(min_stack, max_stack_per_player[i]);
         }
     }
-    int max_allowed = min_stack - current_bets[current_player_i];
+    int max_allowed = min_stack - bet_in_stage[current_player_i];
     if (player_has_played[current_player_i])
     {
-        int call_amount = *std::max_element(current_bets.begin(), current_bets.end()) - current_bets[current_player_i];
+        int call_amount = *std::max_element(bet_in_stage.begin(), bet_in_stage.end()) - bet_in_stage[current_player_i];
         return std::min(call_amount, max_allowed);
     }
     return max_allowed;

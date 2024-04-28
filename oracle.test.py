@@ -392,7 +392,7 @@ class OracleTestCase(unittest.TestCase):
     def test_cannot_bet_more_than_smallest_stack(self):
         player_played = (True, False, False)
         current_player_i = 1
-        current_bets = (10, 1, 2)
+        bet_in_stage = (10, 1, 2)
         player_piles = (200, 300, 30)
         player_is_active = (True, True, True)
 
@@ -401,7 +401,7 @@ class OracleTestCase(unittest.TestCase):
             Oracle.get_max_bet_allowed(
                 player_played,
                 current_player_i,
-                current_bets,
+                bet_in_stage,
                 player_piles,
                 player_is_active,
             ),
@@ -411,7 +411,7 @@ class OracleTestCase(unittest.TestCase):
     def test_can_bet_even_if_players_are_bust(self):
         player_played = (True, False, False)
         current_player_i = 1
-        current_bets = (10, 0, 0)
+        bet_in_stage = (10, 0, 0)
         player_piles = (200, 300, 0)
         player_is_active = (True, True, False)
 
@@ -420,7 +420,7 @@ class OracleTestCase(unittest.TestCase):
             Oracle.get_max_bet_allowed(
                 player_played,
                 current_player_i,
-                current_bets,
+                bet_in_stage,
                 player_piles,
                 player_is_active,
             ),
@@ -430,7 +430,7 @@ class OracleTestCase(unittest.TestCase):
     def test_cannot_reraise(self):
         player_played = (True, True, False)
         current_player_i = 1
-        current_bets = (10, 5, 2)
+        bet_in_stage = (10, 5, 2)
         player_piles = (200, 300, 30)
         player_is_active = (True, True, True)
 
@@ -439,7 +439,7 @@ class OracleTestCase(unittest.TestCase):
             Oracle.get_max_bet_allowed(
                 player_played,
                 current_player_i,
-                current_bets,
+                bet_in_stage,
                 player_piles,
                 player_is_active,
             ),

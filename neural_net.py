@@ -16,9 +16,9 @@ def to_X_and_Y(df: pd.DataFrame, stage: str):
                 df["player_values"],
                 df["public_cards"],
                 df["player_bet"],
-                df["player_bet_in_round"],
+                df["player_bet_in_game"],
                 df["opponent_bet"],
-                df["opponent_bet_in_round"],
+                df["opponent_bet_in_game"],
                 df["player_turn"],
             ]
         ).flatten(),

@@ -36,9 +36,11 @@ class StateNode:
         state: State,
         end_stage: State.StageType,
         max_depth: int = 0,
-        max_successors=100,
+        max_successors_at_action_nodes=5,
+        max_successors_at_chance_nodes=100,
         parent: "StateNode" = None,
         deck=None,
+        generate_utility_matrix=True,
     ):
         if deck is None:
             deck = set(range(52))
@@ -54,7 +56,11 @@ class StateNode:
         print(
             "Creating StateNode for", state.stage, "with max_depth", max_depth, end="\r"
         )
-        if len(self.state.public_cards) == 5 and self._utility_matrix is None:
+        if (
+            len(self.state.public_cards) == 5
+            and self._utility_matrix is None
+            and generate_utility_matrix
+        ):
             self._utility_matrix = Oracle.generate_utility_matrix(
                 CardCollection(self.state.public_cards)
             )
@@ -63,11 +69,19 @@ class StateNode:
                 (
                     action,
                     StateNode(
-                        successor, end_stage, max_depth - 1, max_successors, self, deck
+                        successor,
+                        end_stage,
+                        max_depth - 1,
+                        max_successors_at_action_nodes,
+                        max_successors_at_chance_nodes,
+                        self,
+                        deck,
                     ),
                 )
                 for action, successor in generate_successor_states(
-                    state, max_successors
+                    state,
+                    max_successors_at_action_nodes,
+                    max_successors_at_chance_nodes,
                 )
             ]
             self.strategy = np.ones((len(Hand.COMBINATIONS), len(self.children))) / len(
@@ -111,10 +125,10 @@ class StateNode:
         player_values = self.values[
             perspective
         ]  # (h,): The value of having each hand at this node for the player
-        player_bet = self.state.current_bets[perspective]
-        player_bet_in_round = self.state.bet_in_round[perspective]
-        opponent_bet = self.state.current_bets[opponent]
-        opponent_bet_in_round = self.state.bet_in_round[opponent]
+        player_bet_in_stage = self.state.bet_in_stage[perspective]
+        player_bet_in_game = self.state.bet_in_game[perspective]
+        opponent_bet_in_stage = self.state.bet_in_stage[opponent]
+        opponent_bet_in_game = self.state.bet_in_game[opponent]
         player_turn = self.state.current_player_i == perspective
         player_has_bet = self.state.player_has_played[perspective]
         opponent_has_bet = self.state.player_has_played[opponent]
@@ -128,10 +142,10 @@ class StateNode:
             public_cards_one_hot,
         ]
         other_props = [
-            player_bet,
-            player_bet_in_round,
-            opponent_bet,
-            opponent_bet_in_round,
+            player_bet_in_stage,
+            player_bet_in_game,
+            opponent_bet_in_stage,
+            opponent_bet_in_game,
             player_turn,
             player_has_bet,
             opponent_has_bet,
@@ -153,10 +167,10 @@ class StateNode:
             headers.append(f"value_of_hand_{i}")
         for i in range(52):
             headers.append(f"public_card_{i}")
-        headers.append("player_bet")
-        headers.append("player_bet_in_round")
-        headers.append("opponent_bet")
-        headers.append("opponent_bet_in_round")
+        headers.append("player_bet_in_stage")
+        headers.append("player_bet_in_game")
+        headers.append("opponent_bet_in_stage")
+        headers.append("opponent_bet_in_game")
         headers.append("player_turn")
         headers.append("player_has_bet")
         headers.append("opponent_has_bet")

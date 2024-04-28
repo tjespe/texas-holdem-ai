@@ -17,18 +17,16 @@ def generate_uniform_ranges(state: State):
     r /= r.sum()
     return [r.copy() for _ in range(state.n_players)]
 
-
-df_file = open("dfs/df_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".parquet", "wb")
-df_rows = []
-
-
 def resolve(
     state: State,
     ranges: list[np.ndarray],
     end_stage: State.StageType,
     end_depth: int,
-    max_successors=10,
-    simulations=100,
+    max_successors_at_action_nodes=5,
+    max_successors_at_chance_nodes=100,
+    max_simulations=10_000,
+    strat_convergence_threshold=1,
+    convergence_lookback=20,
     hand_index=None,
 ):
     """
@@ -40,17 +38,30 @@ def resolve(
         end_depth: The tree depth at which to stop resolving, and use NN instead.
         ranges: The ranges per player (in Texas Hold Em: the probability distribution over possible hole pairs). Can be None if uninformed, in which case the ranges are assumed to be uniform.
         max_successors: The maximum number of successors to generate for each state.
-        simulations: The number of simulations to run.
+        max_simulations: The number of simulations to run.
         hand_index: The index of the hand in the Hand.COMBINATIONS list, if known.
     """
     print("Generating tree")
-    root = StateNode(state, end_stage, end_depth, max_successors)
+    root = StateNode(
+        state,
+        end_stage,
+        end_depth,
+        max_successors_at_action_nodes,
+        max_successors_at_chance_nodes,
+    )
+    value_vectors = []
     strategies = []
-    for t in range(simulations):
-        print("Simulation", t, "of", simulations, end="\r")
+    for t in range(max_simulations):
         subtree_traversal_rollout(root, ranges, state.current_player_i)
         update_strategy(root)
         strategies.append(root.strategy)
+        value_vectors.append(root.values)
+        strat_diff = np.abs(root.strategy - np.mean(strategies[-convergence_lookback:], axis=0)).sum()
+        print(t, "Strat diff:", strat_diff)
+        if strat_diff < strat_convergence_threshold and t > 10:
+            break
+    if t == max_simulations - 1:
+        print("Warning: CFR did not converge")
     strategies_per_hand = np.mean(strategies, axis=0)
     if hand_index:
         strategy = strategies_per_hand[hand_index]
@@ -62,11 +73,8 @@ def resolve(
     updated_ranges[state.current_player_i] = bayesian_update(
         updated_ranges[state.current_player_i], action_i, strategies_per_hand
     )
-    # Write the dataframe
-    global df_rows
-    df = pd.DataFrame(df_rows, columns=StateNode.get_df_headers())
-    df.to_parquet(df_file)
-    return action, child_state, updated_ranges
+    mean_values = np.array(value_vectors).mean(axis=0)
+    return action, child_state, updated_ranges, mean_values
 
 
 def subtree_traversal_rollout(
@@ -82,9 +90,7 @@ def subtree_traversal_rollout(
     """
     if node.state.is_terminal:
         payoff = ranges[perspective] @ node.get_utility_matrix(perspective)
-        node.values[:] = (
-            -payoff
-        )  # TODO: what is the correct payoff for the other players if there are more than 2 players?
+        node.values[:] = -payoff
         node.values[perspective] = payoff
     elif not node.children:
         node.values = ml_model(node.state)
@@ -124,11 +130,6 @@ def subtree_traversal_rollout(
             subtree_traversal_rollout(child, ranges, perspective)
             values_per_child[i] = child.values
         node.values = values_per_child.mean(axis=0)
-    # Append the data frame representation of the node to the global combined_df
-    global df_rows
-    df_row = node.to_df_row(ranges, perspective)
-    if df_row is not None:
-        df_rows.append(df_row)
 
 
 def bayesian_update(r: np.ndarray, action_i, strategy: np.ndarray):

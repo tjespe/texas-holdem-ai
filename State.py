@@ -19,10 +19,10 @@ class State:
     current_player_i: int
 
     # The bets from each player since the last deal
-    current_bets: Tuple[int]
+    bet_in_stage: Tuple[int]
 
-    # The amount of money each player has bet in the current round
-    bet_in_round: Tuple[int]
+    # The amount of money each player has bet in the current game
+    bet_in_game: Tuple[int]
 
     # Whether or not each player has had a turn in the current round
     player_has_played: Tuple[bool]
@@ -44,8 +44,8 @@ class State:
         public_cards: Tuple[int],
         player_piles: Tuple[int],
         current_player_i: int,
-        current_bets: Tuple[int],
-        bet_in_round: Tuple[int],
+        bet_in_stage: Tuple[int],
+        bet_in_game: Tuple[int],
         player_has_played: Tuple[bool],
         folded_players: Tuple[bool],
         first_better_i: int,
@@ -54,15 +54,15 @@ class State:
         self.public_cards = public_cards
         self.player_piles = player_piles
         self.current_player_i = current_player_i
-        self.current_bets = current_bets
-        self.bet_in_round = bet_in_round
+        self.bet_in_stage = bet_in_stage
+        self.bet_in_game = bet_in_game
         self.player_has_played = player_has_played
         self.player_is_folded = folded_players
         self._first_better_i = first_better_i
         self.n_players = len(player_piles)
         self.big_blind = big_blind
         assert len(folded_players) == len(player_piles)
-        assert len(current_bets) <= len(player_piles)
+        assert len(bet_in_stage) <= len(player_piles)
 
     def __eq__(self, other):
         return (
@@ -70,7 +70,7 @@ class State:
             and self.player_piles == other.player_piles
             and self.pot == other.pot
             and self.current_player_i == other.current_player_i
-            and self.current_bets == other.current_bets
+            and self.bet_in_stage == other.bet_in_stage
             and self.player_has_played == other.player_has_played
             and self.player_is_folded == other.folded_players
             and self.first_better_i == other.first_better_i
@@ -100,7 +100,7 @@ class State:
 
     @property
     def pot(self):
-        return sum(self.bet_in_round)
+        return sum(self.bet_in_game)
     
     @property
     def game_size(self):
@@ -150,7 +150,7 @@ class State:
         """
         return (
             np.all(np.array(self.player_has_played)[self.player_is_active])
-            and len(set(np.array(self.current_bets)[self.player_is_active])) == 1
+            and len(set(np.array(self.bet_in_stage)[self.player_is_active])) == 1
         )
 
     @property
@@ -176,8 +176,8 @@ class State:
                     for i in range(self.n_players)
                 ],
                 "Pile": self.player_piles,
-                "Bet this round": self.bet_in_round,
-                "Bet since last deal": self.current_bets,
+                "Bet this game": self.bet_in_game,
+                "Bet since last card": self.bet_in_stage,
                 "Folded": self.player_is_folded,
             }
         ).set_index("Player")

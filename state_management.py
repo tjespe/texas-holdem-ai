@@ -22,8 +22,8 @@ def _copy_and_modify(state: State, **kwargs):
         kwargs.get("public_cards", state.public_cards),
         kwargs.get("player_piles", state.player_piles),
         kwargs.get("current_player_i", state.current_player_i),
-        kwargs.get("current_bets", state.current_bets),
-        kwargs.get("bet_in_round", state.bet_in_round),
+        kwargs.get("bet_in_stage", state.bet_in_stage),
+        kwargs.get("bet_in_game", state.bet_in_game),
         kwargs.get("player_has_played", state.player_has_played),
         kwargs.get("folded_players", state.player_is_folded),
         kwargs.get("first_better_i", state.first_better_i),
@@ -66,8 +66,8 @@ def generate_root_state(
         public_cards=(),
         player_piles=tuple(pile_size for _ in range(n_players)),
         current_player_i=first_better_i,
-        current_bets=tuple(0 for _ in range(n_players)),
-        bet_in_round=tuple(0 for _ in range(n_players)),
+        bet_in_stage=tuple(0 for _ in range(n_players)),
+        bet_in_game=tuple(0 for _ in range(n_players)),
         folded_players=tuple(False for _ in range(n_players)),
         first_better_i=first_better_i,
         player_has_played=tuple(False for _ in range(n_players)),
@@ -77,7 +77,8 @@ def generate_root_state(
 
 def generate_successor_states(
     state: State,
-    max_successors=100,
+    max_successors_at_action_nodes=5,
+    max_successors_at_chance_nodes=100,
     betting_fn: Callable[["State"], int] = RandomPlayer().play,
 ) -> list[tuple[int, "State"]]:
     """
@@ -85,7 +86,8 @@ def generate_successor_states(
     If the current state is a state where a player has to make a decision, then the number of successor states
     will be limited by max_successors.
     :param state: The current state
-    :param max_successors: The maximum number of successor states to generate
+    :param max_successors_at_action_nodes: The maximum number of successors to generate for each state where a player has to make a decision.
+    :param max_successors_at_chance_nodes: The maximum number of successors to generate for each state where the outcome is determined by chance.
     :param relative_bet_distribution: The distribution to sample from when generating bets
     Returns a list of (action, child state)-tuples
     """
@@ -98,12 +100,16 @@ def generate_successor_states(
         if state.public_cards == ():
             return [
                 (None, add_cards(state, draw))
-                for draw in _generate_possible_draws(state, 3, max_successors)
+                for draw in _generate_possible_draws(
+                    state, 3, max_successors_at_chance_nodes
+                )
             ]
         elif len(state.public_cards) < 5:
             return [
                 (None, add_cards(state, draw))
-                for draw in _generate_possible_draws(state, 1, max_successors)
+                for draw in _generate_possible_draws(
+                    state, 1, max_successors_at_chance_nodes
+                )
             ]
         else:
             # Go to showdown (no successor states)
@@ -112,19 +118,17 @@ def generate_successor_states(
         # Check if the current player has folded
         if state.player_is_folded[state.current_player_i]:
             return [(None, skip_current_player(state))]
-        check_bet = max(state.current_bets) - state.current_bets[state.current_player_i]
+        check_bet = max(state.bet_in_stage) - state.bet_in_stage[state.current_player_i]
         # A player has to make a decision, generate `max_successors` possible decisions
-        return [
-            (bet, place_bet(state, bet))
-            for bet in set(
-                # Ensure folding is one of the options
-                [0]
-                # Ensure checking is one of the options
-                + [check_bet]
-                # Generate other random bets
-                + [betting_fn(state) for _ in range(max_successors)]
-            )
-        ]
+        bets = set(
+            # Ensure folding is one of the options
+            [0]
+            # Ensure checking is one of the options
+            + [check_bet]
+            # Generate other random bets
+            + [betting_fn(state) for _ in range(max_successors_at_action_nodes - 2)]
+        )
+        return [(bet, place_bet(state, bet)) for bet in bets]
 
 
 def add_cards(state: State, cards: tuple[int], skip_integrity_check=False) -> State:
@@ -133,7 +137,7 @@ def add_cards(state: State, cards: tuple[int], skip_integrity_check=False) -> St
     return _copy_and_modify(
         state,
         public_cards=state.public_cards + tuple(cards),
-        current_bets=tuple(0 for _ in range(state.n_players)),
+        bet_in_stage=tuple(0 for _ in range(state.n_players)),
         current_player_i=state.first_better_i,
         player_has_played=tuple(False for _ in range(state.n_players)),
     )
@@ -154,7 +158,7 @@ def fold_current_player(state: State) -> State:
 
 def place_bet(state: State, bet: int, is_blind=False) -> State:
     min_required_bet = (
-        max(state.current_bets) - state.current_bets[state.current_player_i]
+        max(state.bet_in_stage) - state.bet_in_stage[state.current_player_i]
     )
     if bet == 0 and min_required_bet > 0:
         return fold_current_player(state)
@@ -170,7 +174,7 @@ def place_bet(state: State, bet: int, is_blind=False) -> State:
         max_bet := Oracle.get_max_bet_allowed(
             state.player_has_played,
             state.current_player_i,
-            state.current_bets,
+            state.bet_in_stage,
             state.player_piles,
             state.player_is_active,
         )
@@ -184,15 +188,15 @@ def place_bet(state: State, bet: int, is_blind=False) -> State:
     return _copy_and_modify(
         state,
         current_player_i=state.next_player,
-        current_bets=_update_tuple(
-            state.current_bets,
+        bet_in_stage=_update_tuple(
+            state.bet_in_stage,
             state.current_player_i,
-            state.current_bets[state.current_player_i] + bet,
+            state.bet_in_stage[state.current_player_i] + bet,
         ),
-        bet_in_round=_update_tuple(
-            state.bet_in_round,
+        bet_in_game=_update_tuple(
+            state.bet_in_game,
             state.current_player_i,
-            state.bet_in_round[state.current_player_i] + bet,
+            state.bet_in_game[state.current_player_i] + bet,
         ),
         player_has_played=(
             state.player_has_played
@@ -229,7 +233,9 @@ def end_round(state: State, players: list[Player], print_result=False) -> State:
     if not state.is_terminal:
         raise Exception("The round is not over yet")
     winners = Oracle.find_winner(
-        CardCollection(state.public_cards), [CardCollection(p.hand) for p in players], state.player_is_active
+        CardCollection(state.public_cards),
+        [CardCollection(p.hand) for p in players],
+        state.player_is_active,
     )
     if print_result:
         showdown = np.sum(state.player_is_active) > 1
@@ -275,7 +281,7 @@ def get_blind_bet(state: State) -> Union[int, None]:
         has_played = state.player_has_played[state.current_player_i]
         if has_played:
             return None
-        has_placed_blind = state.current_bets[state.current_player_i] > 0
+        has_placed_blind = state.bet_in_stage[state.current_player_i] > 0
         if has_placed_blind:
             return None
         if is_small_blind:

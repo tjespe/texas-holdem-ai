@@ -14,12 +14,12 @@ class HumanPlayer(Player):
         print(Card.get_cli_repr_for_cards(self.hand))
         try:
             call_bet = (
-                max(state.bet_in_round) - state.bet_in_round[state.current_player_i]
+                max(state.bet_in_game) - state.bet_in_game[state.current_player_i]
             )
             max_raise = Oracle.get_max_bet_allowed(
                 state.player_has_played,
                 state.current_player_i,
-                state.current_bets,
+                state.bet_in_stage,
                 state.player_piles,
                 state.player_is_active,
             )
