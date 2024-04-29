@@ -58,21 +58,10 @@ class StateNode:
         self.strategy = None
         self.regrets = None
         self._utility_matrix = parent._utility_matrix if parent is not None else None
-        print(
-            "Creating StateNode for", state.stage, "with max_depth", max_depth, end="\r"
-        )
         at_or_past_end_stage = end_stage is not None and state.is_at_or_past_stage(
             end_stage, end_sub_stage
         )
         if not at_or_past_end_stage and max_depth > 0 and not state.is_terminal:
-            print("Generating children, because: ")
-            print("end_stage =", end_stage)
-            print("state.stage =", state.stage)
-            print("end_sub_stage =", end_sub_stage)
-            print("state.sub_stage =", state.sub_stage)
-            print("at_or_past_end_stage =", at_or_past_end_stage)
-            print("max_depth =", max_depth)
-            print("state.is_terminal =", state.is_terminal)
             self.children = [
                 (
                     action,
