@@ -105,9 +105,9 @@ if __name__ == "__main__":
         # RandomPlayer(name="Random Randall"),
         # RandomPlayer(name="Random Rhonda"),
         # HumanPlayer(name="Larnes"),
+        BlendedPlayer(name="Benny the Blended"),
         RationalPlayer(name="Rational Rasmus"),
         # ResolverPlayer(name="Resa the Resolver"),
-        BlendedPlayer(name="Benny the Blended"),
         # BlendedPlayer(name="Olga the Opponent"),
     ]
     game_manager = GameManager(players)

@@ -14,7 +14,6 @@ class StateNode:
 
     state: State
     parent: "StateNode"
-    deck: set[int]
 
     # List of (action, StateNode) tuples
     children: list[tuple[int, "StateNode"]]
@@ -35,17 +34,23 @@ class StateNode:
         self,
         state: State,
         end_stage: State.StageType,
+        end_sub_stage: State.SubStageType,
         max_depth: int = 0,
         max_successors_at_action_nodes=5,
         max_successors_at_chance_nodes=100,
         parent: "StateNode" = None,
-        deck=None,
-        generate_utility_matrix=True,
     ):
-        if deck is None:
-            deck = set(range(52))
-        deck -= set(state.public_cards)
-        self.deck = deck
+        """
+        Args:
+        
+            state (State): The state to create a node for
+            end_stage (State.StageType): The stage to stop creating child nodes at (ignored if None, takes precedence over max_depth)
+            end_sub_stage (State.SubStageType): The sub-stage to stop creating child nodes at (ignored if None, takes precedence over max_depth)
+            max_depth (int): The maximum depth to create child nodes at
+            max_successors_at_action_nodes (int): The maximum number of successors to create at action nodes
+            max_successors_at_chance_nodes (int): The maximum number of successors to create at chance nodes
+            parent (StateNode): The parent node
+        """
         self.state = state
         self.parent = parent
         self.values = np.zeros((state.n_players, len(Hand.COMBINATIONS)))
@@ -56,26 +61,29 @@ class StateNode:
         print(
             "Creating StateNode for", state.stage, "with max_depth", max_depth, end="\r"
         )
-        if (
-            len(self.state.public_cards) == 5
-            and self._utility_matrix is None
-            and generate_utility_matrix
-        ):
-            self._utility_matrix = Oracle.generate_utility_matrix(
-                CardCollection(self.state.public_cards)
-            )
-        if end_stage != state.stage and max_depth > 0 and not state.is_terminal:
+        at_or_past_end_stage = end_stage is not None and state.is_at_or_past_stage(
+            end_stage, end_sub_stage
+        )
+        if not at_or_past_end_stage and max_depth > 0 and not state.is_terminal:
+            print("Generating children, because: ")
+            print("end_stage =", end_stage)
+            print("state.stage =", state.stage)
+            print("end_sub_stage =", end_sub_stage)
+            print("state.sub_stage =", state.sub_stage)
+            print("at_or_past_end_stage =", at_or_past_end_stage)
+            print("max_depth =", max_depth)
+            print("state.is_terminal =", state.is_terminal)
             self.children = [
                 (
                     action,
                     StateNode(
                         successor,
                         end_stage,
+                        end_sub_stage,
                         max_depth - 1,
                         max_successors_at_action_nodes,
                         max_successors_at_chance_nodes,
                         self,
-                        deck,
                     ),
                 )
                 for action, successor in generate_successor_states(
@@ -89,20 +97,31 @@ class StateNode:
             )
             self.regrets = np.zeros((len(Hand.COMBINATIONS), len(self.children)))
 
+    def _propagate_util_matrix_cache(self):
+        if self.parent is not None and self.parent.state.public_cards == self.state.public_cards:
+            if self._utility_matrix is not None:
+                self.parent._utility_matrix = self._utility_matrix
+                self.parent._propagate_util_matrix_cache()
+            else:
+                self._utility_matrix = self.parent._utility_matrix
+
     def get_utility_matrix(self, perspective: int):
         two_players_active = sum(self.state.player_is_active) >= 2
         if not two_players_active:
             self._utility_matrix = Oracle.generate_utility_matrix(
                 CardCollection(self.state.public_cards), False
             )
-            assert self._utility_matrix.min() == 0 # No negative payoffs for the active player
-            assert self._utility_matrix.max() == 1 # There should be plenty of 
+            assert (
+                self._utility_matrix.min() == 0
+            )  # No negative payoffs for the active player
+            assert self._utility_matrix.max() == 1  # There should be plenty of
             if not self.state.player_is_active[perspective]:
                 self._utility_matrix = -self._utility_matrix
         elif self._utility_matrix is None:
             self._utility_matrix = Oracle.generate_utility_matrix(
                 CardCollection(self.state.public_cards)
             )
+            self._propagate_util_matrix_cache()
         return self._utility_matrix
 
     def to_df_row(self, ranges: list[np.ndarray], perspective: int):
@@ -183,3 +202,9 @@ class StateNode:
         headers.append("game_size")
         headers.append("stage")
         return headers
+    
+    def draw_tree(self, depth=0):
+        print("  " * depth, self.state.stage, self.state.sub_stage)
+        for action, child in self.children:
+            print("  " * depth, action)
+            child.draw_tree(depth + 1)

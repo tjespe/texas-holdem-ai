@@ -8,6 +8,8 @@ from cpp_poker.cpp_poker import Hand, CardCollection
 from neural_net import to_X_and_Y
 from datetime import datetime
 
+from run_nn_model import estimate_value_vector
+
 np.set_printoptions(threshold=50)
 
 
@@ -26,6 +28,7 @@ def resolve(
     ranges: list[np.ndarray],
     end_stage: State.StageType,
     end_depth: int,
+    end_sub_stage: Union[State.SubStageType, None] = None,
     max_successors_at_action_nodes=5,
     max_successors_at_chance_nodes=100,
     max_simulations=10_000,
@@ -46,20 +49,36 @@ def resolve(
         max_simulations: The number of simulations to run.
         hand_index: The index of the hand in the Hand.COMBINATIONS list, if known.
     """
-    print("Generating tree")
+    print("\n\n@@@@@ STARTING RESOLUTION @@@@@")
+    generate_nodes_to = {
+        "end_stage": end_stage,
+        "end_sub_stage": end_sub_stage,
+        "max_depth": end_depth,
+    }
+    print("ARGS:", generate_nodes_to)
+    if end_stage and state.is_at_or_past_stage(end_stage, end_sub_stage):
+        generate_nodes_to["end_stage"] = None
+        generate_nodes_to["max_depth"] = 1
+    print("GENERATING NODES TO:", generate_nodes_to)
     root = StateNode(
         state,
-        end_stage,
-        end_depth,
-        max_successors_at_action_nodes,
-        max_successors_at_chance_nodes,
+        max_successors_at_action_nodes=max_successors_at_action_nodes,
+        max_successors_at_chance_nodes=max_successors_at_chance_nodes,
+        **generate_nodes_to,
     )
+    if not root.children:
+        raise Exception("No children were generated for the root node")
+    print("\n\nGENERATED TREE:")
+    print(root.draw_tree(), "\n")
     value_vectors = []
     strategies = []
-    print("Possible actions:")
+    print("\nPossible actions:")
     for i, (action, child) in enumerate(root.children):
         print(i, action)
     errors = []
+    print("\n---- Root node ----")
+    print("| Stage:", root.state.stage)
+    print("| Sub stage:", root.state.sub_stage)
     for t in range(max_simulations):
         subtree_traversal_rollout(root, ranges, state.current_player_i)
         update_strategy(root)
@@ -72,7 +91,14 @@ def resolve(
             strat_diff = np.abs(root.strategy - np.mean(strategies, axis=0)).sum()
             percentage_off = strat_diff / root.strategy.sum()
             errors.append(percentage_off)
-            print("Iteration:", t, "Strat diff:", strat_diff, "Percentage off:", percentage_off)
+            print(
+                "Iteration:",
+                t,
+                "Strat diff:",
+                strat_diff,
+                "Percentage off:",
+                percentage_off,
+            )
             if percentage_off < strat_convergence_threshold:
                 print(
                     "Breaking because the percentage error is less than",
@@ -81,7 +107,11 @@ def resolve(
                 break
             if len(errors) > patience:
                 if np.all(np.diff(errors[-patience:]) > 0):
-                    print("Breaking because the error has increased for", patience, "iterations")
+                    print(
+                        "Breaking because the error has increased for",
+                        patience,
+                        "iterations",
+                    )
                     print("Latest errors:", errors[-patience:])
                     print("Worsening:", np.diff(errors[-patience:]))
                     break
@@ -92,9 +122,10 @@ def resolve(
     strategies_per_hand = np.mean(strategies, axis=0)
     if hand_index:
         strategy = strategies_per_hand[hand_index]
+        print("Strategy for hand:", strategy)
     else:
         strategy = ranges[state.current_player_i] @ strategies_per_hand
-    print("Strategy:", strategy)
+        print("Strategy given range:", strategy)
     action_i = np.random.choice(len(strategy), p=strategy)
     action, child_state = root.children[action_i]
     updated_ranges = [r.copy() for r in ranges]
@@ -115,7 +146,7 @@ def resolve(
 
 
 def subtree_traversal_rollout(
-    node: StateNode, ranges: list[np.ndarray], perspective: int
+    node: StateNode, ranges: list[np.ndarray], perspective: int, indentation=0
 ):
     """
     Recursively traverse the tree, updating the values and strategies of the nodes.
@@ -125,18 +156,41 @@ def subtree_traversal_rollout(
         ranges: The ranges per player (in Texas Hold Em: the probability distribution over possible hole pairs).
         perspective: The player for which to update the values and strategies.
     """
+    ind_str = "|" + "    " * indentation
+    print("|" + "----" * indentation, "Traversing node:")
+    print(ind_str, "Stage:", node.state.stage)
+    print(ind_str, "Sub stage:", node.state.sub_stage)
     if node.state.is_terminal:
+        print(ind_str, "Getting util matrix because we are at a terminal node:")
+        print(ind_str, "Players have played:", node.state.player_has_played)
+        print(ind_str, "Players are folded:", node.state.player_is_folded)
+        print(ind_str, "Player bets in stage:", node.state.bet_in_stage)
         payoff = ranges[perspective] @ node.get_utility_matrix(perspective)
         # Scale payoff by the pot size/game size to make it comparable across different games
         payoff *= node.state.pot / node.state.game_size
         node.values[:] = -payoff
         node.values[perspective] = payoff
         if np.isnan(node.values).any():
-            print("Payoff", payoff)
-            print("Ranges", ranges)
+            print(ind_str, "Payoff", payoff)
+            print(ind_str, "Ranges", ranges)
             raise ValueError("Nan values found in terminal node")
     elif not node.children:
-        node.values = ml_model(node.state)
+        print(
+            ind_str,
+            "Running ML model for sub stage",
+            node.state.sub_stage,
+            "in stage",
+            node.state.stage,
+            "for player",
+            perspective,
+        )
+        payoff = estimate_value_vector(node, ranges, perspective)
+        payoff *= node.state.pot / node.state.game_size
+        node.values[:] = -payoff
+        node.values[perspective] = payoff
+        if np.isnan(node.values).any():
+            print(ind_str, "Payoff", payoff)
+            raise ValueError("Nan values found in estimated vector at leaf node")
     elif not node.state.all_players_are_done:
         # Player P is the acting player
         P = node.state.current_player_i
@@ -149,19 +203,19 @@ def subtree_traversal_rollout(
         for i, (action, child) in enumerate(node.children):
             child_ranges = ranges.copy()
             child_ranges[P] = bayesian_update(child_ranges[P], i, node.strategy)
-            subtree_traversal_rollout(child, child_ranges, perspective)
+            subtree_traversal_rollout(child, child_ranges, perspective, indentation + 1)
             for h in range(len(Hand.COMBINATIONS)):
                 node.values[P, h] = child.values[P, h] * node.strategy[h, i]
                 node.values[O, h] = child.values[O, h] * node.strategy[h, i]
         if np.isnan(node.values).any():
             if np.isnan(node.values).all():
-                print("All values are nan")
-            print(node.values)
+                print(ind_str, "All values are nan")
+            print(ind_str, node.values)
             raise ValueError("Nan values found in children of action node")
     else:
         # This is a chance node
         for i, (action, child) in enumerate(node.children):
-            subtree_traversal_rollout(child, ranges, perspective)
+            subtree_traversal_rollout(child, ranges, perspective, indentation + 1)
             for h in range(len(Hand.COMBINATIONS)):
                 node.values[:, h] += child.values[:, h] / len(node.children)
         if np.isnan(node.values).any():
@@ -192,7 +246,7 @@ def bayesian_update(r: np.ndarray, action_i, strategy: np.ndarray):
     return (prob_act_given_state * r) / prob_act
 
 
-def update_strategy(node: StateNode, print_details=False):
+def update_strategy(node: StateNode):
     if not node.children:
         # This is a leaf node, so there are no regrets to use for updating the strategy.
         return

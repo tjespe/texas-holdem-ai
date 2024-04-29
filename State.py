@@ -84,11 +84,28 @@ class State:
         Literal["terminal"],
     ]
 
+    STAGES: list[StageType] = ["preflop", "flop", "turn", "river", "terminal"]
+
     SubStageType = Union[
         Literal["first_bet"],
         Literal["respond"],
         Literal["respond_to_raise"],
     ]
+
+    SUB_STAGES: list[SubStageType] = ["first_bet", "respond", "respond_to_raise"]
+
+    def is_at_or_past_stage(
+        self, stage: StageType, sub_stage: Union[SubStageType, None]
+    ) -> bool:
+        if sub_stage is None:
+            return self.STAGES.index(self.stage) >= self.STAGES.index(stage)
+        return (
+            self.STAGES.index(self.stage) > self.STAGES.index(stage)
+            or (
+                self.STAGES.index(self.stage) == self.STAGES.index(stage)
+                and self.SUB_STAGES.index(self.sub_stage) >= self.SUB_STAGES.index(sub_stage)
+            )
+        )
 
     @property
     def stage(self) -> StageType:
@@ -103,9 +120,11 @@ class State:
         if len(self.public_cards) == 5:
             return "river"
         raise ValueError("Invalid number of public cards")
-    
+
     @property
     def sub_stage(self) -> SubStageType:
+        if self.stage == "terminal":
+            return "terminal"
         if sum(self.player_has_played) == 0:
             return "first_bet"
         if not self.player_has_played[self.current_player_i]:
@@ -117,7 +136,7 @@ class State:
     @property
     def pot(self):
         return sum(self.bet_in_game)
-    
+
     @property
     def game_size(self):
         return sum(self.player_piles) + self.pot

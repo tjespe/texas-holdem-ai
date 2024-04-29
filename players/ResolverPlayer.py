@@ -8,19 +8,26 @@ from datetime import datetime
 
 
 class ResolverPlayer(Player):
-    """
-    This player resolves a full game tree to determine the best action.
-    """
-
     def __init__(
         self,
         name: str = "Resa",
-        max_successors_at_action_nodes=10,
+        max_successors_at_action_nodes=5,
         max_successors_at_chance_nodes=50,
         simulations=200,
         max_depth=100,
-        end_stage="terminal",
+        end_stage="river",
+        end_sub_stage="first_bet",
     ):
+        """
+        Args:
+            name (str): Player name
+            max_successors_at_action_nodes (int): Max number of successors to consider at action nodes
+            max_successors_at_chance_nodes (int): Max number of successors to consider at chance nodes
+            simulations (int): Number of simulations to run
+            max_depth (int): Max depth to search before using a Neural Net as a heuristic
+            end_stage (str): Stage to stop searching at before using a Neural Net as a heuristic
+            end_sub_stage (str): Sub-stage to stop searching at before using a Neural Net as a heuristic
+        """
         super().__init__()
         self.name = name
         self.ranges = None
@@ -30,6 +37,7 @@ class ResolverPlayer(Player):
         self.simulations = simulations
         self.max_depth = max_depth
         self.end_stage = end_stage
+        self.end_sub_stage = end_sub_stage
         self.cache_fname = (
             "dfs/df_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".parquet"
         )
@@ -40,7 +48,7 @@ class ResolverPlayer(Player):
         if self._hand_index is None:
             hand_cards = CardCollection(self.hand)
             for i, hand in enumerate(Hand.COMBINATIONS):
-                if hand_cards == hand.get_cards():
+                if hand_cards == hand:
                     self._hand_index = i
                     break
         return self._hand_index
@@ -52,14 +60,14 @@ class ResolverPlayer(Player):
             state,
             self.ranges,
             end_stage=self.end_stage,
+            end_sub_stage=self.end_sub_stage,
             end_depth=self.max_depth,
             max_successors_at_action_nodes=self.max_successors_at_action_nodes,
             max_successors_at_chance_nodes=self.max_successors_at_chance_nodes,
             max_simulations=self.simulations,
-            strat_convergence_threshold=2
+            hand_index=self.hand_index,
         )
         self.cached_rows.append(df_row)
-        print(self.cached_rows)
-        df = pd.DataFrame(self.cached_rows, columns=StateNode.get_df_headers())
-        df.to_parquet(self.cache_fname)
+        # df = pd.DataFrame(self.cached_rows, columns=StateNode.get_df_headers())
+        # df.to_parquet(self.cache_fname)
         return action
