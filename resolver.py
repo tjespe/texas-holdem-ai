@@ -22,6 +22,11 @@ def generate_uniform_ranges(state: State):
     r /= r.sum()
     return [r.copy() for _ in range(state.n_players)]
 
+def debug_print(*args, **kwargs):
+    return
+    kwargs["file"] = sys.stderr
+    return __builtins__.print(*args, **kwargs)
+
 
 def resolve(
     state: State,
@@ -36,6 +41,7 @@ def resolve(
     strat_convergence_threshold=0.02,
     patience=10,
     hand_index=None,
+    cached_root: StateNode=None
 ):
     """
     Resolve a state using the CFR algorithm.
@@ -49,36 +55,40 @@ def resolve(
         max_simulations: The number of simulations to run.
         hand_index: The index of the hand in the Hand.COMBINATIONS list, if known.
     """
-    print("\n\n@@@@@ STARTING RESOLUTION @@@@@")
+    debug_print("\n\n@@@@@ STARTING RESOLUTION @@@@@")
     generate_nodes_to = {
         "end_stage": end_stage,
         "end_sub_stage": end_sub_stage,
         "max_depth": end_depth,
     }
-    print("ARGS:", generate_nodes_to)
+    debug_print("ARGS:", generate_nodes_to)
     if end_stage and state.is_at_or_past_stage(end_stage, end_sub_stage):
         generate_nodes_to["end_stage"] = None
         generate_nodes_to["max_depth"] = 1
-    print("GENERATING NODES TO:", generate_nodes_to)
-    root = StateNode(
-        state,
-        max_successors_at_action_nodes=max_successors_at_action_nodes,
-        max_successors_at_chance_nodes=max_successors_at_chance_nodes,
-        **generate_nodes_to,
-    )
+    debug_print("GENERATING NODES TO:", generate_nodes_to)
+    if cached_root is None:
+        root = StateNode(
+            state,
+            max_successors_at_action_nodes=max_successors_at_action_nodes,
+            max_successors_at_chance_nodes=max_successors_at_chance_nodes,
+            **generate_nodes_to,
+        )
+    else:
+        root = cached_root
+        root.reset_values()
     if not root.children:
         raise Exception("No children were generated for the root node")
     print("\n\nGENERATED TREE:")
-    print(root.draw_tree(), "\n")
+    root.print_tree()
     value_vectors = []
     strategies = []
-    print("\nPossible actions:")
+    debug_print("\nPossible actions:")
     for i, (action, child) in enumerate(root.children):
-        print(i, action)
+        debug_print(i, action)
     errors = []
-    print("\n---- Root node ----")
-    print("| Stage:", root.state.stage)
-    print("| Sub stage:", root.state.sub_stage)
+    debug_print("\n---- Root node ----")
+    debug_print("| Stage:", root.state.stage)
+    debug_print("| Sub stage:", root.state.sub_stage)
     for t in range(max_simulations):
         subtree_traversal_rollout(root, ranges, state.current_player_i)
         update_strategy(root)
@@ -122,10 +132,10 @@ def resolve(
     strategies_per_hand = np.mean(strategies, axis=0)
     if hand_index:
         strategy = strategies_per_hand[hand_index]
-        print("Strategy for hand:", strategy)
+        debug_print("Strategy for hand:", strategy)
     else:
         strategy = ranges[state.current_player_i] @ strategies_per_hand
-        print("Strategy given range:", strategy)
+        debug_print("Strategy given range:", strategy)
     action_i = np.random.choice(len(strategy), p=strategy)
     action, child_state = root.children[action_i]
     updated_ranges = [r.copy() for r in ranges]
@@ -133,15 +143,15 @@ def resolve(
         updated_ranges[state.current_player_i], action_i, strategies_per_hand
     )
     mean_values = np.array(value_vectors).mean(axis=0)
-    print("Mean values (target var for NN):", mean_values)
-    print("Max of mean values:", mean_values.max())
-    print("Min of mean values:", mean_values.min())
+    debug_print("Mean values (target var for NN):", mean_values)
+    debug_print("Max of mean values:", mean_values.max())
+    debug_print("Min of mean values:", mean_values.min())
     root.values = mean_values
     return (
         action,
         child_state,
         updated_ranges,
-        root.to_df_row(ranges, state.current_player_i),
+        root,
     )
 
 
@@ -157,25 +167,25 @@ def subtree_traversal_rollout(
         perspective: The player for which to update the values and strategies.
     """
     ind_str = "|" + "    " * indentation
-    print("|" + "----" * indentation, "Traversing node:")
-    print(ind_str, "Stage:", node.state.stage)
-    print(ind_str, "Sub stage:", node.state.sub_stage)
+    debug_print("|" + "----" * indentation, "Traversing node:")
+    debug_print(ind_str, "Stage:", node.state.stage)
+    debug_print(ind_str, "Sub stage:", node.state.sub_stage)
     if node.state.is_terminal:
-        print(ind_str, "Getting util matrix because we are at a terminal node:")
-        print(ind_str, "Players have played:", node.state.player_has_played)
-        print(ind_str, "Players are folded:", node.state.player_is_folded)
-        print(ind_str, "Player bets in stage:", node.state.bet_in_stage)
+        debug_print(ind_str, "Getting util matrix because we are at a terminal node:")
+        debug_print(ind_str, "Players have played:", node.state.player_has_played)
+        debug_print(ind_str, "Players are folded:", node.state.player_is_folded)
+        debug_print(ind_str, "Player bets in stage:", node.state.bet_in_stage)
         payoff = ranges[perspective] @ node.get_utility_matrix(perspective)
         # Scale payoff by the pot size/game size to make it comparable across different games
         payoff *= node.state.pot / node.state.game_size
         node.values[:] = -payoff
         node.values[perspective] = payoff
         if np.isnan(node.values).any():
-            print(ind_str, "Payoff", payoff)
-            print(ind_str, "Ranges", ranges)
+            debug_print(ind_str, "Payoff", payoff)
+            debug_print(ind_str, "Ranges", ranges)
             raise ValueError("Nan values found in terminal node")
     elif not node.children:
-        print(
+        debug_print(
             ind_str,
             "Running ML model for sub stage",
             node.state.sub_stage,
@@ -189,7 +199,7 @@ def subtree_traversal_rollout(
         node.values[:] = -payoff
         node.values[perspective] = payoff
         if np.isnan(node.values).any():
-            print(ind_str, "Payoff", payoff)
+            debug_print(ind_str, "Payoff", payoff)
             raise ValueError("Nan values found in estimated vector at leaf node")
     elif not node.state.all_players_are_done:
         # Player P is the acting player
@@ -209,8 +219,8 @@ def subtree_traversal_rollout(
                 node.values[O, h] = child.values[O, h] * node.strategy[h, i]
         if np.isnan(node.values).any():
             if np.isnan(node.values).all():
-                print(ind_str, "All values are nan")
-            print(ind_str, node.values)
+                debug_print(ind_str, "All values are nan")
+            debug_print(ind_str, node.values)
             raise ValueError("Nan values found in children of action node")
     else:
         # This is a chance node
@@ -239,9 +249,9 @@ def bayesian_update(r: np.ndarray, action_i, strategy: np.ndarray):
     prob_act_given_state = strategy[:, action_i]  # (h, )
     prob_act = r @ prob_act_given_state  # (h, ) @ (h, ) = (1, )
     if prob_act == 0:
-        print("r", r)
-        print("prob_act_given_state", prob_act_given_state)
-        print("prob_act_given_state.sum()", prob_act_given_state.sum())
+        debug_print("r", r)
+        debug_print("prob_act_given_state", prob_act_given_state)
+        debug_print("prob_act_given_state.sum()", prob_act_given_state.sum())
         raise Exception("NBNBNBNBNBNNB: Zero probability of taking this action")
     return (prob_act_given_state * r) / prob_act
 

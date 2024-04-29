@@ -4,10 +4,16 @@ from StateNode import StateNode
 from helpers import get_random_bet
 from resolver import resolve
 import numpy as np
-from cpp_poker.cpp_poker import Hand, Oracle
+from cpp_poker.cpp_poker import Hand, Oracle, CardCollection
 from datetime import datetime
 
-def generate_data_point(stage: State.StageType, end_stage: State.StageType, stage_of_stage=None):
+
+def generate_data_point(
+    stage: State.StageType,
+    end_stage: State.StageType,
+    stage_of_stage=None,
+    versions_of_ranges=5,
+):
     """
     Generate training data for a given stage.
 
@@ -116,25 +122,39 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
         return generate_data_point(stage, end_stage, stage_of_stage)
     if state.sub_stage != stage_of_stage:
         raise ValueError("Wrong state setup, expected sub_stage to be", stage_of_stage)
-    rP = np.random.rand(len(Hand.COMBINATIONS))
-    rP /= rP.sum()
-    rO = np.random.rand(len(Hand.COMBINATIONS))
-    rO /= rO.sum()
-    ranges = [rP, rO]
-    print("Generating data point for state:")
-    print(state.get_cli_repr())
-    print("Stage:", stage)
-    print("Stage of stage:", stage_of_stage)
-    action, child_state, updated_ranges, df_row = resolve(
-        state,
-        ranges,
-        end_stage,
-        end_depth=100,  # Not used as end_stage is used instead
-        max_successors_at_action_nodes=3,
-        max_successors_at_chance_nodes=100,
-        max_simulations=1000,
-    )
-    return df_row
+    rows = []
+    root: StateNode = None
+    table = CardCollection(state.public_cards)
+    impossible_ranges = np.zeros(len(Hand.COMBINATIONS))
+    for h, hand in enumerate(Hand.COMBINATIONS):
+        if hand.intersects(table):
+            impossible_ranges[h] = 1
+    for i in range(versions_of_ranges):
+        # Generate random ranges
+        rP = np.random.rand(len(Hand.COMBINATIONS))
+        rO = np.random.rand(len(Hand.COMBINATIONS))
+        # Remove impossible hands
+        rP *= 1 - impossible_ranges
+        rO *= 1 - impossible_ranges
+        # Make ranges in later iterations more extreme
+        rP = rP ** (i + 1)
+        rO = rO ** (i + 1)
+        # Normalize ranges
+        rP /= rP.sum()
+        rO /= rO.sum()
+        ranges = [rP, rO]
+        action, child_state, updated_ranges, root = resolve(
+            state,
+            ranges,
+            end_stage,
+            end_depth=100,  # Not used as end_stage is used instead
+            max_successors_at_action_nodes=3,
+            max_successors_at_chance_nodes=100,
+            max_simulations=1000,
+            cached_root=root,
+        )
+        rows.append(root.to_df_row(ranges, 0))
+    return rows
 
 
 def save_df(data, fname: str):
@@ -143,7 +163,10 @@ def save_df(data, fname: str):
 
 
 def generate_training_data(
-    stage: State.StageType, end_stage: State.StageType, n_points: int, stage_of_stage=None
+    stage: State.StageType,
+    end_stage: State.StageType,
+    n_points: int,
+    stage_of_stage=None,
 ):
     """
     Generate training data for a given stage.
@@ -158,7 +181,7 @@ def generate_training_data(
     )
     for i in range(n_points):
         print("Generating data point", i, "of", n_points)
-        data.append(generate_data_point(stage, end_stage, stage_of_stage))
+        data += generate_data_point(stage, end_stage, stage_of_stage)
         save_df(data, fname)
     save_df(data, fname)
 

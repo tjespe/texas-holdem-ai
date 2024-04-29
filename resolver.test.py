@@ -103,7 +103,7 @@ class FullResolverTest(unittest.TestCase):
         hand_index = 500
         ranges = generate_uniform_ranges(example_turn_state)
         print(ranges)
-        action, child_state, updated_ranges = resolve(
+        action, child_state, updated_ranges, cached_root = resolve(
             example_turn_state,
             ranges,
             end_stage="terminal",

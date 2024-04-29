@@ -105,6 +105,16 @@ class StateNode:
             else:
                 self._utility_matrix = self.parent._utility_matrix
 
+    def reset_values(self):
+        self.values = np.zeros((self.state.n_players, len(Hand.COMBINATIONS)))
+        if self.strategy is not None:
+            self.strategy = np.ones_like(self.strategy)
+            self.strategy /= self.strategy.sum(axis=1)[:, None]
+        if self.regrets is not None:
+            self.regrets = np.zeros_like(self.regrets)
+        for _, child in self.children:
+            child.reset_values()
+
     def get_utility_matrix(self, perspective: int):
         two_players_active = sum(self.state.player_is_active) >= 2
         if not two_players_active:
@@ -203,8 +213,8 @@ class StateNode:
         headers.append("stage")
         return headers
     
-    def draw_tree(self, depth=0):
+    def print_tree(self, depth=0):
         print("  " * depth, self.state.stage, self.state.sub_stage)
         for action, child in self.children:
             print("  " * depth, action)
-            child.draw_tree(depth + 1)
+            child.print_tree(depth + 1)

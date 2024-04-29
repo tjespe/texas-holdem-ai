@@ -56,7 +56,7 @@ class ResolverPlayer(Player):
     def play(self, state) -> int:
         if self.ranges is None:
             self.ranges = generate_uniform_ranges(state)
-        action, child_state, self.ranges, df_row = resolve(
+        action, child_state, self.ranges, cached_root = resolve(
             state,
             self.ranges,
             end_stage=self.end_stage,
@@ -67,7 +67,7 @@ class ResolverPlayer(Player):
             max_simulations=self.simulations,
             hand_index=self.hand_index,
         )
-        self.cached_rows.append(df_row)
+        # self.cached_rows.append(cached_root.to_df_row(self.ranges, 0))
         # df = pd.DataFrame(self.cached_rows, columns=StateNode.get_df_headers())
         # df.to_parquet(self.cache_fname)
         return action
