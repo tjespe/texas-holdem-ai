@@ -157,4 +157,4 @@ def generate_training_data(
 
 
 if __name__ == "__main__":
-    generate_training_data("river", "terminal", 1000, stage_of_stage="first_bet")
+    generate_training_data("river", "terminal", 1000)
