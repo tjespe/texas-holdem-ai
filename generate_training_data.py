@@ -1,6 +1,7 @@
 import pandas as pd
 from State import State
 from StateNode import StateNode
+from helpers import get_random_bet
 from resolver import resolve
 import numpy as np
 from cpp_poker.cpp_poker import Hand, Oracle
@@ -57,7 +58,7 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
                 (True, True),  # Both players were active before the raise
             ),
         )
-        raised_by = np.random.randint(0, max_raised_by)
+        raised_by = get_random_bet(0, max_raised_by, big_blind)
         bet_in_stage = (0, raised_by)
         bet_in_game = (pot // 2, pot // 2 + raised_by)
     elif stage_of_stage == "respond_to_raise":
@@ -73,7 +74,7 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
                 (True, True),  # Both players were active before the raise
             ),
         )
-        initial_bet = np.random.randint(0, max_initial_bet)
+        initial_bet = get_random_bet(0, max_initial_bet, big_blind)
         bet_in_stage = (initial_bet, initial_bet)
         bet_in_game = (pot // 2 + initial_bet, pot // 2 + initial_bet)
         max_opp_raise = min(
@@ -92,7 +93,7 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
         if big_blind >= max_opp_raise:
             opp_raise = 0
         else:
-            opp_raise = np.random.randint(big_blind, max_opp_raise)
+            opp_raise = get_random_bet(big_blind, max_opp_raise, big_blind)
         bet_in_game = (pot // 2 + initial_bet, pot // 2 + initial_bet + opp_raise)
         bet_in_stage = (initial_bet, initial_bet + opp_raise)
     state = State(

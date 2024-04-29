@@ -1,6 +1,6 @@
 from cpp_poker.cpp_poker import Card, Oracle, CardCollection
 from PlayerABC import Player
-from players.RandomPlayer import RandomPlayer
+from helpers import get_random_bet_for_state
 from State import State
 import numpy as np
 from math import factorial
@@ -79,7 +79,7 @@ def generate_successor_states(
     state: State,
     max_successors_at_action_nodes=5,
     max_successors_at_chance_nodes=100,
-    betting_fn: Callable[["State"], int] = RandomPlayer().play,
+    betting_fn: Callable[["State"], int] = get_random_bet_for_state,
 ) -> list[tuple[int, "State"]]:
     """
     Generate possible successor states from the given state.
