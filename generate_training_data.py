@@ -36,10 +36,8 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
     if stage_of_stage is None:
         stage_of_stage = np.random.choice(
             ["first_bet", "respond", "respond_to_raise"],
-            # Rarely first bet as it is more expensive, and rarely respond to raise
-            # because it does not consider the actions of the other player so the
-            # data is not as valuable (despite being cheap).
-            p=[0.05, 0.65, 0.3],
+            # Rarely first bet as it is more expensive
+            p=[0.05, 0.5, 0.45],
         )
     if stage_of_stage == "first_bet":
         bet_in_stage = (0, 0)
@@ -132,7 +130,7 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
         ranges,
         end_stage,
         end_depth=100,  # Not used as end_stage is used instead
-        max_successors_at_action_nodes=5,
+        max_successors_at_action_nodes=3,
         max_successors_at_chance_nodes=100,
         max_simulations=1000,
     )
