@@ -132,10 +132,10 @@ def resolve(
     strategies_per_hand = np.mean(strategies, axis=0)
     if hand_index:
         strategy = strategies_per_hand[hand_index]
-        debug_print("Strategy for hand:", strategy)
+        print("Strategy for hand:", strategy)
     else:
         strategy = ranges[state.current_player_i] @ strategies_per_hand
-        debug_print("Strategy given range:", strategy)
+        print("Strategy given range:", strategy)
     action_i = np.random.choice(len(strategy), p=strategy)
     action, child_state = root.children[action_i]
     updated_ranges = [r.copy() for r in ranges]

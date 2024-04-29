@@ -137,12 +137,14 @@ def generate_data_point(
         rP *= 1 - impossible_ranges
         rO *= 1 - impossible_ranges
         # Make ranges in later iterations more extreme
-        rP = rP ** (i + 1)
-        rO = rO ** (i + 1)
+        rP = rP ** (10 * i + 1)
+        rO = rO ** (10 * i + 1)
         # Normalize ranges
         rP /= rP.sum()
         rO /= rO.sum()
         ranges = [rP, rO]
+        print("P1 range", rP)
+        print("Opponent range", rO)
         action, child_state, updated_ranges, root = resolve(
             state,
             ranges,
