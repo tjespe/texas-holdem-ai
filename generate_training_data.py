@@ -42,7 +42,6 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
         bet_in_stage = (0, 0)
         player_has_played = (False, False)
         first_better_i = 0  # The first better is the player
-        convergence_threshold = 200 # Very hard to get this to converge
     elif stage_of_stage == "respond":
         player_has_played = (False, True)  # The opponent has played
         first_better_i = 1  # The first better was the opponent
@@ -59,7 +58,6 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
         raised_by = np.random.randint(0, max_raised_by)
         bet_in_stage = (0, raised_by)
         bet_in_game = (pot // 2, pot // 2 + raised_by)
-        convergence_threshold = 100 # Pretty hard to get this to converge
     elif stage_of_stage == "respond_to_raise":
         player_has_played = (True, True)
         first_better_i = 0
@@ -89,10 +87,12 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
                 (True, True),  # Both players were active before the raise
             ),
         )
-        opp_raise = np.random.randint(big_blind, max_opp_raise)
+        if big_blind >= max_opp_raise:
+            opp_raise = 0
+        else:
+            opp_raise = np.random.randint(big_blind, max_opp_raise)
         bet_in_game = (pot // 2 + initial_bet, pot // 2 + initial_bet + opp_raise)
         bet_in_stage = (initial_bet, initial_bet + opp_raise)
-        convergence_threshold = 1 # This converges easily
     state = State(
         public_cards=tuple(np.random.choice(52, n_cards, replace=False)),
         player_piles=player_piles,
@@ -126,7 +126,6 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
         max_successors_at_action_nodes=5,
         max_successors_at_chance_nodes=100,
         max_simulations=1000,
-        strat_convergence_threshold=convergence_threshold,
     )
     return df_row
 
@@ -158,4 +157,4 @@ def generate_training_data(
 
 
 if __name__ == "__main__":
-    generate_training_data("river", "terminal", 1000, stage_of_stage="respond_to_raise")
+    generate_training_data("river", "terminal", 1000, stage_of_stage="first_bet")

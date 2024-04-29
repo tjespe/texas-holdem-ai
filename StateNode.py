@@ -48,7 +48,7 @@ class StateNode:
         self.deck = deck
         self.state = state
         self.parent = parent
-        self.values = np.full((state.n_players, len(Hand.COMBINATIONS)), np.nan)
+        self.values = np.zeros((state.n_players, len(Hand.COMBINATIONS)))
         self.children = []
         self.strategy = None
         self.regrets = None
@@ -86,10 +86,6 @@ class StateNode:
             ]
             self.strategy = np.ones((len(Hand.COMBINATIONS), len(self.children))) / len(
                 self.children
-            )
-            print(
-                "Initial strategy:",
-                self.strategy,
             )
             self.regrets = np.zeros((len(Hand.COMBINATIONS), len(self.children)))
 

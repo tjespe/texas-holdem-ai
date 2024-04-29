@@ -1,3 +1,4 @@
+import sys
 from typing import Union
 import numpy as np
 import pandas as pd
@@ -6,6 +7,8 @@ from StateNode import StateNode
 from cpp_poker.cpp_poker import Hand, CardCollection
 from neural_net import to_X_and_Y
 from datetime import datetime
+
+np.set_printoptions(threshold=50)
 
 
 def generate_uniform_ranges(state: State):
@@ -26,8 +29,9 @@ def resolve(
     max_successors_at_action_nodes=5,
     max_successors_at_chance_nodes=100,
     max_simulations=10_000,
-    strat_convergence_threshold=1,
-    convergence_lookback=20,
+    min_simulations=30,
+    strat_convergence_threshold=0.02,
+    patience=10,
     hand_index=None,
 ):
     """
@@ -52,24 +56,37 @@ def resolve(
     )
     value_vectors = []
     strategies = []
+    print("Possible actions:")
+    for i, (action, child) in enumerate(root.children):
+        print(i, action)
+    errors = []
     for t in range(max_simulations):
-        subtree_traversal_rollout(
-            root, ranges, state.current_player_i, print_values=True
-        )
-        update_strategy(root, print_details=True)
-        print("Possible actions:")
-        for i, (action, child) in enumerate(root.children):
-            print(i, action)
-        print("Adding strategy to cache", root.strategy)
+        subtree_traversal_rollout(root, ranges, state.current_player_i)
+        update_strategy(root)
+        if t % 10 == 0:
+            # print("Current strategy", root.strategy)
+            pass
         strategies.append(root.strategy)
-        print("Adding values to cache", root.values)
         value_vectors.append(root.values)
-        strat_diff = np.abs(
-            root.strategy - np.mean(strategies[-convergence_lookback:], axis=0)
-        ).sum()
-        print(t, "Strat diff:", strat_diff)
-        if strat_diff < strat_convergence_threshold and t > 10:
-            break
+        if t > min_simulations:
+            strat_diff = np.abs(root.strategy - np.mean(strategies, axis=0)).sum()
+            percentage_off = strat_diff / root.strategy.sum()
+            errors.append(percentage_off)
+            print("Iteration:", t, "Strat diff:", strat_diff, "Percentage off:", percentage_off)
+            if percentage_off < strat_convergence_threshold:
+                print(
+                    "Breaking because the percentage error is less than",
+                    strat_convergence_threshold,
+                )
+                break
+            if len(errors) > patience:
+                if np.all(np.diff(errors[-patience:]) > 0):
+                    print("Breaking because the error has increased for", patience, "iterations")
+                    print("Latest errors:", errors[-patience:])
+                    print("Worsening:", np.diff(errors[-patience:]))
+                    break
+        else:
+            print("Iteration:", t, end="\r")
     if t == max_simulations - 1:
         print("Warning: CFR did not converge")
     strategies_per_hand = np.mean(strategies, axis=0)
@@ -95,7 +112,7 @@ def resolve(
 
 
 def subtree_traversal_rollout(
-    node: StateNode, ranges: list[np.ndarray], perspective: int, print_values=False
+    node: StateNode, ranges: list[np.ndarray], perspective: int
 ):
     """
     Recursively traverse the tree, updating the values and strategies of the nodes.
@@ -111,8 +128,6 @@ def subtree_traversal_rollout(
         payoff *= node.state.pot / node.state.game_size
         node.values[:] = -payoff
         node.values[perspective] = payoff
-        if print_values:
-            print("Set values for terminal state to", node.values)
         if np.isnan(node.values).any():
             print("Payoff", payoff)
             print("Ranges", ranges)
@@ -122,48 +137,30 @@ def subtree_traversal_rollout(
     elif not node.state.all_players_are_done:
         # Player P is the acting player
         P = node.state.current_player_i
-        values_per_child = np.full(
-            (len(node.children), node.state.n_players, len(Hand.COMBINATIONS)), np.nan
-        )
-        for action_i, (action, child) in enumerate(node.children):
-            child_ranges = [r.copy() for r in ranges]
-            child_ranges[P] = bayesian_update(ranges[P], action_i, node.strategy)
-            subtree_traversal_rollout(child, child_ranges, perspective)
-            values_per_child[action_i] = child.values  # (p, h)
-        # node.strategy has shape (h, a), add an axis to make it (h, a, 1) for broadcasting
-        strategy_expanded = node.strategy[:, :, np.newaxis]
-
-        # values_per_child has shape (a, p, h), transpose it to (h, a, p) to align for multiplication
-        values_per_child_transposed = np.transpose(values_per_child, (2, 0, 1))
-
-        # Multiply, which will broadcast strategy_expanded across the p dimension
-        # After multiplication, sum over the action axis (axis=1) to collapse the actions
-        # The resulting shape will be (h, p)
-        expected_values = np.sum(
-            strategy_expanded * values_per_child_transposed, axis=1
-        )
-
-        # The final output shape (p, h) aligns with the pseudo code's structure where
-        # there's no direct multiplication with the range at this stage.
-        node.values = expected_values.T
-        if np.isnan(node.values).any():
-            print("Values per child", values_per_child)
-            raise ValueError("Nan values found in child of player action node")
-        if print_values:
-            print("Set values for player action state to", node.values)
-    else:
-        # This is a chance node
-        values_per_child = np.zeros(
-            (len(node.children), node.state.n_players, len(Hand.COMBINATIONS))
+        O = next(
+            i
+            for i in range(node.state.n_players)
+            if i != P and node.state.player_is_active[i]
         )
         for i, (action, child) in enumerate(node.children):
-            subtree_traversal_rollout(child, ranges, perspective)
-            values_per_child[i] = child.values
-        node.values = values_per_child.mean(axis=0)
-        if print_values:
-            print("Set values for chance state to", node.values)
+            child_ranges = ranges.copy()
+            child_ranges[P] = bayesian_update(child_ranges[P], i, node.strategy)
+            subtree_traversal_rollout(child, child_ranges, perspective)
+            for h in range(len(Hand.COMBINATIONS)):
+                node.values[P, h] += child.values[P, h] * node.strategy[h, i]
+                node.values[O, h] += child.values[O, h] * node.strategy[h, i]
         if np.isnan(node.values).any():
-            print("Values per child", values_per_child)
+            if np.isnan(node.values).all():
+                print("All values are nan")
+            print(node.values)
+            raise ValueError("Nan values found in children of action node")
+    else:
+        # This is a chance node
+        for i, (action, child) in enumerate(node.children):
+            subtree_traversal_rollout(child, ranges, perspective)
+            for h in range(len(Hand.COMBINATIONS)):
+                node.values[:, h] += child.values[:, h] / len(node.children)
+        if np.isnan(node.values).any():
             raise ValueError("Nan values found in children of chacne node")
 
 
@@ -187,7 +184,7 @@ def bayesian_update(r: np.ndarray, action_i, strategy: np.ndarray):
         print("r", r)
         print("prob_act_given_state", prob_act_given_state)
         print("prob_act_given_state.sum()", prob_act_given_state.sum())
-        print("NBNBNBNBNBNNB: Zero probability of taking this action")
+        raise Exception("NBNBNBNBNBNNB: Zero probability of taking this action")
     return (prob_act_given_state * r) / prob_act
 
 
@@ -201,7 +198,6 @@ def update_strategy(node: StateNode, print_details=False):
         # There is no acting player
         return
     P = node.state.current_player_i
-    prev_regrets = node.regrets.copy()
     node.regrets += np.array(
         # (a, h)
         [
@@ -212,41 +208,12 @@ def update_strategy(node: StateNode, print_details=False):
     ).T  # (h, a)
     positive_regrets = np.maximum(node.regrets, 0)  # (h, a)
     # Make regret_sums a (h, a) matrix where each row is the sum of the positive regrets for that hand
-    regret_sums = positive_regrets.sum(axis=1).repeat(node.regrets.shape[1]).reshape(
-        node.regrets.shape
-    )
-    print("Regret sums", regret_sums)
-    print("Regret sums shape", regret_sums.shape)
-    print("Positive regrets shape", positive_regrets.shape)
-    if positive_regrets[:, 0].sum() == 0:
-        fold_action, fold_child = node.children[0]
-        assert fold_action == 0
-        print("∑∑∑∑∑∑∑∑∑∑∑∑ DETECTED 0 REGRETS FOR FOLDING ∑∑∑∑∑∑∑∑∑∑∑∑∑")
-        print("Values at node were", node.values)
-        print("Min value of hands at node", node.values[P].min())
-        print("Mean value of hands at node", node.values[P].mean())
-        print("Value at folding node", fold_child.values[P])
-        diff = fold_child.values[P] - node.values[P]
-        print("Difference in value", diff)
-        print("Max diff", diff.max())
-        print("Min diff", diff.min())
-        prev_pos_regret_folding_hands = np.argwhere(prev_regrets[:, 0] > 0)
-        print("Previously positive regrets of folding at hands", prev_regrets[prev_pos_regret_folding_hands, 0])
-        print("Delta at those hands", diff[prev_pos_regret_folding_hands].flatten())
-        print("Regrets for those hands now", node.regrets[prev_pos_regret_folding_hands, 0])
-        print("Positive regrets:", positive_regrets)
-        print("Regret sums:", regret_sums)
-        print("Strategy was", node.strategy)
-        print("Player has played?", node.state.player_has_played)
-        print("State was", node.state.get_cli_repr())
+    regret_sums = positive_regrets.sum(axis=1, keepdims=True)  # (h, 1)
     node.strategy = np.where(
-        (regret_sums > 0) & (positive_regrets > 0),
+        regret_sums > 0,
         positive_regrets / regret_sums,
         node.strategy,
     )
     node.strategy /= node.strategy.sum(axis=1, keepdims=True)
-    print("Updating parts of strategy where regret sums are positive, i.e.", regret_sums > 0)
     if (node.strategy[:, 0] == 0).all():
         raise Exception("The probability of folding is 0 regardless of hand")
-    if print_details:
-        print("Updated strategy to", node.strategy)
