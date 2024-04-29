@@ -36,7 +36,7 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
         stage_of_stage = np.random.choice(
             ["first_bet", "respond", "respond_to_raise"],
             # More often respond to raise because that is cheaper to simulate
-            p=[0.05, 0.1, 0.85],
+            p=[0.15, 0.3, 0.55],
         )
     if stage_of_stage == "first_bet":
         bet_in_stage = (0, 0)
@@ -107,8 +107,14 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
     if state.current_player_i != 0:
         raise ValueError("Wrong state setup, expected current player to be 0.")
     if state.all_players_are_done:
+        # This can happen sometimes if the generated bet sizes and piles lead to
+        # no more possible actions. In that case, we just generate a new data point.
+        print("WARNING: Wrong state setup, expected not all players to be done.")
         print(state.get_cli_repr())
-        raise ValueError("Wrong state setup, expected not all players to be done.")
+        print("Regenerating data point.")
+        return generate_data_point(stage, end_stage, stage_of_stage)
+    if state.sub_stage != stage_of_stage:
+        raise ValueError("Wrong state setup, expected sub_stage to be", stage_of_stage)
     rP = np.random.rand(len(Hand.COMBINATIONS))
     rP /= rP.sum()
     rO = np.random.rand(len(Hand.COMBINATIONS))

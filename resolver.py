@@ -29,7 +29,7 @@ def resolve(
     max_successors_at_action_nodes=5,
     max_successors_at_chance_nodes=100,
     max_simulations=10_000,
-    min_simulations=30,
+    min_simulations=1,
     strat_convergence_threshold=0.02,
     patience=10,
     hand_index=None,
@@ -68,7 +68,7 @@ def resolve(
             pass
         strategies.append(root.strategy)
         value_vectors.append(root.values)
-        if t > min_simulations:
+        if t >= min_simulations:
             strat_diff = np.abs(root.strategy - np.mean(strategies, axis=0)).sum()
             percentage_off = strat_diff / root.strategy.sum()
             errors.append(percentage_off)
@@ -102,6 +102,9 @@ def resolve(
         updated_ranges[state.current_player_i], action_i, strategies_per_hand
     )
     mean_values = np.array(value_vectors).mean(axis=0)
+    print("Mean values (target var for NN):", mean_values)
+    print("Max of mean values:", mean_values.max())
+    print("Min of mean values:", mean_values.min())
     root.values = mean_values
     return (
         action,
@@ -142,13 +145,14 @@ def subtree_traversal_rollout(
             for i in range(node.state.n_players)
             if i != P and node.state.player_is_active[i]
         )
+        node.values = np.zeros((node.state.n_players, len(Hand.COMBINATIONS)))
         for i, (action, child) in enumerate(node.children):
             child_ranges = ranges.copy()
             child_ranges[P] = bayesian_update(child_ranges[P], i, node.strategy)
             subtree_traversal_rollout(child, child_ranges, perspective)
             for h in range(len(Hand.COMBINATIONS)):
-                node.values[P, h] += child.values[P, h] * node.strategy[h, i]
-                node.values[O, h] += child.values[O, h] * node.strategy[h, i]
+                node.values[P, h] = child.values[P, h] * node.strategy[h, i]
+                node.values[O, h] = child.values[O, h] * node.strategy[h, i]
         if np.isnan(node.values).any():
             if np.isnan(node.values).all():
                 print("All values are nan")

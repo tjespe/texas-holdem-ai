@@ -84,6 +84,12 @@ class State:
         Literal["terminal"],
     ]
 
+    SubStageType = Union[
+        Literal["first_bet"],
+        Literal["respond"],
+        Literal["respond_to_raise"],
+    ]
+
     @property
     def stage(self) -> StageType:
         if self.is_terminal:
@@ -97,6 +103,16 @@ class State:
         if len(self.public_cards) == 5:
             return "river"
         raise ValueError("Invalid number of public cards")
+    
+    @property
+    def sub_stage(self) -> SubStageType:
+        if sum(self.player_has_played) == 0:
+            return "first_bet"
+        if not self.player_has_played[self.current_player_i]:
+            return "respond"
+        if self.player_has_played[self.current_player_i]:
+            return "respond_to_raise"
+        raise ValueError("Invalid sub stage")
 
     @property
     def pot(self):
