@@ -87,12 +87,37 @@ class StateNode:
             self.regrets = np.zeros((len(Hand.COMBINATIONS), len(self.children)))
 
     def _propagate_util_matrix_cache(self):
-        if self.parent is not None and self.parent.state.public_cards == self.state.public_cards:
-            if self._utility_matrix is not None:
-                self.parent._utility_matrix = self._utility_matrix
-                self.parent._propagate_util_matrix_cache()
+        if self._utility_matrix is not None:
+            if self.parent is not None and self.parent.state.public_cards == self.state.public_cards:
+                if self.parent._utility_matrix is None:
+                    # "Parent has no util, propagating upwards"
+                    self.parent._utility_matrix = self._utility_matrix
+                    self.parent._propagate_util_matrix_cache()
+                else:
+                    # "Both parent and child have util, not propagating further"
+                    pass
             else:
+                # "Parent and child public cards differ, not propagating"
+                pass
+            for _, child in self.children:
+                if child._utility_matrix is None:
+                    # "Child has no util, propagating downwards"
+                    child._utility_matrix = self._utility_matrix
+                    child._propagate_util_matrix_cache()
+        elif self.parent and self.parent._utility_matrix is not None:
+            # "Parent has util, considering propagating downwards"
+            if self.parent.state.public_cards == self.state.public_cards:
+                # "Parent cards matched, propagating downwards"
                 self._utility_matrix = self.parent._utility_matrix
+                for _, child in self.children:
+                    child._utility_matrix = self._utility_matrix
+                    child._propagate_util_matrix_cache()
+            else:
+                # "Parent cards didn't match, not propagating"
+                pass
+        else:
+            # "Neither parent nor child have util, not propagating"
+            pass
 
     def reset_values(self):
         self.values = np.zeros((self.state.n_players, len(Hand.COMBINATIONS)))
