@@ -35,8 +35,10 @@ def generate_data_point(stage: State.StageType, end_stage: State.StageType, stag
     if stage_of_stage is None:
         stage_of_stage = np.random.choice(
             ["first_bet", "respond", "respond_to_raise"],
-            # More often respond to raise because that is cheaper to simulate
-            p=[0.15, 0.3, 0.55],
+            # Rarely first bet as it is more expensive, and rarely respond to raise
+            # because it does not consider the actions of the other player so the
+            # data is not as valuable (despite being cheap).
+            p=[0.05, 0.65, 0.3],
         )
     if stage_of_stage == "first_bet":
         bet_in_stage = (0, 0)
