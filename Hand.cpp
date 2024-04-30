@@ -4,6 +4,8 @@ std::vector<CardCollection> Hand::COMBINATIONS = Hand::generate_combinations();
 
 std::vector<CardCollection> Hand::generate_combinations()
 {
+    // NB: This method must be deterministic, and cannot be changed without
+    // invalidating all training data for the neural network.
     std::vector<CardCollection> combinations;
     std::bitset<52> cards;
     for (int i = 0; i < 52; ++i)
@@ -19,6 +21,21 @@ std::vector<CardCollection> Hand::generate_combinations()
     }
     return combinations;
 }
+
+std::map<int, std::vector<int>> Hand::HANDS_WITH_CARD = []() {
+    std::map<int, std::vector<int>> hands_with_card;
+    for (int i = 0; i < 52; ++i)
+    {
+        for (int j = 0; j < Hand::COMBINATIONS.size(); ++j)
+        {
+            if (Hand(j).get_cards().has(i))
+            {
+                hands_with_card[i].push_back(j);
+            }
+        }
+    }
+    return hands_with_card;
+}();
 
 Hand::Hand()
 {
