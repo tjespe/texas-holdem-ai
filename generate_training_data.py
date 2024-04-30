@@ -12,7 +12,7 @@ def generate_data_point(
     stage: State.StageType,
     end_stage: State.StageType,
     stage_of_stage=None,
-    versions_of_ranges=4,
+    versions_of_ranges=1,
 ):
     """
     Generate training data for a given stage.
