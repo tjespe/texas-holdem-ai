@@ -1,10 +1,13 @@
+import os
 import numpy as np
 import pandas as pd
 from Deck import Deck
 from cpp_poker.cpp_poker import Hand, Oracle, CardCollection
 from State import State
 from state_management import generate_successor_states
+from datetime import datetime
 
+run_start = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 class StateNode:
     """
@@ -42,7 +45,7 @@ class StateNode:
     ):
         """
         Args:
-        
+
             state (State): The state to create a node for
             end_stage (State.StageType): The stage to stop creating child nodes at (ignored if None, takes precedence over max_depth)
             end_sub_stage (State.SubStageType): The sub-stage to stop creating child nodes at (ignored if None, takes precedence over max_depth)
@@ -88,7 +91,10 @@ class StateNode:
 
     def _propagate_util_matrix_cache(self):
         if self._utility_matrix is not None:
-            if self.parent is not None and self.parent.state.public_cards == self.state.public_cards:
+            if (
+                self.parent is not None
+                and self.parent.state.public_cards == self.state.public_cards
+            ):
                 if self.parent._utility_matrix is None:
                     # "Parent has no util, propagating upwards"
                     self.parent._utility_matrix = self._utility_matrix
@@ -200,6 +206,16 @@ class StateNode:
             self.state.pot,
             self.state.game_size,
             self.state.stage,
+            # Use name of computer or user, concatenated with time stamp of start of run
+            str(
+                os.getenv("COMPUTERNAME")
+                or os.getenv("USER")
+                or os.getenv("USERNAME")
+                or os.getenv("HOSTNAME")
+                or os.uname().nodename
+            )
+            + "_"
+            + run_start,
         ]
         arr = [item for array in arrays for item in array] + other_props
         return arr
@@ -225,8 +241,9 @@ class StateNode:
         headers.append("pot")
         headers.append("game_size")
         headers.append("stage")
+        headers.append("origin")
         return headers
-    
+
     def print_tree(self, depth=0):
         print("  " * depth, self.state.stage, self.state.sub_stage)
         for action, child in self.children:

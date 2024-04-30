@@ -63,7 +63,7 @@ def preprocess_data(
 ):
     scale_bets(df)
     scale_ranges(df, mean_training_range_val, std_training_range_val)
-    df.drop(columns=["game_size", "stage"] + value_columns, inplace=True)
+    df.drop(columns=["game_size", "stage", "origin"] + value_columns, inplace=True)
     encode_bools(df)
 
 

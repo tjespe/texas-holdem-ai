@@ -111,7 +111,8 @@ PYBIND11_MODULE(cpp_poker, m)
         .def("get_cli_repr", &Hand::get_cli_repr)
         .def("str", &Hand::str)
         .def("__eq__", &Hand::operator==)
-        .def_readonly_static("COMBINATIONS", &Hand::COMBINATIONS);
+        .def_readonly_static("COMBINATIONS", &Hand::COMBINATIONS)
+        .def_readonly_static("HANDS_WITH_CARD", &Hand::HANDS_WITH_CARD);
 
     py::class_<HandRank>(m, "HandRank")
         .def_readonly_static("ROYAL_FLUSH", &HandRank::ROYAL_FLUSH)
