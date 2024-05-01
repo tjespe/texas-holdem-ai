@@ -3,7 +3,6 @@
 #include <stdexcept> // For runtime_error
 #include <iterator>  // For std::next
 #include <sstream>
-#include <iostream>
 #include <random>
 
 CardCollection::CardCollection() : cards(0) {}
@@ -528,7 +527,6 @@ int CardCollection::size() const
 
 std::vector<Card> CardCollection::to_vector() const
 {
-    std::cout << "Making vector" << std::endl;
     std::vector<Card> card_vector;
     for (int i = 0; i < 52; ++i)
     {
@@ -537,7 +535,6 @@ std::vector<Card> CardCollection::to_vector() const
             card_vector.push_back(Card(i));
         }
     }
-    std::cout << "Made vector" << std::endl;
     return card_vector;
 }
 

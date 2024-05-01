@@ -6,6 +6,7 @@
 #include "Oracle.hpp"
 #include "TerminalColors.hpp"
 #include "Hand.hpp"
+#include "CheatSheet.hpp"
 
 namespace py = pybind11;
 
@@ -144,17 +145,9 @@ PYBIND11_MODULE(cpp_poker, m)
         .def_readonly_static("DEFAULT", &TerminalColors::DEFAULT)
         .def_readonly_static("FOLDED", &TerminalColors::FOLDED);
 
-    py::class_<Oracle>(m, "Oracle")
-        .def_static("find_winner", &Oracle::find_winner)
-        .def_static("get_max_bet_allowed", &Oracle::get_max_bet_allowed)
-        .def_static("get_winning_probability", &Oracle::get_winning_probability,
-                    py::arg("hand"), py::arg("table"), py::arg("num_players"),
-                    "Get the winning probability of a hand given a table and number of players\n"
-                    ":param hand: A set of integers representing the hand\n"
-                    ":param table: A list of integers representing the table cards\n"
-                    ":param num_players: An integer representing the number of players\n"
-                    ":return: A float representing the winning probability")
-        .def_static("get_winning_probability_n_simulations", &Oracle::get_winning_probability_n_simulations,
+    py::class_<CheatSheet>(m, "CheatSheet")
+        .def_static("save_cache", &CheatSheet::save_cache, "Save the cache to a file")
+        .def_static("get_winning_probability", py::overload_cast<CardCollection &, CardCollection &, int, int>(&CheatSheet::get_winning_probability),
                     py::arg("hand"), py::arg("table"), py::arg("num_players"), py::arg("num_simulations"),
                     "Get the winning probability of a hand given a table and number of players\n"
                     ":param hand: A set of integers representing the hand\n"
@@ -162,6 +155,17 @@ PYBIND11_MODULE(cpp_poker, m)
                     ":param num_players: An integer representing the number of players\n"
                     ":param num_simulations: An integer representing the number of simulations to run\n"
                     ":return: A float representing the winning probability")
+        .def_static("get_winning_probability", py::overload_cast<CardCollection &, CardCollection &, int>(&CheatSheet::get_winning_probability),
+                    py::arg("hand"), py::arg("table"), py::arg("num_players"),
+                    "Get the winning probability of a hand given a table and number of players\n"
+                    ":param hand: A set of integers representing the hand\n"
+                    ":param table: A list of integers representing the table cards\n"
+                    ":param num_players: An integer representing the number of players\n"
+                    ":return: A float representing the winning probability");
+
+    py::class_<Oracle>(m, "Oracle")
+        .def_static("find_winner", &Oracle::find_winner)
+        .def_static("get_max_bet_allowed", &Oracle::get_max_bet_allowed)
         .def_static("generate_utility_matrix", [](const CardCollection &table)
                     {
         auto matrix = Oracle::generate_utility_matrix(table);

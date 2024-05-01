@@ -1,4 +1,4 @@
-from cpp_poker.cpp_poker import Card, Oracle, CardCollection
+from cpp_poker.cpp_poker import CardCollection, CheatSheet
 from PlayerABC import Player
 
 
@@ -19,7 +19,7 @@ class RationalPlayer(Player):
             return 0
         current_bet = state.bet_in_stage[current_player_i]
         call_bet = max(state.bet_in_stage) - current_bet
-        winning_prob = Oracle.get_winning_probability(
+        winning_prob = CheatSheet.get_winning_probability(
             CardCollection(self.hand),
             CardCollection(state.public_cards),
             state.player_is_active.sum(),

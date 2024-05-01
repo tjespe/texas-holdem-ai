@@ -1,7 +1,7 @@
 import unittest
 
 import numpy as np
-from cpp_poker.cpp_poker import Card, Oracle, CardCollection, Hand, HandRank
+from cpp_poker.cpp_poker import Card, Oracle, CardCollection, Hand, HandRank, CheatSheet
 
 
 class HandCheckTestCase(unittest.TestCase):
@@ -450,38 +450,22 @@ class OracleTestCase(unittest.TestCase):
         hand = CardCollection({Card("A", "♦"), Card("A", "♠")})
         table = CardCollection()
         self.assertAlmostEqual(
-            Oracle.get_winning_probability(hand, table, 2), 0.86, delta=0.02
+            CheatSheet.get_winning_probability(hand, table, 2, 100000), 0.86, delta=0.01
         )
 
     def test_get_pre_flop_ace_king_unsuited_win_prob(self):
         hand = CardCollection({Card("A", "♦"), Card("K", "♠")})
         table = CardCollection()
         self.assertAlmostEqual(
-            Oracle.get_winning_probability(hand, table, 2), 0.65, delta=0.02
+            CheatSheet.get_winning_probability(hand, table, 2, 100000), 0.65, delta=0.01
         )
-
-    # def test_suits_do_not_matter(self):
-    #     # Two hands with the same cards but different suits should have the same win
-    #     # probability
-    #     hand1 = (Card("A", "♦").to_index(), Card("K", "♠").to_index())
-    #     hand2 = (Card("A", "♦").to_index(), Card("K", "♥").to_index())
-    #     table = [
-    #         Card("2", "♦").to_index(),
-    #         Card("3", "♦").to_index(),
-    #         Card("4", "♦").to_index(),
-    #     ]
-    #     self.assertEqual(
-    #         Oracle._convert_cards_to_equiv_str(hand1, table),
-    #         Oracle._convert_cards_to_equiv_str(hand2, table),
-    #     )
 
 
 class TestPokerUtilityMatrix(unittest.TestCase):
     def test_single_active_player(self):
         # Terminal state: Only one active player means they win automatically.
         table = CardCollection([5, 18, 32])
-        player_is_active = (True, False)
-        result = np.array(Oracle.generate_utility_matrix(table, player_is_active, 0))
+        result = np.array(Oracle.generate_utility_matrix(table, False))
         # The only player (who is also the perspective) automatically wins, so the utility should be 1
         # for all possible hands, and 0 for all other hands.
         assert result.mean() > 0.7, "Expected utility to be close to 1"
@@ -492,8 +476,7 @@ class TestPokerUtilityMatrix(unittest.TestCase):
     def test_showdown_two_players(self):
         # Terminal state: Showdown between two players
         table = CardCollection([2, 29, 31, 45, 50])
-        player_is_active = (True, True)
-        result = np.array(Oracle.generate_utility_matrix(table, player_is_active, 0))
+        result = np.array(Oracle.generate_utility_matrix(table, True))
         # The exact values depend on the 'find_winner' function logic
         self.assertEqual(
             result.shape,
@@ -504,12 +487,10 @@ class TestPokerUtilityMatrix(unittest.TestCase):
     def test_deck_respect_table(self):
         # Ensure the function respects the remaining deck after the table is dealt
         table = CardCollection([12, 7, 23])
-        player_is_active = (True, True)
-        result = np.array(Oracle.generate_utility_matrix(table, player_is_active, 0))
+        result = np.array(Oracle.generate_utility_matrix(table, True))
         print(result.shape)
         print(result)
         # Check if any part of the result uses cards from the table
-        print("Checking for overlap with table")
         cards_on_hands = CardCollection()
         samples = 100
         np.random.seed(0)
