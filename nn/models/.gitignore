@@ -1,4 +1,2 @@
 *
 !.gitignore
-!model*latest.h5
-!model*latest.json

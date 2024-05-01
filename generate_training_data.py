@@ -191,4 +191,4 @@ def generate_training_data(
 
 
 if __name__ == "__main__":
-    generate_training_data("turn", "river", 50, "first_bet")
+    generate_training_data("turn", "river", 50)
