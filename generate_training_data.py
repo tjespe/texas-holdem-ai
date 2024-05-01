@@ -191,4 +191,4 @@ def generate_training_data(
 
 
 if __name__ == "__main__":
-    generate_training_data("turn", "river", 1000)
+    generate_training_data("flop", "turn", 1000)

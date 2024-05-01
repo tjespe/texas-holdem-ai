@@ -8,15 +8,19 @@ from datetime import datetime
 
 
 class ResolverPlayer(Player):
+    """
+    A player that uses Monte Carlo Tree Search to resolve the game tree down to a
+    certain depth.
+    At the specified depth, the player uses a neural network to estimate the value
+    of the game state.
+    """
     def __init__(
         self,
         name: str = "Resa",
         max_successors_at_action_nodes=5,
         max_successors_at_chance_nodes=50,
         simulations=200,
-        max_depth=100,
-        end_stage="river",
-        end_sub_stage="first_bet",
+        max_depth=3,
     ):
         """
         Args:
@@ -25,8 +29,6 @@ class ResolverPlayer(Player):
             max_successors_at_chance_nodes (int): Max number of successors to consider at chance nodes
             simulations (int): Number of simulations to run
             max_depth (int): Max depth to search before using a Neural Net as a heuristic
-            end_stage (str): Stage to stop searching at before using a Neural Net as a heuristic
-            end_sub_stage (str): Sub-stage to stop searching at before using a Neural Net as a heuristic
         """
         super().__init__()
         self.name = name
@@ -36,8 +38,6 @@ class ResolverPlayer(Player):
         self.max_successors_at_chance_nodes = max_successors_at_chance_nodes
         self.simulations = simulations
         self.max_depth = max_depth
-        self.end_stage = end_stage
-        self.end_sub_stage = end_sub_stage
         self.cache_fname = (
             "nn/dfs/df_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".parquet"
         )
@@ -54,13 +54,14 @@ class ResolverPlayer(Player):
         return self._hand_index
 
     def play(self, state) -> int:
+        if sum(state.player_is_active) > 2:
+            print("The ResolverPlayer only supports heads-up games")
+            return 0
         if self.ranges is None:
             self.ranges = generate_uniform_ranges(state)
         action, child_state, self.ranges, cached_root = resolve(
             state,
             self.ranges,
-            end_stage=self.end_stage,
-            end_sub_stage=self.end_sub_stage,
             end_depth=self.max_depth,
             max_successors_at_action_nodes=self.max_successors_at_action_nodes,
             max_successors_at_chance_nodes=self.max_successors_at_chance_nodes,

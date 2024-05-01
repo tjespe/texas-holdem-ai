@@ -5,13 +5,13 @@ from players.RationalPlayer import RationalPlayer
 from players.ResolverPlayer import ResolverPlayer
 
 
-class BlendedPlayer(Player):
+class MixedPlayer(Player):
     """
     This switches between RandomPlayer and RationalPlayer early in the game,
     but uses ResolverPlayer's strategy from the turn onwards.
     """
     
-    def __init__(self, name: str = "Blaine", random_factor: float = 0.5):
+    def __init__(self, name: str = "Mick", random_factor: float = 0.5):
         super().__init__()
         self.name = name
         self.random_player = RandomPlayer()

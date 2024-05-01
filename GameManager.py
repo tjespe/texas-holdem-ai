@@ -99,15 +99,15 @@ if __name__ == "__main__":
     from players.HumanPlayer import HumanPlayer
     from players.ResolverPlayer import ResolverPlayer
     from players.RationalPlayer import RationalPlayer
-    from players.BlendedPlayer import BlendedPlayer
+    from players.MixedPlayer import MixedPlayer
 
     players = [
         # RandomPlayer(name="Random Randall"),
         # RandomPlayer(name="Random Rhonda"),
-        # HumanPlayer(name="Larnes"),
-        BlendedPlayer(name="Benny the Blended"),
-        RationalPlayer(name="Rational Rasmus"),
-        # ResolverPlayer(name="Resa the Resolver"),
+        HumanPlayer(name="Tord"),
+        MixedPlayer(name="Mixed Mick"),
+        # RationalPlayer(name="Rational Rasmus"),
+        ResolverPlayer(name="Resa the Resolver"),
         # BlendedPlayer(name="Olga the Opponent"),
     ]
     game_manager = GameManager(players)

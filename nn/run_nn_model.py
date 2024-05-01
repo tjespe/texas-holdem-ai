@@ -45,8 +45,7 @@ def load_stage_model(stage: State.StageType):
 
 
 models = {
-    # "preflop": load_stage_model("preflop"),
-    # "flop": load_stage_model("flop"),
+    "flop": load_stage_model("flop"),
     "turn": load_stage_model("turn"),
     "river": load_stage_model("river"),
 }

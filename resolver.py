@@ -177,7 +177,7 @@ def _build_leaf_node_list(
             )
             nodes.extend(child_nodes)
             ranges_list.extend(child_ranges_list)
-        elif not child.state.all_players_are_done:
+        elif not child.state.all_players_are_done and not child.state.is_terminal:
             ranges_list.append(updated_ranges)
             nodes.append(child)
     return nodes, ranges_list
