@@ -49,7 +49,9 @@ PYBIND11_MODULE(cpp_poker, m)
         .def("__lt__", [](const Card &a, const Card &b)
              { return a < b; })
         .def("__gt__", [](const Card &a, const Card &b)
-             { return a > b; });
+             { return a > b; })
+        .def_readonly("rank", &Card::rank)
+        .def_readonly("suit", &Card::suit);
 
     py::class_<CardCollection::Iterator>(m, "Iterator")
         .def("__iter__", [](CardCollection::Iterator &it) -> CardCollection::Iterator &

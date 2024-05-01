@@ -9,6 +9,7 @@ from datetime import datetime
 
 run_start = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
+
 class StateNode:
     """
     Class used by the resolver to store states with children, and relevant info
@@ -36,8 +37,8 @@ class StateNode:
     def __init__(
         self,
         state: State,
-        end_stage: State.StageType,
-        end_sub_stage: State.SubStageType,
+        end_stage: State.StageType = None,
+        end_sub_stage: State.SubStageType = None,
         max_depth: int = 0,
         max_successors_at_action_nodes=5,
         max_successors_at_chance_nodes=100,

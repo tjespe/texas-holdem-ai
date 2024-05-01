@@ -125,17 +125,17 @@ def generate_data_point(
     rows = []
     root: StateNode = None
     table = CardCollection(state.public_cards)
-    impossible_ranges = np.zeros(len(Hand.COMBINATIONS))
+    impossible_hands = np.zeros(len(Hand.COMBINATIONS))
     for h, hand in enumerate(Hand.COMBINATIONS):
         if hand.intersects(table):
-            impossible_ranges[h] = 1
+            impossible_hands[h] = 1
     for i in range(versions_of_ranges):
         # Generate random ranges
         rP = np.random.rand(len(Hand.COMBINATIONS))
         rO = np.random.rand(len(Hand.COMBINATIONS))
         # Remove impossible hands
-        rP *= 1 - impossible_ranges
-        rO *= 1 - impossible_ranges
+        rP *= 1 - impossible_hands
+        rO *= 1 - impossible_hands
         # Make ranges in later iterations more extreme
         rP = rP ** (10 * i + 1)
         rO = rO ** (10 * i + 1)
