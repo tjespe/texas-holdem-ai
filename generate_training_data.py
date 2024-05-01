@@ -154,6 +154,8 @@ def generate_data_point(
             max_successors_at_chance_nodes=100,
             max_simulations=1000,
             cached_root=root,
+            sliding_window=10,
+            strat_convergence_threshold=0.03
         )
         rows.append(root.to_df_row(ranges, 0))
     return rows
@@ -189,4 +191,4 @@ def generate_training_data(
 
 
 if __name__ == "__main__":
-    generate_training_data("river", "terminal", 1000)
+    generate_training_data("turn", "river", 50, "first_bet")

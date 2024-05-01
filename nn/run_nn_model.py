@@ -8,6 +8,7 @@ from State import State
 from StateNode import StateNode
 from keras.models import load_model
 import logging
+from cpp_poker.cpp_poker import Hand
 
 tf.get_logger().setLevel(logging.ERROR)
 
@@ -30,6 +31,7 @@ bool_columns = [
 
 __dir__ = os.path.dirname(__file__)
 MODEL_DIR = os.path.join(__dir__, "models")
+
 
 def load_stage_model(stage: State.StageType):
     model_fname = os.path.join(MODEL_DIR, f"model_{stage}_latest.h5")
@@ -57,8 +59,10 @@ def scale_bets(df: pd.DataFrame):
 def scale_ranges(df, training_mean, training_sd):
     df[range_columns] = (df[range_columns] - training_mean) / training_sd
 
+
 def encode_bools(df: pd.DataFrame):
     df[bool_columns] = df[bool_columns].astype(int)
+
 
 def preprocess_data(
     df: pd.DataFrame, mean_training_range_val: float, std_training_range_val: float
@@ -82,3 +86,44 @@ def estimate_value_vector(
     X = df.values
     prediction = model.predict(X)
     return prediction[0]
+
+def _get_stage(node: StateNode):
+    stage = node.state.stage
+    if stage == "terminal":
+        stage = "river"
+    return stage
+
+def estimate_value_vectors(
+    nodes: list[StateNode], ranges_per_child: list[np.ndarray], perspective: int
+):
+    stages = set([_get_stage(node) for node in nodes])
+    if len(stages) != 1:
+        predictions = np.full((len(nodes), len(Hand.COMBINATIONS)), np.nan)
+        indices_per_stage = {}
+        for i, node in enumerate(nodes):
+            stage = _get_stage(node)
+            if stage not in indices_per_stage:
+                indices_per_stage[stage] = []
+            indices_per_stage[stage].append(i)
+        for stage, indices in indices_per_stage.items():
+            nodes_at_stage = [nodes[i] for i in indices]
+            ranges_at_stage = [ranges_per_child[i] for i in indices]
+            stages_at_stage = set([_get_stage(node) for node in nodes_at_stage])
+            if len(stages_at_stage) != 1:
+                raise ValueError("Nodes at stage have different stages: %s" % stages_at_stage)
+            predictions_at_stage = estimate_value_vectors(nodes_at_stage, ranges_at_stage, perspective)
+            predictions[indices] = predictions_at_stage
+        return predictions
+    stage = nodes[0].state.stage
+    if stage == "terminal":
+        stage = "river"
+    model, meta = models[stage]
+    rows = [
+        node.to_df_row(ranges, perspective)
+        for node, ranges in zip(nodes, ranges_per_child)
+    ]
+    df = pd.DataFrame(rows, columns=StateNode.get_df_headers())
+    preprocess_data(df, meta["mean_training_range_val"], meta["sd_training_range_val"])
+    X = df.values
+    predictions = model.predict(X)
+    return predictions

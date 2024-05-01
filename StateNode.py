@@ -34,6 +34,9 @@ class StateNode:
     # (h, h) The utility of each hand against each other hand
     _utility_matrix: np.ndarray = None
 
+    # Whether the values have been calculated ahead of time (used for optimizing performance)
+    values_calculated_ahead = False
+
     def __init__(
         self,
         state: State,

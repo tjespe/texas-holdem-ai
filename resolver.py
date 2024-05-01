@@ -8,7 +8,7 @@ from cpp_poker.cpp_poker import Hand, CardCollection
 from neural_net import to_X_and_Y
 from datetime import datetime
 
-from nn.run_nn_model import estimate_value_vector
+from nn.run_nn_model import estimate_value_vector, estimate_value_vectors
 
 np.set_printoptions(threshold=50)
 
@@ -21,6 +21,7 @@ def generate_uniform_ranges(state: State):
             r[i] = 0
     r /= r.sum()
     return [r.copy() for _ in range(state.n_players)]
+
 
 def debug_print(*args, **kwargs):
     return
@@ -41,7 +42,8 @@ def resolve(
     strat_convergence_threshold=0.02,
     patience=10,
     hand_index=None,
-    cached_root: StateNode=None
+    cached_root: StateNode = None,
+    sliding_window=None
 ):
     """
     Resolve a state using the CFR algorithm.
@@ -54,6 +56,7 @@ def resolve(
         max_successors: The maximum number of successors to generate for each state.
         max_simulations: The number of simulations to run.
         hand_index: The index of the hand in the Hand.COMBINATIONS list, if known.
+        sliding_window: If this is set, only the last `sliding_window` iterations are used to calculate the strategy.
     """
     debug_print("\n\n@@@@@ STARTING RESOLUTION @@@@@")
     generate_nodes_to = {
@@ -89,7 +92,10 @@ def resolve(
     debug_print("\n---- Root node ----")
     debug_print("| Stage:", root.state.stage)
     debug_print("| Sub stage:", root.state.sub_stage)
+    if sliding_window is None:
+        sliding_window = max_simulations
     for t in range(max_simulations):
+        _precompute_leaf_node_values(root, ranges, state.current_player_i)
         subtree_traversal_rollout(root, ranges, state.current_player_i)
         update_strategy(root)
         if t % 10 == 0:
@@ -98,7 +104,7 @@ def resolve(
         strategies.append(root.strategy)
         value_vectors.append(root.values)
         if t >= min_simulations:
-            strat_diff = np.abs(root.strategy - np.mean(strategies, axis=0)).sum()
+            strat_diff = np.abs(root.strategy - np.mean(strategies[-sliding_window:], axis=0)).sum()
             percentage_off = strat_diff / root.strategy.sum()
             errors.append(percentage_off)
             print(
@@ -129,7 +135,7 @@ def resolve(
             print("Iteration:", t, end="\r")
     if t == max_simulations - 1:
         print("Warning: CFR did not converge")
-    strategies_per_hand = np.mean(strategies, axis=0)
+    strategies_per_hand = np.mean(strategies[-sliding_window:], axis=0)
     if hand_index:
         strategy = strategies_per_hand[hand_index]
         print("Strategy for hand:", strategy)
@@ -154,6 +160,37 @@ def resolve(
         root,
     )
 
+def _build_leaf_node_list(
+    node: StateNode, ranges: list[np.ndarray], perspective: int
+):
+    nodes = []
+    ranges_list = []
+    for i, (action, child) in enumerate(node.children):
+        updated_ranges = ranges.copy()
+        if not node.state.all_players_are_done:
+            updated_ranges[node.state.current_player_i] = bayesian_update(
+                updated_ranges[node.state.current_player_i], i, node.strategy
+            )
+        if child.children:
+            child_nodes, child_ranges_list = _build_leaf_node_list(
+                child, updated_ranges, perspective
+            )
+            nodes.extend(child_nodes)
+            ranges_list.extend(child_ranges_list)
+        elif not child.state.all_players_are_done:
+            ranges_list.append(updated_ranges)
+            nodes.append(child)
+    return nodes, ranges_list
+
+def _precompute_leaf_node_values(root: StateNode, ranges: list[np.ndarray], perspective: int):
+    leaf_nodes, ranges_list = _build_leaf_node_list(root, ranges, perspective)
+    payoff_vectors = estimate_value_vectors(leaf_nodes, ranges_list, perspective)
+    for i, node in enumerate(leaf_nodes):
+        payoff = payoff_vectors[i]
+        payoff *= node.state.pot / node.state.game_size
+        node.values[:] = -payoff
+        node.values[perspective] = payoff
+        node.values_calculated_ahead = True
 
 def subtree_traversal_rollout(
     node: StateNode, ranges: list[np.ndarray], perspective: int, indentation=0
@@ -170,6 +207,8 @@ def subtree_traversal_rollout(
     debug_print("|" + "----" * indentation, "Traversing node:")
     debug_print(ind_str, "Stage:", node.state.stage)
     debug_print(ind_str, "Sub stage:", node.state.sub_stage)
+
+    # Decide what to do based on the type of node
     if node.state.is_terminal:
         debug_print(ind_str, "Getting util matrix because we are at a terminal node:")
         debug_print(ind_str, "Players have played:", node.state.player_has_played)
@@ -194,13 +233,17 @@ def subtree_traversal_rollout(
             "for player",
             perspective,
         )
-        payoff = estimate_value_vector(node, ranges, perspective)
-        payoff *= node.state.pot / node.state.game_size
-        node.values[:] = -payoff
-        node.values[perspective] = payoff
-        if np.isnan(node.values).any():
-            debug_print(ind_str, "Payoff", payoff)
-            raise ValueError("Nan values found in estimated vector at leaf node")
+        if node.values_calculated_ahead:
+            debug_print(ind_str, "Values already calculated ahead")
+            node.values_calculated_ahead = False # Reset this flag
+        else:
+            payoff = estimate_value_vector(node, ranges, perspective)
+            payoff *= node.state.pot / node.state.game_size
+            node.values[:] = -payoff
+            node.values[perspective] = payoff
+            if np.isnan(node.values).any():
+                debug_print(ind_str, "Payoff", payoff)
+                raise ValueError("Nan values found in estimated vector at leaf node")
     elif not node.state.all_players_are_done:
         # Player P is the acting player
         P = node.state.current_player_i
