@@ -179,7 +179,7 @@ def generate_training_data(
     """
     data = []
     fname = (
-        "dfs/df_" + stage + "_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".parquet"
+        "nn/dfs/df_" + stage + "_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".parquet"
     )
     for i in range(n_points):
         print("Generating data point", i, "of", n_points)

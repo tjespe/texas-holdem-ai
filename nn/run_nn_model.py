@@ -28,10 +28,12 @@ bool_columns = [
     "opponent_has_bet",
 ]
 
+__dir__ = os.path.dirname(__file__)
+MODEL_DIR = os.path.join(__dir__, "models")
 
 def load_stage_model(stage: State.StageType):
-    model_fname = f"models/model_{stage}_latest.h5"
-    meta_fname = f"models/model_{stage}_latest.json"
+    model_fname = os.path.join(MODEL_DIR, f"model_{stage}_latest.h5")
+    meta_fname = os.path.join(MODEL_DIR, f"model_{stage}_latest.json")
     if not os.path.exists(model_fname):
         print(f"Warning: Model file {model_fname} not found")
         return None, None

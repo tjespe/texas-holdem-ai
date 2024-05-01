@@ -8,7 +8,7 @@ from cpp_poker.cpp_poker import Hand, CardCollection
 from neural_net import to_X_and_Y
 from datetime import datetime
 
-from run_nn_model import estimate_value_vector
+from nn.run_nn_model import estimate_value_vector
 
 np.set_printoptions(threshold=50)
 

@@ -75,12 +75,8 @@ int Oracle::get_max_bet_allowed(
     return max_allowed;
 }
 
-float Oracle::get_winning_probability(const CardCollection &hand, const CardCollection &table, int num_players)
-{
-    return get_winning_probability_n_simulations(hand, table, num_players, 5000);
-}
-
 /**
+ * Creates a string that represents the hand and table cards or equally good hands/tables in a unique way.
  * Will be used later for caching get_winning_probability results.
  */
 std::string _convert_cards_to_equiv_str(const std::set<int> &hand, const std::vector<int> &table)
@@ -126,6 +122,11 @@ std::string _convert_cards_to_equiv_str(const std::set<int> &hand, const std::ve
         table_str += std::to_string(card.rank) + suits_reencoding[card.suit];
     }
     return "hand:" + hand_str + "_table:" + table_str;
+}
+
+float Oracle::get_winning_probability(const CardCollection &hand, const CardCollection &table, int num_players)
+{
+    return get_winning_probability_n_simulations(hand, table, num_players, 5000);
 }
 
 /**

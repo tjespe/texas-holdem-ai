@@ -39,7 +39,7 @@ class ResolverPlayer(Player):
         self.end_stage = end_stage
         self.end_sub_stage = end_sub_stage
         self.cache_fname = (
-            "dfs/df_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".parquet"
+            "nn/dfs/df_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".parquet"
         )
         self.cached_rows = []
 
