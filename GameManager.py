@@ -21,6 +21,8 @@ class GameManager:
     state: State
 
     def __init__(self, players: list[Player], buy_in: int = 100, big_blind: int = 2):
+        for i, player in enumerate(players):
+            player.index = i
         self.players = players
         self.deck = Deck()
         self.state = generate_root_state(len(self.players), buy_in, big_blind)
@@ -61,7 +63,10 @@ class GameManager:
             else:
                 bet = player.play(self.state)
                 try:
-                    self.state = place_bet(self.state, bet)
+                    from_state = self.state
+                    self.state = place_bet(from_state, bet)
+                    for player in self.players:
+                        player.observe_bet(from_state, bet)
                 except BettingRuleViolation as e:
                     print(
                         "\n@@@@@@@@@@@@@@@@@@@@@@@@\nBetting rules violation:\n@@@@@@@@@@@@@@@@@@@@@@@@\n",
@@ -90,6 +95,8 @@ class GameManager:
                 winner_list = []
             winner_list.append(winner.name)
             set_value("winners", winner_list)
+            for player in self.players:
+                player.round_over(self.state)
         else:
             self.play_round(print_state=print_state, sleep=sleep)
 
@@ -105,9 +112,9 @@ if __name__ == "__main__":
         # RandomPlayer(name="Random Randall"),
         # RandomPlayer(name="Random Rhonda"),
         HumanPlayer(name="Tord"),
-        # MixedPlayer(name="Mixed Mick"),
+        MixedPlayer(name="Mixed Mick"),
         # RationalPlayer(name="Rational Rasmus"),
-        ResolverPlayer(name="Resa the Resolver"),
+        # ResolverPlayer(name="Resa the Resolver"),
         # BlendedPlayer(name="Olga the Opponent"),
     ]
     game_manager = GameManager(players)

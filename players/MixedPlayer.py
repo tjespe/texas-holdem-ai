@@ -1,5 +1,6 @@
 import numpy as np
 from PlayerABC import Player
+from State import State
 from players.RandomPlayer import RandomPlayer
 from players.RationalPlayer import RationalPlayer
 from players.ResolverPlayer import ResolverPlayer
@@ -24,9 +25,12 @@ class MixedPlayer(Player):
         self.rational_player.hand = self.hand
         self.resolver_player.hand = self.hand
 
+    # def observe_bet(self, from_state: State, bet: int):
+    #     return self.resolver_player.observe_bet(from_state, bet)
+
     def play(self, state) -> int:
         self._update_hands()
-        if len(state.public_cards) < 5:
+        if len(state.public_cards) < 4:
             if np.random.rand() < self.random_factor:
                 return self.random_player.play(state)
             return self.rational_player.play(state)

@@ -145,7 +145,7 @@ def generate_data_point(
         ranges = [rP, rO]
         print("P1 range", rP)
         print("Opponent range", rO)
-        action, child_state, updated_ranges, root = resolve(
+        action, child_state, updated_ranges, strats_per_hand, root = resolve(
             state,
             ranges,
             end_stage,

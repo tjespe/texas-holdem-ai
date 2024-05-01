@@ -4,7 +4,7 @@ import pandas as pd
 from Deck import Deck
 from cpp_poker.cpp_poker import Hand, Oracle, CardCollection
 from State import State
-from state_management import generate_successor_states
+from state_management import generate_successor_states, place_bet
 from datetime import datetime
 
 run_start = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -46,6 +46,7 @@ class StateNode:
         max_successors_at_action_nodes=5,
         max_successors_at_chance_nodes=100,
         parent: "StateNode" = None,
+        must_include_action: int = None,
     ):
         """
         Args:
@@ -57,6 +58,7 @@ class StateNode:
             max_successors_at_action_nodes (int): The maximum number of successors to create at action nodes
             max_successors_at_chance_nodes (int): The maximum number of successors to create at chance nodes
             parent (StateNode): The parent node
+            must_include_action (int): If not None, this bet will be included in the child nodes as the first action
         """
         self.state = state
         self.parent = parent
@@ -69,6 +71,19 @@ class StateNode:
             end_stage, end_sub_stage
         )
         if not at_or_past_end_stage and max_depth > 0 and not state.is_terminal:
+            successor_tuples = generate_successor_states(
+                state,
+                max_successors_at_action_nodes,
+                max_successors_at_chance_nodes,
+            )
+            if must_include_action is not None:
+                action_already_included = any(
+                    action == must_include_action for action, _ in successor_tuples
+                )
+                if not action_already_included:
+                    successor_tuples.insert(
+                        0, (must_include_action, place_bet(state, must_include_action))
+                    )
             self.children = [
                 (
                     action,
@@ -82,11 +97,7 @@ class StateNode:
                         self,
                     ),
                 )
-                for action, successor in generate_successor_states(
-                    state,
-                    max_successors_at_action_nodes,
-                    max_successors_at_chance_nodes,
-                )
+                for action, successor in successor_tuples
             ]
             self.strategy = np.ones((len(Hand.COMBINATIONS), len(self.children))) / len(
                 self.children
@@ -249,7 +260,13 @@ class StateNode:
         return headers
 
     def get_tree_str(self, depth=0):
-        s = "  " * depth + str(self.state.stage) + "." + str(self.state.sub_stage) + "\n"
+        s = (
+            "  " * depth
+            + str(self.state.stage)
+            + "."
+            + str(self.state.sub_stage)
+            + "\n"
+        )
         for action, child in self.children:
             s += "  " * depth + str(action) + "\n"
             s += child.get_tree_str(depth + 1)

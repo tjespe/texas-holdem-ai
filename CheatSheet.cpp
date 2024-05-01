@@ -111,7 +111,6 @@ std::pair<float, int> CheatSheet::find_or_simulate(CardCollection &hand, CardCol
     {
         return it->second;
     }
-    std::cout << "Running " << num_simulations << " simulations for " << key << std::endl;
     float prob = get_winning_probability_n_simulations(hand, table, num_players, num_simulations);
     cache[key] = {prob, num_simulations};
     return {prob, num_simulations};

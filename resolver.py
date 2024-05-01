@@ -24,10 +24,12 @@ def generate_uniform_ranges(state: State):
 
 
 def debug_print(*args, **kwargs):
-    return # Remove this line to enable debug print
+    return  # Remove this line to enable debug print
     kwargs["file"] = sys.stderr
-    return __builtins__.print(*args, **kwargs)
+    return print(*args, **kwargs)
 
+class DidNotConvergeError(Exception):
+    pass
 
 def resolve(
     state: State,
@@ -43,7 +45,9 @@ def resolve(
     patience=10,
     hand_index=None,
     cached_root: StateNode = None,
-    sliding_window=None
+    sliding_window=None,
+    must_include_action: int = None,
+    raise_exception_on_non_convergence=False,
 ):
     """
     Resolve a state using the CFR algorithm.
@@ -75,12 +79,17 @@ def resolve(
             max_successors_at_action_nodes=max_successors_at_action_nodes,
             max_successors_at_chance_nodes=max_successors_at_chance_nodes,
             **generate_nodes_to,
+            must_include_action=must_include_action,
         )
     else:
         root = cached_root
         root.reset_values()
     if not root.children:
         raise Exception("No children were generated for the root node")
+    if len(root.children) == 1:
+        print("Only one action, nothing to resolve")
+        action, child = root.children[0]
+        return action, child, ranges, np.ones((len(Hand.COMBINATIONS), 1)), root
     debug_print("\n\nGENERATED TREE:")
     debug_print(root.get_tree_str())
     value_vectors = []
@@ -104,7 +113,9 @@ def resolve(
         strategies.append(root.strategy)
         value_vectors.append(root.values)
         if t >= min_simulations:
-            strat_diff = np.abs(root.strategy - np.mean(strategies[-sliding_window:], axis=0)).sum()
+            strat_diff = np.abs(
+                root.strategy - np.mean(strategies[-sliding_window:], axis=0)
+            ).sum()
             percentage_off = strat_diff / root.strategy.sum()
             errors.append(percentage_off)
             print(
@@ -135,6 +146,8 @@ def resolve(
             print("Iteration:", t, end="\r")
     if t == max_simulations - 1:
         print("Warning: CFR did not converge")
+        if raise_exception_on_non_convergence:
+            raise DidNotConvergeError("CFR did not converge")
     strategies_per_hand = np.mean(strategies[-sliding_window:], axis=0)
     if hand_index:
         strategy = strategies_per_hand[hand_index]
@@ -157,12 +170,12 @@ def resolve(
         action,
         child_state,
         updated_ranges,
+        strategies_per_hand,
         root,
     )
 
-def _build_leaf_node_list(
-    node: StateNode, ranges: list[np.ndarray], perspective: int
-):
+
+def _build_leaf_node_list(node: StateNode, ranges: list[np.ndarray], perspective: int):
     nodes = []
     ranges_list = []
     for i, (action, child) in enumerate(node.children):
@@ -182,7 +195,10 @@ def _build_leaf_node_list(
             nodes.append(child)
     return nodes, ranges_list
 
-def _precompute_leaf_node_values(root: StateNode, ranges: list[np.ndarray], perspective: int):
+
+def _precompute_leaf_node_values(
+    root: StateNode, ranges: list[np.ndarray], perspective: int
+):
     leaf_nodes, ranges_list = _build_leaf_node_list(root, ranges, perspective)
     payoff_vectors = estimate_value_vectors(leaf_nodes, ranges_list, perspective)
     for i, node in enumerate(leaf_nodes):
@@ -191,6 +207,7 @@ def _precompute_leaf_node_values(root: StateNode, ranges: list[np.ndarray], pers
         node.values[:] = -payoff
         node.values[perspective] = payoff
         node.values_calculated_ahead = True
+
 
 def subtree_traversal_rollout(
     node: StateNode, ranges: list[np.ndarray], perspective: int, indentation=0
@@ -235,9 +252,16 @@ def subtree_traversal_rollout(
         )
         if node.values_calculated_ahead:
             debug_print(ind_str, "Values already calculated ahead")
-            node.values_calculated_ahead = False # Reset this flag
+            node.values_calculated_ahead = False  # Reset this flag
         else:
-            print("Values for leaf node was not precomputed:", node.state.sub_stage, "in stage", node.state.stage, "for player", perspective)
+            print(
+                "Values for leaf node was not precomputed:",
+                node.state.sub_stage,
+                "in stage",
+                node.state.stage,
+                "for player",
+                perspective,
+            )
             payoff = estimate_value_vector(node, ranges, perspective)
             payoff *= node.state.pot / node.state.game_size
             node.values[:] = -payoff
@@ -294,8 +318,10 @@ def bayesian_update(r: np.ndarray, action_i, strategy: np.ndarray):
     prob_act = r @ prob_act_given_state  # (h, ) @ (h, ) = (1, )
     if prob_act == 0:
         debug_print("r", r)
+        debug_print("action_i", action_i)
         debug_print("prob_act_given_state", prob_act_given_state)
         debug_print("prob_act_given_state.sum()", prob_act_given_state.sum())
+        debug_print("strategy", strategy)
         raise Exception("NBNBNBNBNBNNB: Zero probability of taking this action")
     return (prob_act_given_state * r) / prob_act
 

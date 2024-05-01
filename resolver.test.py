@@ -102,7 +102,7 @@ class FullResolverTest(unittest.TestCase):
     def test_full_resolver(self):
         ranges = generate_uniform_ranges(example_turn_state)
         print(ranges)
-        action, child_state, updated_ranges, cached_root = resolve(
+        action, child_state, updated_ranges, strats_per_hand, cached_root = resolve(
             example_turn_state,
             ranges,
             end_stage="terminal",
