@@ -68,7 +68,7 @@ class ResolverPlayer(Player):
             max_simulations=self.simulations,
             hand_index=self.hand_index,
         )
-        # self.cached_rows.append(cached_root.to_df_row(self.ranges, 0))
-        # df = pd.DataFrame(self.cached_rows, columns=StateNode.get_df_headers())
-        # df.to_parquet(self.cache_fname)
+        self.cached_rows.append(cached_root.to_df_row(self.ranges, 0))
+        df = pd.DataFrame(self.cached_rows, columns=StateNode.get_df_headers())
+        df.to_parquet(self.cache_fname)
         return action

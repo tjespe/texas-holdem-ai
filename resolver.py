@@ -24,7 +24,7 @@ def generate_uniform_ranges(state: State):
 
 
 def debug_print(*args, **kwargs):
-    return
+    return # Remove this line to enable debug print
     kwargs["file"] = sys.stderr
     return __builtins__.print(*args, **kwargs)
 
@@ -167,7 +167,7 @@ def _build_leaf_node_list(
     ranges_list = []
     for i, (action, child) in enumerate(node.children):
         updated_ranges = ranges.copy()
-        if not node.state.all_players_are_done:
+        if node.state.action_required:
             updated_ranges[node.state.current_player_i] = bayesian_update(
                 updated_ranges[node.state.current_player_i], i, node.strategy
             )
@@ -177,7 +177,7 @@ def _build_leaf_node_list(
             )
             nodes.extend(child_nodes)
             ranges_list.extend(child_ranges_list)
-        elif not child.state.all_players_are_done and not child.state.is_terminal:
+        elif node.state.action_required and not child.state.is_terminal:
             ranges_list.append(updated_ranges)
             nodes.append(child)
     return nodes, ranges_list
@@ -244,7 +244,7 @@ def subtree_traversal_rollout(
             if np.isnan(node.values).any():
                 debug_print(ind_str, "Payoff", payoff)
                 raise ValueError("Nan values found in estimated vector at leaf node")
-    elif not node.state.all_players_are_done:
+    elif node.state.action_required:
         # Player P is the acting player
         P = node.state.current_player_i
         O = next(

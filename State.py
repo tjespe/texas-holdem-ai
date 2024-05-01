@@ -187,6 +187,10 @@ class State:
             np.all(np.array(self.player_has_played)[self.player_is_active])
             and len(set(np.array(self.bet_in_stage)[self.player_is_active])) == 1
         )
+    
+    @property
+    def action_required(self):
+        return not self.all_players_are_done
 
     @property
     def small_blind(self):

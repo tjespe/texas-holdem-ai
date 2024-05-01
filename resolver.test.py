@@ -100,7 +100,6 @@ class UpdateStrategyTest(unittest.TestCase):
 
 class FullResolverTest(unittest.TestCase):
     def test_full_resolver(self):
-        hand_index = 500
         ranges = generate_uniform_ranges(example_turn_state)
         print(ranges)
         action, child_state, updated_ranges, cached_root = resolve(

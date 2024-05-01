@@ -131,8 +131,8 @@ def generate_successor_states(
         return [(bet, place_bet(state, bet)) for bet in bets]
 
 
-def add_cards(state: State, cards: tuple[int], skip_integrity_check=False) -> State:
-    if not skip_integrity_check and not state.all_players_are_done:
+def add_cards(state: State, cards: tuple[int]) -> State:
+    if not state.all_players_are_done:
         raise Exception("Cannot add cards when players have not finished betting")
     return _copy_and_modify(
         state,
