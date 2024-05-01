@@ -248,8 +248,9 @@ class StateNode:
         headers.append("origin")
         return headers
 
-    def print_tree(self, depth=0):
-        print("  " * depth, self.state.stage, self.state.sub_stage)
+    def get_tree_str(self, depth=0):
+        s = "  " * depth + str(self.state.stage) + "." + str(self.state.sub_stage) + "\n"
         for action, child in self.children:
-            print("  " * depth, action)
-            child.print_tree(depth + 1)
+            s += "  " * depth + str(action) + "\n"
+            s += child.get_tree_str(depth + 1)
+        return s

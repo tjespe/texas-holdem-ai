@@ -81,8 +81,8 @@ def resolve(
         root.reset_values()
     if not root.children:
         raise Exception("No children were generated for the root node")
-    print("\n\nGENERATED TREE:")
-    root.print_tree()
+    debug_print("\n\nGENERATED TREE:")
+    debug_print(root.get_tree_str())
     value_vectors = []
     strategies = []
     debug_print("\nPossible actions:")
@@ -177,7 +177,7 @@ def _build_leaf_node_list(
             )
             nodes.extend(child_nodes)
             ranges_list.extend(child_ranges_list)
-        elif node.state.action_required and not child.state.is_terminal:
+        elif not child.state.is_terminal:
             ranges_list.append(updated_ranges)
             nodes.append(child)
     return nodes, ranges_list
@@ -237,6 +237,7 @@ def subtree_traversal_rollout(
             debug_print(ind_str, "Values already calculated ahead")
             node.values_calculated_ahead = False # Reset this flag
         else:
+            print("Values for leaf node was not precomputed:", node.state.sub_stage, "in stage", node.state.stage, "for player", perspective)
             payoff = estimate_value_vector(node, ranges, perspective)
             payoff *= node.state.pot / node.state.game_size
             node.values[:] = -payoff
@@ -320,11 +321,13 @@ def update_strategy(node: StateNode):
     positive_regrets = np.maximum(node.regrets, 0)  # (h, a)
     # Make regret_sums a (h, a) matrix where each row is the sum of the positive regrets for that hand
     regret_sums = positive_regrets.sum(axis=1, keepdims=True)  # (h, 1)
-    node.strategy = np.where(
-        regret_sums > 0,
-        positive_regrets / regret_sums,
-        node.strategy,
-    )
+    # Disable division by zero warning
+    with np.errstate(divide="ignore", invalid="ignore"):
+        node.strategy = np.where(
+            regret_sums > 0,
+            positive_regrets / regret_sums,
+            node.strategy,
+        )
     node.strategy /= node.strategy.sum(axis=1, keepdims=True)
     if (node.strategy[:, 0] == 0).all():
         raise Exception("The probability of folding is 0 regardless of hand")

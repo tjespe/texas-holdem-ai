@@ -19,7 +19,7 @@ class ResolverPlayer(Player):
         name: str = "Resa",
         max_successors_at_action_nodes=5,
         max_successors_at_chance_nodes=50,
-        simulations=200,
+        max_simulations=5,
         max_depth=3,
     ):
         """
@@ -27,7 +27,7 @@ class ResolverPlayer(Player):
             name (str): Player name
             max_successors_at_action_nodes (int): Max number of successors to consider at action nodes
             max_successors_at_chance_nodes (int): Max number of successors to consider at chance nodes
-            simulations (int): Number of simulations to run
+            max_simulations (int): Maximum number of simulations to run
             max_depth (int): Max depth to search before using a Neural Net as a heuristic
         """
         super().__init__()
@@ -36,7 +36,7 @@ class ResolverPlayer(Player):
         self._hand_index = None
         self.max_successors_at_action_nodes = max_successors_at_action_nodes
         self.max_successors_at_chance_nodes = max_successors_at_chance_nodes
-        self.simulations = simulations
+        self.simulations = max_simulations
         self.max_depth = max_depth
         self.cache_fname = (
             "nn/dfs/df_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".parquet"
@@ -57,12 +57,16 @@ class ResolverPlayer(Player):
         if sum(state.player_is_active) > 2:
             print("The ResolverPlayer only supports heads-up games")
             return 0
+        if state.stage == "preflop":
+            # Neural net for preflop is not implemented yet, so just call or check
+            return max(state.bet_in_stage) - state.bet_in_stage[state.current_player_i]
         if self.ranges is None:
             self.ranges = generate_uniform_ranges(state)
         action, child_state, self.ranges, cached_root = resolve(
             state,
             self.ranges,
             end_depth=self.max_depth,
+            end_stage=None,
             max_successors_at_action_nodes=self.max_successors_at_action_nodes,
             max_successors_at_chance_nodes=self.max_successors_at_chance_nodes,
             max_simulations=self.simulations,

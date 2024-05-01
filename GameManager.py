@@ -105,10 +105,10 @@ if __name__ == "__main__":
         # RandomPlayer(name="Random Randall"),
         # RandomPlayer(name="Random Rhonda"),
         HumanPlayer(name="Tord"),
-        MixedPlayer(name="Mixed Mick"),
+        # MixedPlayer(name="Mixed Mick"),
         # RationalPlayer(name="Rational Rasmus"),
         ResolverPlayer(name="Resa the Resolver"),
         # BlendedPlayer(name="Olga the Opponent"),
     ]
     game_manager = GameManager(players)
-    game_manager.play_round(print_state=True, sleep=0)
+    game_manager.play_round(print_state=True, sleep=1)
