@@ -27,6 +27,10 @@ class GameManager:
         self.deck = Deck()
         self.state = generate_root_state(len(self.players), buy_in, big_blind)
 
+    @property
+    def player_names(self):
+        return [player.name for player in self.players]
+
     def play_round(self, print_state: bool = False, sleep=0):
         """
         Play a round of poker.
@@ -44,7 +48,7 @@ class GameManager:
                 time.sleep(sleep)
             if print_state:
                 os.system("clear")
-                print(self.state.get_cli_repr())
+                print(self.state.get_cli_repr(self.player_names))
             if self.state.all_players_are_done:
                 # Deal cards
                 if self.state.public_cards == ():
@@ -75,7 +79,7 @@ class GameManager:
                     input("Press enter to continue...")
         if print_state:
             os.system("clear")
-            print(self.state.get_cli_repr())
+            print(self.state.get_cli_repr(self.player_names))
         self.state = end_round(self.state, self.players, print_result=True)
         if sleep:
             input("Press enter to continue...")
@@ -89,7 +93,7 @@ class GameManager:
             winner = list(set(self.players) - bust_players)[0]
             print("Winner:", winner.name)
             print("Final state:")
-            print(self.state.get_cli_repr())
+            print(self.state.get_cli_repr(self.player_names))
             winner_list = get_value("winners")
             if winner_list is None:
                 winner_list = []

@@ -30,7 +30,7 @@ class MixedPlayer(Player):
 
     def play(self, state) -> int:
         self._update_hands()
-        if len(state.public_cards) < 4:
+        if len(state.public_cards) < 4 or sum(state.player_is_active) > 2:
             if np.random.rand() < self.random_factor:
                 return self.random_player.play(state)
             return self.rational_player.play(state)

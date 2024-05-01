@@ -196,7 +196,7 @@ class State:
     def small_blind(self):
         return self.big_blind // 2
 
-    def get_cli_repr(self):
+    def get_cli_repr(self, player_names: Tuple[str]=None):
         cards = (
             Card.get_cli_repr_for_cards(self.public_cards)
             if self.public_cards
@@ -210,7 +210,7 @@ class State:
                         if self.player_is_folded[i]
                         else TerminalColors.DEFAULT
                     )
-                    + str(i)
+                    + (player_names[i] if player_names is not None else str(i))
                     + ("*" if i == self.current_player_i else "")
                     for i in range(self.n_players)
                 ],
