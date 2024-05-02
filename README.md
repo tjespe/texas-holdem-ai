@@ -14,8 +14,8 @@ Most of the project is written in Python, but some performance critical parts ar
     cmake ..
     make
     ```
-3. _Optional_: Set up the desired game structure (i.e. number of players, types of players, configuration for computer players) in `GameManager.py`.
-4. Run the game by running `python GameManager.py`.
+3. _Optional_: Set up the desired game structure (i.e. number of players, types of players, configuration for computer players) in `main.py`.
+4. Run the game by running `python main.py`.
 
 **NB**: Trained neural networks are not included in this repository, and the ResolverPlayer will not work without them.
 
@@ -33,3 +33,12 @@ The following simplifications have been made to the game:
 - There are no side pots. This has two consequences:
     1. If a player goes all-in, the other players can only call or fold.
     2. It is not possible to raise by more than the player with the smallest stack can call.
+
+## Project structure
+
+The main components of this project are:
+- A poker "oracle" written in C++ that can evaluate the strength of hands and compare them. Defined in `Oracle.cpp`, `CheatSheet.cpp`, and `CardCollection.cpp`.
+- A Monte Carlo Tree Search implementation in Python that can play Texas Hold'em. Defined in `resolver.py`.
+- Neural networks used as heuristics to limit the search space. Defined in the files in the `nn` subdirectory.
+- A game manager that can run games between different players. Defined in `GameManager.py`.
+- A state manager that implements the rules of Texas Hold'em and how different actions lead to different states. Defined in `state_management.py`.

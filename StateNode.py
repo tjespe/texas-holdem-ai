@@ -84,6 +84,7 @@ class StateNode:
                     successor_tuples.insert(
                         0, (must_include_action, place_bet(state, must_include_action))
                     )
+            # TODO: ensure only legal actions are included
             self.children = [
                 (
                     action,

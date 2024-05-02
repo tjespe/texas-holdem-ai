@@ -103,23 +103,3 @@ class GameManager:
                 player.round_over(self.state)
         else:
             self.play_round(print_state=print_state, sleep=sleep)
-
-
-if __name__ == "__main__":
-    from players.RandomPlayer import RandomPlayer
-    from players.HumanPlayer import HumanPlayer
-    from players.ResolverPlayer import ResolverPlayer
-    from players.RationalPlayer import RationalPlayer
-    from players.MixedPlayer import MixedPlayer
-
-    players = [
-        # RandomPlayer(name="Random Randall"),
-        # RandomPlayer(name="Random Rhonda"),
-        HumanPlayer(name="Tord"),
-        MixedPlayer(name="Mixed Mick"),
-        # RationalPlayer(name="Rational Rasmus"),
-        # ResolverPlayer(name="Resa the Resolver"),
-        # BlendedPlayer(name="Olga the Opponent"),
-    ]
-    game_manager = GameManager(players)
-    game_manager.play_round(print_state=True, sleep=1)
