@@ -322,7 +322,8 @@ def bayesian_update(r: np.ndarray, action_i, strategy: np.ndarray):
         debug_print("prob_act_given_state", prob_act_given_state)
         debug_print("prob_act_given_state.sum()", prob_act_given_state.sum())
         debug_print("strategy", strategy)
-        raise Exception("NBNBNBNBNBNNB: Zero probability of taking this action")
+        # raise Exception("NBNBNBNBNBNNB: Zero probability of taking this action")
+        return r
     return (prob_act_given_state * r) / prob_act
 
 

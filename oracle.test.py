@@ -475,8 +475,9 @@ class TestPokerUtilityMatrix(unittest.TestCase):
 
     def test_showdown_two_players(self):
         # Terminal state: Showdown between two players
-        table = CardCollection([2, 29, 31, 45, 50])
+        table = CardCollection([2, 29, 31])
         result = np.array(Oracle.generate_utility_matrix(table, True))
+        print(result)
         # The exact values depend on the 'find_winner' function logic
         self.assertEqual(
             result.shape,
