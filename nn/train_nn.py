@@ -369,7 +369,7 @@ early_stopping = EarlyStopping(
 )
 
 folds = list(kf.split(X_train))
-# folds = folds[:1] # Limit the number of folds to look at
+folds = folds[:1] # Limit the number of folds to look at
 
 # Loop over each fold
 for i, (train_index, val_index) in enumerate(folds):
