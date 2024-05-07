@@ -337,39 +337,45 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
 
     return model
 
-# In[ ]:
+
+# ### Split data
+
+# In[27]:
 
 
-# Train model on all data
+# Split the data into training and test sets
+X_train, X_test, Y_train, Y_test = train_test_split(
+    X, Y, test_size=0.2, random_state=42
+)
+
+
+# %% Training and testing
+
+# Test the model
 model = generate_model()
-model.fit(X, Y, epochs=SELECTED_EPOCHS)
+epochs = SELECTED_EPOCHS
+model.fit(X_train, Y_train, epochs=epochs)
+test_loss = model.evaluate(X_test, Y_test)
+print(f"Test MSE: {test_loss:.4f}")
+print(f"Test RMSE: {np.sqrt(test_loss):.4f}")
 
-# Change working directory to models
-os.chdir("models")
 
-# Save the model
-timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-model_fname = f"model_{stage}_{timestamp}.h5"
-model.save(model_fname)
+# In[33]:
 
-# Save metadata
-metadata = {
-    "mean_training_range_val": mean_training_range_val,
-    "sd_training_range_val": sd_training_range_val,
-}
-meta_fname = f"model_{stage}_{timestamp}.json"
-with open(meta_fname, "w") as f:
-    json.dump(metadata, f)
 
-# Symlink the model to the latest model
-latest_fname = f"model_{stage}_latest.h5"
-latest_meta_fname = f"model_{stage}_latest.json"
-if os.path.exists(latest_fname):
-    os.remove(latest_fname)
-if os.path.exists(latest_meta_fname):
-    os.remove(latest_meta_fname)
-os.symlink(model_fname, latest_fname)
-os.symlink(meta_fname, latest_meta_fname)
+# As a baseline, calculate the RMSE of predicting only zeros
+baseline_mse = np.mean(Y_test**2)
+print(f"Baseline MSE: {baseline_mse:.4f}")
+baseline_rmse = np.sqrt(baseline_mse)
+print(f"Baseline RMSE: {baseline_rmse:.4f}")
 
-# Change working directory back to parent
-os.chdir("..")
+
+# In[34]:
+
+
+# As a better baseline, calculate the RMSE of predicting the mean of the target variable
+mean_target = np.mean(Y_train, axis=0)
+mean_baseline_mse = np.mean((Y_test - mean_target) ** 2)
+print(f"Mean Baseline MSE: {mean_baseline_mse:.4f}")
+mean_baseline_rmse = np.sqrt(mean_baseline_mse)
+print(f"Mean Baseline RMSE: {mean_baseline_rmse:.4f}")
