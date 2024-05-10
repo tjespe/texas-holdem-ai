@@ -141,7 +141,10 @@ def resolve(
                     )
                     print("Latest errors:", errors[-patience:])
                     print("Worsening:", np.diff(errors[-patience:]))
-                    break
+                    if raise_exception_on_non_convergence:
+                        raise DidNotConvergeError("CFR did not converge")
+                    else:
+                        break
         else:
             print("Iteration:", t, end="\r")
     if t == max_simulations - 1:

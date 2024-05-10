@@ -2,7 +2,7 @@ import pandas as pd
 from State import State
 from StateNode import StateNode
 from helpers import get_random_bet
-from resolver import resolve
+from resolver import DidNotConvergeError, resolve
 import numpy as np
 from cpp_poker.cpp_poker import Hand, Oracle, CardCollection
 from datetime import datetime
@@ -145,19 +145,24 @@ def generate_data_point(
         ranges = [rP, rO]
         print("P1 range", rP)
         print("Opponent range", rO)
-        action, child_state, updated_ranges, strats_per_hand, root = resolve(
-            state,
-            ranges,
-            end_stage,
-            end_depth=100,  # Not used as end_stage is used instead
-            max_successors_at_action_nodes=3,
-            max_successors_at_chance_nodes=100,
-            max_simulations=1000,
-            cached_root=root,
-            sliding_window=10,
-            strat_convergence_threshold=0.03
-        )
-        rows.append(root.to_df_row(ranges, 0))
+        try:
+            action, child_state, updated_ranges, strats_per_hand, root = resolve(
+                state,
+                ranges,
+                end_stage,
+                end_depth=100,  # Not used as end_stage is used instead
+                max_successors_at_action_nodes=3,
+                max_successors_at_chance_nodes=100,
+                max_simulations=1000,
+                cached_root=root,
+                sliding_window=10,
+                # strat_convergence_threshold=0.03,
+                raise_exception_on_non_convergence=True,
+            )
+            rows.append(root.to_df_row(ranges, 0))
+        except DidNotConvergeError as e:
+            print("Did not converge, not adding data point.")
+            continue
     return rows
 
 
