@@ -4,6 +4,7 @@ from State import State
 from players.RandomPlayer import RandomPlayer
 from players.RationalPlayer import RationalPlayer
 from players.ResolverPlayer import ResolverPlayer
+from state_management import place_bet
 
 
 class MixedPlayer(Player):
@@ -24,9 +25,24 @@ class MixedPlayer(Player):
         self.random_player.hand = self.hand
         self.rational_player.hand = self.hand
         self.resolver_player.hand = self.hand
+        self.random_player.index = self.index
+        self.rational_player.index = self.index
+        self.resolver_player.index = self.index
 
-    # def observe_bet(self, from_state: State, bet: int):
-    #     return self.resolver_player.observe_bet(from_state, bet)
+    def observe_bet(self, from_state: State, bet: int):
+        if len(from_state.public_cards) < 4:
+            # No need to observe this, because the neural nets for these stages
+            # are not good enough.
+            return
+        if place_bet(from_state, bet, False).is_terminal:
+            # No need to observe this, because the game will be over before we
+            # can use this information.
+            return
+        if from_state.stage == "turn" and from_state.sub_stage == "first_bet":
+            # We are 3 steps away from the river card, so it's a bit
+            # too early to use the resolver player.
+            return
+        return self.resolver_player.observe_bet(from_state, bet)
 
     def play(self, state) -> int:
         self._update_hands()
@@ -35,6 +51,10 @@ class MixedPlayer(Player):
                 return self.random_player.play(state)
             return self.rational_player.play(state)
         else:
+            if state.stage == "turn" and state.sub_stage == "first_bet":
+                # We are 3 steps away from the river card, so it's a bit
+                # too early to use the resolver player.
+                return self.rational_player.play(state)
             return self.resolver_player.play(state)
 
     def __repr__(self) -> str:
