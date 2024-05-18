@@ -6,7 +6,7 @@ from players.ResolverPlayer import ResolverPlayer
 from players.RandomPlayer import RandomPlayer
 
 players = [
-    HumanPlayer(name="Tord"),
+    HumanPlayer(name="You"),
     MixedPlayer(name="Mikael"),
 ]
 
