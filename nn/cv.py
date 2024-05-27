@@ -28,7 +28,7 @@ import gc
 # In[4]:
 
 
-stage = "river"
+stage = "turn"
 
 
 # ### Reading and compacting dfs
