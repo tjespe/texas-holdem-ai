@@ -30,7 +30,7 @@ import gc
 # In[4]:
 
 
-stage = "turn"
+stage = "river"
 
 
 # ### Reading and compacting dfs
