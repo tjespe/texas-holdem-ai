@@ -16,17 +16,17 @@ class HumanPlayer(Player):
             call_bet = (
                 max(state.bet_in_game) - state.bet_in_game[state.current_player_i]
             )
-            max_raise = Oracle.get_max_bet_allowed(
+            max_bet = Oracle.get_max_bet_allowed(
                 state.player_has_played,
                 state.current_player_i,
                 state.bet_in_stage,
                 state.player_piles,
                 state.player_is_active,
             )
+            # The player can raise if they enough in their pile and the Oracle's max bet exceeds the call bet
             can_raise = (
                 state.player_piles[state.current_player_i] > call_bet
-                and state.player_can_raise(state.current_player_i)
-                and max_raise > call_bet
+                and max_bet > call_bet
             )
             options = (
                 ["Call" if call_bet else "Check"]
