@@ -3,6 +3,7 @@ from PlayerABC import Player
 from State import State
 from cpp_poker.cpp_poker import Oracle
 
+
 def get_random_betting_distribution(call_bet: int, max_bet: int, big_blind: int):
     distribution = np.ones(max_bet + 1)
     # Make higher bets less likely
@@ -22,15 +23,17 @@ def get_random_betting_distribution(call_bet: int, max_bet: int, big_blind: int)
     # Ensure sum of distribution is 1
     distribution = distribution / np.sum(distribution)
     # Plotting for debugging
-    # plt.plot(
-    #     distribution,
-    #     label=f"Player {current_player_i}, {len(state.public_cards)} cards",
-    # )
+    # import matplotlib.pyplot as plt
+
+    # plt.plot(distribution)
+    # plt.show()
     return distribution
+
 
 def get_random_bet(call_bet: int, max_bet: int, big_blind: int):
     distribution = get_random_betting_distribution(call_bet, max_bet, big_blind)
     return np.random.choice(len(distribution), p=distribution)
+
 
 def get_random_betting_distribution_for_state(state: State):
     """
@@ -50,6 +53,7 @@ def get_random_betting_distribution_for_state(state: State):
     )
     max_bet = min(max_allowed_bet, all_in_bet)
     return get_random_betting_distribution(call_bet, max_bet, state.big_blind)
+
 
 def get_random_bet_for_state(state: State):
     distribution = get_random_betting_distribution_for_state(state)

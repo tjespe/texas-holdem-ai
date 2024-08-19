@@ -427,14 +427,14 @@ class OracleTestCase(unittest.TestCase):
             210,
         )
 
-    def test_cannot_reraise(self):
-        player_played = (True, True, False)
+    def test_can_reraise(self):
+        player_played = (True, True, True)
         current_player_i = 1
         bet_in_stage = (10, 5, 2)
         player_piles = (200, 300, 30)
         player_is_active = (True, True, True)
 
-        # It is not allowed to reraise
+        # It is allowed to reraise, but only to the amount of the smallest stack
         self.assertEqual(
             Oracle.get_max_bet_allowed(
                 player_played,
@@ -443,7 +443,7 @@ class OracleTestCase(unittest.TestCase):
                 player_piles,
                 player_is_active,
             ),
-            5,
+            30 + 2 - 5,
         )
 
     def test_get_pre_flop_aces_win_prob(self):

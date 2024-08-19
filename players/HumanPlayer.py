@@ -25,7 +25,7 @@ class HumanPlayer(Player):
             )
             can_raise = (
                 state.player_piles[state.current_player_i] > call_bet
-                and not state.player_has_played[state.current_player_i]
+                and state.player_can_raise(state.current_player_i)
                 and max_raise > call_bet
             )
             options = (

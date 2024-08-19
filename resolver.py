@@ -28,8 +28,10 @@ def debug_print(*args, **kwargs):
     kwargs["file"] = sys.stderr
     return print(*args, **kwargs)
 
+
 class DidNotConvergeError(Exception):
     pass
+
 
 def resolve(
     state: State,

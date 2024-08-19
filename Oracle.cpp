@@ -44,7 +44,7 @@ std::set<int> Oracle::find_winner(const CardCollection &table, const std::vector
 
 /**
  * To simplify the game, it is not allowed to bet more than the smallest stack.
- * Aditionally, a player who has already played cannot reraise, they can only call or fold.
+ * A player is allowed to raise if they have not yet played or if they have not yet matched the highest bet.
  */
 int Oracle::get_max_bet_allowed(
     const std::vector<bool> &player_has_played,
@@ -66,15 +66,23 @@ int Oracle::get_max_bet_allowed(
             min_stack = std::min(min_stack, max_stack_per_player[i]);
         }
     }
+    bool another_player_has_raised = false;
+    for (size_t i = 0; i < player_has_played.size(); ++i)
+    {
+        if (bet_in_stage[i] > bet_in_stage[current_player_i])
+        {
+            another_player_has_raised = true;
+            break;
+        }
+    }
     int max_allowed = min_stack - bet_in_stage[current_player_i];
-    if (player_has_played[current_player_i])
+    if (player_has_played[current_player_i] && !another_player_has_raised)
     {
         int call_amount = *std::max_element(bet_in_stage.begin(), bet_in_stage.end()) - bet_in_stage[current_player_i];
         return std::min(call_amount, max_allowed);
     }
     return max_allowed;
 }
-
 
 std::vector<std::vector<float>> Oracle::generate_utility_matrix(const CardCollection &table)
 {
