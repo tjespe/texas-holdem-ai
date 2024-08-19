@@ -43,7 +43,7 @@ def generate_data_point(
         stage_of_stage = np.random.choice(
             ["first_bet", "respond", "respond_to_raise"],
             # Rarely first bet as it is more expensive
-            p=[0.05, 0.5, 0.45],
+            p=[0.2, 0.5, 0.3],
         )
     if stage_of_stage == "first_bet":
         bet_in_stage = (0, 0)
@@ -200,5 +200,4 @@ def generate_training_data(
 
 
 if __name__ == "__main__":
-    # generate_training_data("flop", "turn", 1000)
     generate_training_data("river", "terminal", 1000)
