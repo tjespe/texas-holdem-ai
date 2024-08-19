@@ -28,7 +28,7 @@ import gc
 # In[4]:
 
 
-stage = "river"
+stage = "turn"
 
 
 # ### Reading and compacting dfs
@@ -310,7 +310,7 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
     )(hidden_layer_2)
 
     # Add a dropout layer to prevent overfitting
-    # dropout_layer = Dropout(0.5)(hidden_layer_3)
+    dropout_layer = Dropout(0.5)(hidden_layer_3)
 
     # Define output layer
     value_layer_P1 = Dense(
@@ -319,7 +319,7 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
         name="value_layer_P1",
         kernel_initializer=init,
         kernel_regularizer=l1_l2(l1=l1_rate, l2=l2_rate),
-    )(hidden_layer_3)
+    )(dropout_layer)
 
     # Naturally, the target variable is centered around 0 with a SD of ~0.1, thus
     # to get an SD of 1, it is scaled by 10. To make this scaling implicit in the model,
@@ -369,7 +369,7 @@ early_stopping = EarlyStopping(
 )
 
 folds = list(kf.split(X_train))
-folds = folds[:1] # Limit the number of folds to look at
+# folds = folds[:1] # Limit the number of folds to look at
 
 # Loop over each fold
 for i, (train_index, val_index) in enumerate(folds):

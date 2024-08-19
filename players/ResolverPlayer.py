@@ -21,8 +21,8 @@ class ResolverPlayer(Player):
         name: str = "Resa",
         max_successors_at_action_nodes=5,
         max_successors_at_chance_nodes=50,
-        max_simulations=5,
-        max_depth=3,
+        max_simulations=50,
+        max_depth=2,
     ):
         """
         Args:
@@ -82,6 +82,7 @@ class ResolverPlayer(Player):
                         max_simulations=self.simulations,
                         hand_index=self.hand_index,
                         must_include_action=bet,
+                        sliding_window=5, # Make it easier to converge
                         # If it does not converge, we don't want to update the ranges,
                         # because we don't know what the opponent's strategy should have been.
                         raise_exception_on_non_convergence=True

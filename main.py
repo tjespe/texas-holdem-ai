@@ -6,8 +6,8 @@ from players.ResolverPlayer import ResolverPlayer
 from players.RandomPlayer import RandomPlayer
 
 players = [
-    HumanPlayer(name="Tord"),
-    ResolverPlayer()
+    HumanPlayer(name="You"),
+    MixedPlayer(name="Mikael"),
 ]
 
 game_manager = GameManager(players)

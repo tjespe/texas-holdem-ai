@@ -262,7 +262,7 @@ def end_round(state: State, players: list[Player], print_result=False) -> State:
     )
     new_state = _copy_and_modify(
         generate_root_state(
-            len(players), first_better_i=(state.first_better_i + 1) % len(players)
+            len(players), first_better_i=(state._first_better_i + 1) % len(players)
         ),
         player_piles=new_piles,
         folded_players=tuple(np.array(new_piles) < state.big_blind),
