@@ -59,7 +59,7 @@ class HumanPlayer(Player):
                     inquirer.Text(
                         "amount",
                         message=f"How much do you want to bet? Minimum is {call_bet + state.big_blind} and maximum is "
-                        + str(max_raise),
+                        + str(max_bet),
                         validate=lambda _, x: x.isdigit(),
                     ),
                 ]
