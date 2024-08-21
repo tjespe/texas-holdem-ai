@@ -1,17 +1,19 @@
-from cpp_poker.cpp_poker import Card, Oracle
+from cpp_poker.cpp_poker import Card, Oracle, CardCollection, CheatSheet, TerminalColors
 from PlayerABC import Player
 from State import State
 import inquirer
 
 
 class HumanPlayer(Player):
-    def __init__(self, name: str):
+    def __init__(self, name: str, allow_hints=False):
         super().__init__()
         self.name = name
+        self.allow_hints = allow_hints
 
-    def play(self, state: State) -> int:
-        print("Your cards are")
-        print(Card.get_cli_repr_for_cards(self.hand))
+    def play(self, state: State, display_cards=True) -> int:
+        if display_cards:
+            print("Your cards are")
+            print(Card.get_cli_repr_for_cards(self.hand))
         try:
             call_bet = (
                 max(state.bet_in_game) - state.bet_in_game[state.current_player_i]
@@ -32,6 +34,7 @@ class HumanPlayer(Player):
                 ["Call" if call_bet else "Check"]
                 + (["Raise"] if can_raise else [])
                 + (["Fold"] if call_bet else [])
+                + (["Get hint"] if self.allow_hints else [])
             )
             questions = [
                 inquirer.List(
@@ -46,6 +49,7 @@ class HumanPlayer(Player):
                         "Call": f"Match the current bet ({call_bet})",
                         "Check": "Pass the turn without betting",
                         "Raise": "Increase the current bet",
+                        "Get hint": "Get a hint on what to do",
                     },
                 ),
             ]
@@ -64,6 +68,31 @@ class HumanPlayer(Player):
                     ),
                 ]
                 return int(inquirer.prompt(questions)["amount"])
+            elif answer == "Get hint":
+                print(" Calculating winning probability...", end="\r")
+                winning_prob = CheatSheet.get_winning_probability(
+                    CardCollection(self.hand),
+                    CardCollection(state.public_cards),
+                    2,
+                    100000,
+                )
+                print(
+                    f"Your chance of winning (based only on your cards and table cards) is {TerminalColors.BLUE}{winning_prob:.2%}{TerminalColors.DEFAULT}.\n",
+                )
+                ev = winning_prob * state.pot
+                print(
+                    f"Given that the pot is {state.pot} your expected value from continuing is {TerminalColors.BLUE}{ev:.2f}{TerminalColors.DEFAULT}.\n"
+                )
+                if call_bet < ev:
+                    print(
+                        f"Based on the expected value, you should {TerminalColors.BLUE}call or raise{TerminalColors.DEFAULT}."
+                    )
+                else:
+                    print(
+                        f"Based on the expected value, you should {TerminalColors.BLUE}fold{TerminalColors.DEFAULT}."
+                    )
+                print()  # Add a newline
+                return self.play(state, display_cards=False)
         except ValueError:
             print("Invalid input. Please enter an integer.")
             return self.play(state)

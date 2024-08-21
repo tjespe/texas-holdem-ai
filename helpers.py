@@ -4,7 +4,9 @@ from State import State
 from cpp_poker.cpp_poker import Oracle
 
 
-def get_random_betting_distribution(call_bet: int, max_bet: int, big_blind: int):
+def get_random_betting_distribution(
+    call_bet: int, max_bet: int, big_blind: int, always_add_fold_chance=True
+):
     distribution = np.ones(max_bet + 1)
     # Make higher bets less likely
     likelihood_decay = 0.5  # Higher values make higher bets less likely
@@ -16,7 +18,8 @@ def get_random_betting_distribution(call_bet: int, max_bet: int, big_blind: int)
     # Ensure too low bets are not made
     distribution[:call_bet] = 0
     # Add a chance of folding
-    distribution[0] = 1
+    if always_add_fold_chance:
+        distribution[0] = 1
     # Add a chance of calling
     if call_bet < distribution.shape[0]:
         distribution[call_bet] = 1
