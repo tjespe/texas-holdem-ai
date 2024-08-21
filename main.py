@@ -11,5 +11,5 @@ players = [
     AwareRationalPlayer(name="Larnes"),
 ]
 
-game_manager = GameManager(players)
+game_manager = GameManager(players, big_blind=4)
 game_manager.play_round(print_state=True, sleep=1)

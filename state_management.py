@@ -266,6 +266,7 @@ def end_round(state: State, players: list[Player], print_result=False) -> State:
         ),
         player_piles=new_piles,
         folded_players=tuple(np.array(new_piles) < state.big_blind),
+        big_blind=state.big_blind,
     )
     return new_state
 

@@ -81,6 +81,8 @@ class GameManager:
             os.system("clear")
             print(self.state.get_cli_repr(self.player_names))
         self.state = end_round(self.state, self.players, print_result=True)
+        for player in self.players:
+            player.round_over(self.state)
         if sleep:
             input("Press enter to continue...")
         bust_players = set()
@@ -99,7 +101,5 @@ class GameManager:
                 winner_list = []
             winner_list.append(winner.name)
             set_value("winners", winner_list)
-            for player in self.players:
-                player.round_over(self.state)
         else:
             self.play_round(print_state=print_state, sleep=sleep)
