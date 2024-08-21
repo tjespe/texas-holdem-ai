@@ -1,14 +1,13 @@
 import math
 import numpy as np
 from State import State
-from cpp_poker.cpp_poker import CardCollection, CheatSheet, Oracle
+from cpp_poker.cpp_poker import CardCollection, CheatSheet, Oracle, Card
 from PlayerABC import Player
 from helpers import get_random_betting_distribution
 from players.RandomPlayer import RandomPlayer
 
 
 def debug_print(*args, **kwargs):
-    return
     print(*args, **kwargs)
 
 
@@ -16,14 +15,19 @@ class AwareRationalPlayer(Player):
     """
     Similar to RationalPlayer, but bases winning probability on a combination of
     cards and bets from other players.
+
+    :param name: Name of the player
+    :param randomness: The probability of making a random move
+    :param alpha: How much the card based winning probability decay as the pot grows (0-1, higher is more decay)
     """
 
-    def __init__(self, name: str = "Rasmus", randomness=0.1):
+    def __init__(self, name: str = "Rasmus", randomness=0.1, alpha=0.5):
         super().__init__()
         self.name = name
         self.raises_per_player = None
         self.implied_winning_probs = None
         self.randomness = randomness
+        self.alpha = alpha
 
     def _ensure_vars_initialized(self, n_players):
         if self.raises_per_player is None:
@@ -98,11 +102,22 @@ class AwareRationalPlayer(Player):
             CardCollection(state.public_cards),
             state.player_is_active.sum(),
         )
+        # Put less weight on card_winning_prob the more is in the pot
+        pot_factor = state.pot / state.big_blind
+        adjusted_card_winning_prob = card_winning_prob / (
+            1 + self.alpha * np.log(1 + pot_factor)
+        )
         raise_based_winning_prob = self.get_winning_prob_based_on_raises(state)
-        winning_prob = np.nanmean([card_winning_prob, raise_based_winning_prob])
-        # Cap winning prob at card based winning prob to avoid being fooled
-        winning_prob = min(winning_prob, card_winning_prob)
+        winning_prob = np.nanmean(
+            [adjusted_card_winning_prob, raise_based_winning_prob]
+        )
+        # Cap winning prob at adjusted_card_winning_prob to avoid being fooled
+        winning_prob = min(winning_prob, adjusted_card_winning_prob)
+        debug_print(
+            f"Machine hand: {str(Card(self.hand[0]))} {str(Card(self.hand[1]))}"
+        )
         debug_print(f"Card based winning prob: {card_winning_prob}")
+        debug_print(f"Adjusted card based winning prob: {adjusted_card_winning_prob}")
         debug_print(f"Raise based winning prob: {raise_based_winning_prob}")
         debug_print(f"Combined winning prob: {winning_prob}")
         rational_max = winning_prob * state.pot
@@ -132,6 +147,7 @@ class AwareRationalPlayer(Player):
         max_bet = min(int(rational_max), max_allowed_bet)
         # Randomize what to do based personal bluff inclination
         if np.random.rand() < self.randomness:
+            debug_print("Random move")
             max_bet = min(state.pot, max_allowed_bet)
 
         # Return random int between call_bet and rational_max
