@@ -8,7 +8,6 @@ from players.RandomPlayer import RandomPlayer
 
 
 def debug_print(*args, **kwargs):
-    return
     print(*args, **kwargs)
 
 
@@ -38,6 +37,7 @@ class AwareRationalPlayer(Player):
         # Dimensions: n_games x n_players
         self.actions_matrix = None
         self.aggression_sensitivity = aggression_sensitivity
+        self.called_bluff = False
 
     def _ensure_vars_initialized(self, n_players):
         if self.raises_per_player is None:
@@ -61,6 +61,7 @@ class AwareRationalPlayer(Player):
         self.actions_matrix = np.vstack(
             [self.actions_matrix, np.zeros(state.n_players)]
         )
+        self.called_bluff = False
 
     def get_relative_aggression(self, player_i):
         actions_this_game = self.actions_matrix[-1, player_i]
@@ -175,17 +176,19 @@ class AwareRationalPlayer(Player):
             chances.append(bluff_chance)
         return np.nanmax(chances)
 
-    def play(self, state) -> int:
+    def play(self, state: State) -> int:
+        debug_print(state.get_cli_repr())
         current_player_i = state.current_player_i
         if state.player_is_folded[current_player_i]:
             return 0
         current_bet = state.bet_in_stage[current_player_i]
         call_bet = max(state.bet_in_stage) - current_bet
-        winning_prob = CheatSheet.get_winning_probability(
+        card_based_winning_prob = CheatSheet.get_winning_probability(
             CardCollection(self.hand),
             CardCollection(state.public_cards),
             state.player_is_active.sum(),
         )
+        winning_prob = card_based_winning_prob
         debug_print(f"Card based winning prob: {winning_prob}")
         # Put less weight on card_winning_prob the more is in the pot
         pot_factor = (state.pot - 2 * state.big_blind) / state.big_blind
@@ -217,9 +220,17 @@ class AwareRationalPlayer(Player):
         if call_bet > rational_max:
             opponent_bluff_chance = self.evaluate_bluff_chance(current_player_i)
             debug_print(f"Opponent bluff chance: {opponent_bluff_chance}")
+            rand_threshold = opponent_bluff_chance * card_based_winning_prob
+            debug_print(
+                f"Rand threshold for responding despite exceeding rational: {rand_threshold}"
+            )
             # Randomize whether to call or fold based on bluff chance
-            if np.random.rand() < opponent_bluff_chance:
+            if np.random.rand() < rand_threshold:
                 debug_print("Assuming bluff")
+                self.called_bluff = True
+                return call_bet
+            if self.called_bluff and card_based_winning_prob > 0.5:
+                debug_print("Assuming continued bluff and calling")
                 return call_bet
             debug_print("Assuming rational")
             return 0
