@@ -1,4 +1,5 @@
 from GameManager import GameManager
+from players.AllInPlayer import AllInPlayer
 from players.AwareRationalPlayerWithRandomStyle import (
     AwareRationalPlayerWithRandomStyle,
 )
@@ -10,7 +11,8 @@ from players.ResolverPlayer import ResolverPlayer
 from players.RandomPlayer import RandomPlayer
 
 players = [
-    HumanPlayer(name="You"),
+    # HumanPlayer(name="You"),
+    AllInPlayer(name="Aladdin"),
     AwareRationalPlayer(name="Larnes"),
     AwareRationalPlayer(name="William", randomness=0.2, aggression_sensitivity=0.5),
     AwareRationalPlayer(
@@ -20,4 +22,4 @@ players = [
 ]
 
 game_manager = GameManager(players, big_blind=4)
-game_manager.play_round(print_state=True, sleep=0.5)
+game_manager.play_round(print_state=True, sleep=0)
