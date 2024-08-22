@@ -1,4 +1,7 @@
 from GameManager import GameManager
+from players.AwareRationalPlayerWithRandomStyle import (
+    AwareRationalPlayerWithRandomStyle,
+)
 from players.HumanPlayer import HumanPlayer
 from players.MixedPlayer import MixedPlayer
 from players.RationalPlayer import RationalPlayer
@@ -13,7 +16,8 @@ players = [
     AwareRationalPlayer(
         name="Styggberget", aggression_sensitivity=1.2, randomness=0.05
     ),
+    AwareRationalPlayerWithRandomStyle(name="Henning", switch_freq=0.3),
 ]
 
 game_manager = GameManager(players, big_blind=4)
-game_manager.play_round(print_state=True, sleep=1)
+game_manager.play_round(print_state=True, sleep=0.5)
