@@ -173,7 +173,7 @@ class AwareRationalPlayer(Player):
             # Cap probabilty at 130% to avoid too high bluff chances
             implied_prob = min(implied_prob, 1)
             # Estimate a chance for bluffing based on the implied probability
-            bluff_chance = 0.9 - 0.7 * (1 - implied_prob) ** 0.1
+            bluff_chance = 0.8 - 0.6 * (1 - implied_prob) ** 0.1
             debug_print(f"Player {player_i} has implied prob: {implied_prob}")
             debug_print(f"Player {player_i} has bluff chance: {bluff_chance}")
             # Cap bluff chance at 0%
