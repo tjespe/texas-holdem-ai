@@ -4,11 +4,13 @@ from State import State
 from cpp_poker.cpp_poker import CardCollection, CheatSheet, Oracle, Card
 from PlayerABC import Player
 from helpers import get_random_betting_distribution
-from players.RandomPlayer import RandomPlayer
+
+log_file = open("AwareRationalPlayer.log", "a")
 
 
 def debug_print(*args, **kwargs):
-    print(*args, **kwargs)
+    # print(*args, **kwargs)
+    print(*args, **kwargs, file=log_file, flush=True)
 
 
 class AwareRationalPlayer(Player):
@@ -64,26 +66,31 @@ class AwareRationalPlayer(Player):
         self.called_bluff = False
 
     def get_relative_aggression(self, player_i):
-        actions_this_game = self.actions_matrix[-1, player_i]
+        total_games = self.actions_matrix.shape[0]
+        weight = np.arange(total_games)[:, np.newaxis]
+        weight = weight / total_games
+        weighted_actions_matrix = self.actions_matrix * weight
+        weighted_aggression_matrix = self.aggression_matrix * weight
+        actions_this_game = weighted_actions_matrix[-1, player_i]
         if not actions_this_game:
             return 1.0
-        aggression_this_game = self.aggression_matrix[-1, player_i] / (
+        aggression_this_game = weighted_aggression_matrix[-1, player_i] / (
             actions_this_game
         )
         debug_print(f"Calculating relative aggression of player {player_i}")
         debug_print(
-            f"Total aggression this game: {self.aggression_matrix[-1, player_i]}"
+            f"Total aggression this game: {weighted_aggression_matrix[-1, player_i]}"
         )
         debug_print(f"Total actions this game: {actions_this_game}")
         debug_print(f"Aggressiveness this game: {aggression_this_game}")
-        aggression_all_games = self.aggression_matrix[:, player_i].sum() / (
-            self.actions_matrix[:, player_i].sum()
+        aggression_all_games = weighted_aggression_matrix[:, player_i].sum() / (
+            weighted_actions_matrix[:, player_i].sum()
         )
         debug_print(
-            f"Total aggression all games: {self.aggression_matrix[:, player_i].sum()}"
+            f"Total aggression all games: {weighted_aggression_matrix[:, player_i].sum()}"
         )
         debug_print(
-            f"Total actions all games: {self.actions_matrix[:, player_i].sum()}"
+            f"Total actions all games: {weighted_actions_matrix[:, player_i].sum()}"
         )
         debug_print(f"Aggressiveness all games: {aggression_all_games}")
         rel_aggression = aggression_this_game / aggression_all_games
@@ -164,16 +171,17 @@ class AwareRationalPlayer(Player):
                 continue
             debug_print(f"Player {player_i} has implied prob: {implied_prob}")
             # Cap probabilty at 130% to avoid too high bluff chances
-            implied_prob = min(implied_prob, 1.3)
-            # Estimate a 30% chance for bluff if the implied probability is 95%
-            # and a 0% chance for bluff if the implied probability is 50%:
-            bluff_chance = 0.67 * implied_prob - 0.33
+            implied_prob = min(implied_prob, 1)
+            # Estimate a chance for bluffing based on the implied probability
+            bluff_chance = 0.9 - 0.7 * (1 - implied_prob) ** 0.1
             debug_print(f"Player {player_i} has implied prob: {implied_prob}")
             debug_print(f"Player {player_i} has bluff chance: {bluff_chance}")
             # Cap bluff chance at 0%
             bluff_chance = max(bluff_chance, 0)
             debug_print(f"Player {player_i} has bluff chance: {bluff_chance}")
             chances.append(bluff_chance)
+        if not chances:
+            return 0
         return np.nanmax(chances)
 
     def play(self, state: State) -> int:
