@@ -5,10 +5,11 @@ from cpp_poker.cpp_poker import CardCollection, CheatSheet, Oracle, Card
 from PlayerABC import Player
 from helpers import get_random_betting_distribution
 
-log_file = open("AwareRationalPlayer.log", "a")
+log_file = open("stats/AwareRationalPlayer.log", "a")
 
 
 def debug_print(*args, **kwargs):
+    return
     # print(*args, **kwargs)
     print(*args, **kwargs, file=log_file, flush=True)
 
@@ -195,6 +196,7 @@ class AwareRationalPlayer(Player):
             CardCollection(self.hand),
             CardCollection(state.public_cards),
             state.player_is_active.sum(),
+            1000,
         )
         winning_prob = card_based_winning_prob
         debug_print(f"Card based winning prob: {winning_prob}")

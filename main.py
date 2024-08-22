@@ -19,6 +19,8 @@ players = [
         name="Styggberget", aggression_sensitivity=1.2, randomness=0.05
     ),
     AwareRationalPlayerWithRandomStyle(name="Henning", switch_freq=0.3),
+    RandomPlayer(),
+    RationalPlayer(),
 ]
 
 game_manager = GameManager(players, big_blind=4)

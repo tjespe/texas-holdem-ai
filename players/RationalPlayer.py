@@ -1,5 +1,5 @@
 import numpy as np
-from cpp_poker.cpp_poker import CardCollection, CheatSheet
+from cpp_poker.cpp_poker import CardCollection, CheatSheet, Oracle
 from PlayerABC import Player
 from helpers import get_random_betting_distribution
 
@@ -32,8 +32,17 @@ class RationalPlayer(Player):
         if call_bet > rational_max:
             return 0
 
+        max_allowed_bet = Oracle.get_max_bet_allowed(
+            state.player_has_played,
+            state.current_player_i,
+            state.bet_in_stage,
+            state.player_piles,
+            state.player_is_active,
+        )
+        max_bet = min(int(rational_max), max_allowed_bet)
+
         # Return random int between call_bet and rational_max
         distribution = get_random_betting_distribution(
-            call_bet, int(rational_max), state.big_blind, always_add_fold_chance=False
+            call_bet, max_bet, state.big_blind, always_add_fold_chance=False
         )
         return np.random.choice(len(distribution), p=distribution)

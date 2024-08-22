@@ -26,6 +26,7 @@ class GameManager:
         self.players = players
         self.deck = Deck()
         self.state = generate_root_state(len(self.players), buy_in, big_blind)
+        self.round = 0
 
     @property
     def player_names(self):
@@ -46,8 +47,10 @@ class GameManager:
                 import time
 
                 time.sleep(sleep)
+            self.round += 1
             if print_state:
                 os.system("clear")
+                print(f"Round {self.round}")
                 print(self.state.get_cli_repr(self.player_names))
             if self.state.all_players_are_done:
                 # Deal cards
