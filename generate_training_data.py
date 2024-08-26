@@ -2,7 +2,7 @@ import pandas as pd
 from State import State
 from StateNode import StateNode
 from helpers import get_random_bet
-from resolver import DidNotConvergeError, resolve
+from resolver import DidNotConvergeError, describe_range, resolve
 import numpy as np
 from cpp_poker.cpp_poker import Hand, Oracle, CardCollection
 from datetime import datetime
@@ -32,13 +32,14 @@ def generate_data_point(
         raise ValueError("No need to generate data for terminal states.")
     else:
         raise ValueError("Invalid stage")
-    n_players = 2
     big_blind = 2
-    pot = np.random.randint(0, 1000)
+    pot = np.random.randint(0, 150)
     if (pot % 2) == 1:
         pot += 1
     bet_in_game = (pot // 2, pot // 2)
-    player_piles = tuple(np.random.randint(0, 1000, n_players))
+    p1_pile = np.random.randint(0, 300)
+    p2_pile = 300 - p1_pile
+    player_piles = (p1_pile, p2_pile)
     if stage_of_stage is None:
         stage_of_stage = np.random.choice(
             ["first_bet", "respond", "respond_to_raise"],
@@ -131,8 +132,8 @@ def generate_data_point(
             impossible_hands[h] = 1
     for i in range(versions_of_ranges):
         # Generate random ranges
-        rP = np.random.rand(len(Hand.COMBINATIONS))
-        rO = np.random.rand(len(Hand.COMBINATIONS))
+        rP = np.random.rand(len(Hand.COMBINATIONS)) ** 300
+        rO = np.random.rand(len(Hand.COMBINATIONS)) ** 300
         # Remove impossible hands
         rP *= 1 - impossible_hands
         rO *= 1 - impossible_hands
@@ -143,21 +144,23 @@ def generate_data_point(
         rP /= rP.sum()
         rO /= rO.sum()
         ranges = [rP, rO]
-        print("P1 range", rP)
-        print("Opponent range", rO)
+        print("P1 range:", describe_range(rP))
+        print("Opponent range", describe_range(rO))
         try:
             action, child_state, updated_ranges, strats_per_hand, root = resolve(
                 state,
                 ranges,
                 end_stage,
                 end_depth=100,  # Not used as end_stage is used instead
-                max_successors_at_action_nodes=3,
+                max_successors_at_action_nodes=4,
                 max_successors_at_chance_nodes=100,
                 max_simulations=1000,
                 cached_root=root,
                 sliding_window=10,
-                # strat_convergence_threshold=0.03,
+                strat_convergence_threshold=0.005,
                 raise_exception_on_non_convergence=True,
+                max_raises=2,
+                generate_deterministic_children=True,
             )
             rows.append(root.to_df_row(ranges, 0))
         except DidNotConvergeError as e:
@@ -193,7 +196,7 @@ def generate_training_data(
         + ".parquet"
     )
     for i in range(n_points):
-        print("Generating data point", i, "of", n_points)
+        print("\n\nGenerating data point", i, "of", n_points)
         data += generate_data_point(stage, end_stage, stage_of_stage)
         save_df(data, fname)
     save_df(data, fname)

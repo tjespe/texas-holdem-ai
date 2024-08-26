@@ -47,6 +47,8 @@ class StateNode:
         max_successors_at_chance_nodes=100,
         parent: "StateNode" = None,
         must_include_action: int = None,
+        max_raises=3,
+        generate_deterministic_children=False,
     ):
         """
         Args:
@@ -75,10 +77,12 @@ class StateNode:
                 state,
                 max_successors_at_action_nodes,
                 max_successors_at_chance_nodes,
+                allow_raise=max_raises > 0,
+                deterministic=generate_deterministic_children,
             )
             if must_include_action is not None:
                 action_already_included = any(
-                    action == must_include_action for action, _ in successor_tuples
+                    action == must_include_action for action, _, __ in successor_tuples
                 )
                 if not action_already_included:
                     successor_tuples.insert(
@@ -96,9 +100,10 @@ class StateNode:
                         max_successors_at_action_nodes,
                         max_successors_at_chance_nodes,
                         self,
+                        max_raises=max_raises - was_raise,
                     ),
                 )
-                for action, successor in successor_tuples
+                for action, was_raise, successor in successor_tuples
             ]
             self.strategy = np.ones((len(Hand.COMBINATIONS), len(self.children))) / len(
                 self.children

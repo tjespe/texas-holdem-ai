@@ -403,14 +403,16 @@ for fold_history in fold_results:
 average_mse = np.mean(mse_scores)
 std_dev_mse = np.std(mse_scores)
 
-print(f"Cross-Validation MSE: {average_mse:.4f} (+/- {std_dev_mse:.4f})")
+print("\nMSE:")
+print(f"Cross-Validation:\t{average_mse:.4f} (+/- {std_dev_mse:.4f})")
 baseline_mse = np.mean((Y_test - np.mean(Y_train, axis=0)) ** 2)
-print(f"Baseline MSE: {baseline_mse:.4f}")
+print(f"Mean-based baseline:\t{baseline_mse:.4f}")
 rmse = np.sqrt(average_mse)
 rmse_std_dev = np.sqrt(std_dev_mse)
-print(f"Cross-Validation RMSE: {rmse:.4f} (+/- {rmse_std_dev:.4f})")
+print("\nRMSE:")
+print(f"Cross-Validation:\t{rmse:.4f} (+/- {rmse_std_dev:.4f})")
 baseline_rmse = np.sqrt(baseline_mse)
-print(f"Baseline RMSE: {baseline_rmse:.4f}")
+print(f"Mean-based baseline:\t{baseline_rmse:.4f}")
 
 # In[25]:
 

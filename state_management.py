@@ -80,6 +80,8 @@ def generate_successor_states(
     max_successors_at_action_nodes=5,
     max_successors_at_chance_nodes=100,
     betting_fn: Callable[["State"], int] = get_random_bet_for_state,
+    allow_raise=True,
+    deterministic=False,
 ) -> list[tuple[int, "State"]]:
     """
     Generate possible successor states from the given state.
@@ -94,19 +96,19 @@ def generate_successor_states(
     if state.is_terminal:
         return []
     elif blind_bet := get_blind_bet(state):
-        return [(blind_bet, place_bet(state, blind_bet, is_blind=True))]
+        return [(blind_bet, False, place_bet(state, blind_bet, is_blind=True))]
     elif state.all_players_are_done:
         # It is time for more cards or to go to showdown
         if state.public_cards == ():
             return [
-                (None, add_cards(state, draw))
+                (None, False, add_cards(state, draw))
                 for draw in _generate_possible_draws(
                     state, 3, max_successors_at_chance_nodes
                 )
             ]
         elif len(state.public_cards) < 5:
             return [
-                (None, add_cards(state, draw))
+                (None, False, add_cards(state, draw))
                 for draw in _generate_possible_draws(
                     state, 1, max_successors_at_chance_nodes
                 )
@@ -117,7 +119,7 @@ def generate_successor_states(
     else:
         # Check if the current player has folded
         if state.player_is_folded[state.current_player_i]:
-            return [(None, skip_current_player(state))]
+            return [(None, False, skip_current_player(state))]
         check_bet = max(state.bet_in_stage) - state.bet_in_stage[state.current_player_i]
         # A player has to make a decision, generate `max_successors` possible decisions
         bets = set(
@@ -125,10 +127,49 @@ def generate_successor_states(
             [0]
             # Ensure checking is one of the options
             + [check_bet]
-            # Generate other random bets
-            + [betting_fn(state) for _ in range(max_successors_at_action_nodes - 2)]
         )
-        return [(bet, place_bet(state, bet)) for bet in bets]
+        max_bet = Oracle.get_max_bet_allowed(
+            state.player_has_played,
+            state.current_player_i,
+            state.bet_in_stage,
+            state.player_piles,
+            state.player_is_active,
+        )
+
+        def add_bet_to_set(bet):
+            if 0 < bet < check_bet + state.big_blind:
+                # Not possible
+                return
+            if bet > max_bet:
+                # Not possible
+                return
+            bets.add(int(bet))
+
+        if allow_raise:
+            # Generate other random bets
+            remaining = lambda: max_successors_at_action_nodes - len(bets)
+            if deterministic:
+                # First, add a basic raise (50% of pot)
+                if remaining():
+                    add_bet_to_set(state.pot // 2)
+                # Then add an "all-in"-ish bet (at least the max)
+                if remaining():
+                    add_bet_to_set(max_bet)
+                # Then add linearly increasing bets until full
+                share_of_pot = 0.6
+                while remaining():
+                    add_bet_to_set(share_of_pot * state.pot)
+                    share_of_pot += 0.1
+                    if share_of_pot > 1.5:
+                        break
+            else:
+                bets = bets.union(
+                    {
+                        betting_fn(state)
+                        for _ in range(max_successors_at_action_nodes - 2)
+                    }
+                )
+        return [(bet, bet > check_bet, place_bet(state, bet)) for bet in bets]
 
 
 def add_cards(state: State, cards: tuple[int]) -> State:
@@ -296,11 +337,13 @@ if __name__ == "__main__":
     state = generate_root_state(3)
     while state:
         print(state.get_cli_repr())
-        successors = generate_successor_states(state, max_successors=1)
+        successors = generate_successor_states(
+            state, max_successors_at_action_nodes=1, max_successors_at_chance_nodes=1
+        )
         if not successors:
             print("Round over")
             break
-        state = np.random.choice([child for action, child in successors])
+        state = np.random.choice([child for action, is_raise, child in successors])
         sleep(1)
     # plt.legend()
     # plt.show()

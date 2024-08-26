@@ -23,6 +23,19 @@ def generate_uniform_ranges(state: State):
     return [r.copy() for _ in range(state.n_players)]
 
 
+def describe_range(r):
+    return (
+        (
+            f"Range with {r.sum()} total probability mass, max {r.max()} and min {r.min()}. Most likely hands:"
+        )
+        + "\n"
+        + "\n".join(
+            f"{Hand.COMBINATIONS[i].str()}\t{round(r[i] * 100 * 100) / 100}%"
+            for i in np.argsort(r)[::-1][:5]
+        )
+    )
+
+
 def debug_print(*args, **kwargs):
     return  # Remove this line to enable debug print
     kwargs["file"] = sys.stderr
@@ -46,10 +59,12 @@ def resolve(
     strat_convergence_threshold=0.02,
     patience=10,
     hand_index=None,
-    cached_root: StateNode = None,
+    cached_root: Union[StateNode, None] = None,
     sliding_window=None,
     must_include_action: int = None,
     raise_exception_on_non_convergence=False,
+    max_raises=3,
+    generate_deterministic_children=False,
 ):
     """
     Resolve a state using the CFR algorithm.
@@ -82,6 +97,8 @@ def resolve(
             max_successors_at_chance_nodes=max_successors_at_chance_nodes,
             **generate_nodes_to,
             must_include_action=must_include_action,
+            max_raises=max_raises,
+            generate_deterministic_children=generate_deterministic_children,
         )
     else:
         root = cached_root
@@ -92,8 +109,10 @@ def resolve(
         print("Only one action, nothing to resolve")
         action, child = root.children[0]
         return action, child, ranges, np.ones((len(Hand.COMBINATIONS), 1)), root
-    debug_print("\n\nGENERATED TREE:")
-    debug_print(root.get_tree_str())
+    print("State:")
+    print(state.get_cli_repr())
+    print("\n\nGENERATED TREE:", file=sys.stderr)
+    print(root.get_tree_str(), file=sys.stderr)
     value_vectors = []
     strategies = []
     debug_print("\nPossible actions:")
@@ -159,7 +178,11 @@ def resolve(
         print("Strategy for hand:", strategy)
     else:
         strategy = ranges[state.current_player_i] @ strategies_per_hand
-        print("Strategy given range:", strategy)
+        print("Strategy given range:")
+        for (action, child), prob in sorted(
+            zip(root.children, strategy), key=lambda x: x[0][0]
+        ):
+            print(action, "\t", round(prob * 100 * 100) / 100, "%")
     action_i = np.random.choice(len(strategy), p=strategy)
     action, child_state = root.children[action_i]
     updated_ranges = [r.copy() for r in ranges]
