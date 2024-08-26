@@ -194,17 +194,6 @@ class State:
     def small_blind(self):
         return self.big_blind // 2
 
-    def player_can_raise(self, player_i: int = None):
-        if player_i is None:
-            player_i = self.current_player_i
-        if not self.player_is_active[player_i]:
-            return False
-        if not self.player_has_played[player_i]:
-            return True
-        if max(self.bet_in_game) > self.bet_in_game[player_i]:
-            return True
-        return False
-
     def get_cli_repr(self, player_names: Tuple[str] = None):
         cards = (
             Card.get_cli_repr_for_cards(self.public_cards)

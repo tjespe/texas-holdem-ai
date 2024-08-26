@@ -12,13 +12,13 @@ class MixedPlayer(Player):
     This switches between RandomPlayer and RationalPlayer early in the game,
     but uses ResolverPlayer's strategy from the turn onwards.
     """
-    
-    def __init__(self, name: str = "Mick", random_factor: float = 0.5):
+
+    def __init__(self, name: str = "Mick", random_factor: float = 0.2):
         super().__init__()
         self.name = name
         self.random_player = RandomPlayer()
         self.rational_player = RationalPlayer()
-        self.resolver_player = ResolverPlayer()
+        self.resolver_player = ResolverPlayer(max_simulations=5)
         self.random_factor = random_factor
 
     def _update_hands(self):

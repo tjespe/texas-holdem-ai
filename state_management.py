@@ -128,7 +128,6 @@ def generate_successor_states(
             # Generate other random bets
             + [betting_fn(state) for _ in range(max_successors_at_action_nodes - 2)]
         )
-        print(bets)
         return [(bet, place_bet(state, bet)) for bet in bets]
 
 
@@ -267,6 +266,7 @@ def end_round(state: State, players: list[Player], print_result=False) -> State:
         ),
         player_piles=new_piles,
         folded_players=tuple(np.array(new_piles) < state.big_blind),
+        big_blind=state.big_blind,
     )
     return new_state
 

@@ -1,5 +1,7 @@
+import numpy as np
 from cpp_poker.cpp_poker import CardCollection, CheatSheet
 from PlayerABC import Player
+from helpers import get_random_betting_distribution
 
 
 class RationalPlayer(Player):
@@ -29,4 +31,9 @@ class RationalPlayer(Player):
         rational_max += avg_forced_loss
         if call_bet > rational_max:
             return 0
-        return call_bet
+
+        # Return random int between call_bet and rational_max
+        distribution = get_random_betting_distribution(
+            call_bet, int(rational_max), state.big_blind, always_add_fold_chance=False
+        )
+        return np.random.choice(len(distribution), p=distribution)
