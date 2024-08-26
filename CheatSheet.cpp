@@ -4,6 +4,7 @@
 #include <iostream>
 #include <csignal>
 #include <cstdlib>
+#include <algorithm>
 
 std::string CheatSheet::cache_file_path = "cheat-sheet.txt";
 bool CheatSheet::cache_loaded = false;
