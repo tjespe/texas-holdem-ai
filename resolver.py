@@ -283,12 +283,8 @@ def subtree_traversal_rollout(
         EU = ranges[perspective] @ payoff
         if sum(node.state.player_is_active) == 1:
             assert np.isclose(np.abs(EU), 1)
-        # Subtract what we ourselves have bet, because it's not really a win (and not
-        # subtracting it encourages betting a lot to get the other to fold even if there
-        # is not much to win)
-        pot = node.state.pot - node.state.bet_in_game[perspective]
-        # Scale payoff by the game size to make it comparable across different games
-        payoff *= pot / node.state.game_size
+        # Scale payoff by the pot size/game size to make it comparable across different games
+        payoff *= node.state.pot / node.state.game_size
         node.values[:] = -payoff
         node.values[perspective] = payoff
         if np.isnan(node.values).any():
