@@ -295,7 +295,7 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
     dropout_layer = Dropout(0.5)(hidden_layer_3)
 
     hidden_layer_4 = Dense(
-        1326 * 5,
+        1326 * 2,
         activation="relu",
         name="hidden_layer_4",
         kernel_initializer=init,
@@ -303,7 +303,7 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
     )(dropout_layer)
 
     hidden_layer_5 = Dense(
-        1326 * 3,
+        1326 * 2,
         activation="relu",
         name="hidden_layer_5",
         kernel_initializer=init,
