@@ -259,7 +259,30 @@ def subtree_traversal_rollout(
         debug_print(ind_str, "Players have played:", node.state.player_has_played)
         debug_print(ind_str, "Players are folded:", node.state.player_is_folded)
         debug_print(ind_str, "Player bets in stage:", node.state.bet_in_stage)
-        payoff = ranges[perspective] @ node.get_utility_matrix(perspective)
+        # U has dimensions (h, h) where h is the number of possible hole pairs
+        # The value at U[i, j] is the utility of player 0 given that player 0 has hand i and player 1 has hand j
+        U = node.get_utility_matrix(perspective)
+        # Thus, we multiply the utility matrix by the range of the opponent to get the
+        # expected utility for each hand for player 0.
+        # However, we only do it if both players are active
+        if sum(node.state.player_is_active) > 1:
+            payoff = U @ ranges[1 - perspective]
+        elif node.state.player_is_active[perspective]:
+            # If only the perspective player is active, we take the max utility for each hand
+            # to get an array of only 1's and 0's, where 1 means the perspective player wins
+            # and 0 means that the hand is impossible.
+            payoff = U.max(axis=1)
+            # Assert payoffs only include 1's (for wins) and 0's (for impossible states)
+            assert np.all(np.isin(payoff, [0, 1]))
+        else:
+            # If only the opponent is active, we take the min utility for each hand
+            # to get an array of only -1's and 0's
+            payoff = U.min(axis=1)
+            # Assert payoffs only include -1's (for losses) and 0's (for impossible states)
+            assert np.all(np.isin(payoff, [0, -1]))
+        EU = ranges[perspective] @ payoff
+        if sum(node.state.player_is_active) == 1:
+            assert np.isclose(np.abs(EU), 1)
         # Scale payoff by the pot size/game size to make it comparable across different games
         payoff *= node.state.pot / node.state.game_size
         node.values[:] = -payoff
