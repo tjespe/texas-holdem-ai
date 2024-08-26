@@ -283,16 +283,19 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
         kernel_regularizer=l1_l2(l1=l1_rate, l2=l2_rate),
     )(hidden_layer_1)
 
+    # Add a dropout layer to prevent overfitting
+    dropout_layer_1 = Dropout(0.2)(hidden_layer_2)
+
     hidden_layer_3 = Dense(
         1326 * 5,
         activation="relu",
         name="hidden_layer_3",
         kernel_initializer=init,
         kernel_regularizer=l1_l2(l1=l1_rate, l2=l2_rate),
-    )(hidden_layer_2)
+    )(dropout_layer_1)
 
-    # # Add a dropout layer to prevent overfitting
-    # dropout_layer = Dropout(0.5)(hidden_layer_3)
+    # Add a dropout layer to prevent overfitting
+    dropout_layer_2 = Dropout(0.2)(hidden_layer_3)
 
     hidden_layer_4 = Dense(
         Y.shape[1] * 2,
@@ -300,7 +303,7 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
         name="hidden_layer_4",
         kernel_initializer=init,
         kernel_regularizer=l1_l2(l1=l1_rate, l2=l2_rate),
-    )(hidden_layer_3)
+    )(dropout_layer_2)
 
     # Define output layer
     value_layer_P1 = Dense(
