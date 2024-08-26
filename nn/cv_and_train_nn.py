@@ -291,24 +291,16 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
         kernel_regularizer=l1_l2(l1=l1_rate, l2=l2_rate),
     )(hidden_layer_2)
 
-    # Add a dropout layer to prevent overfitting
-    dropout_layer = Dropout(0.5)(hidden_layer_3)
+    # # Add a dropout layer to prevent overfitting
+    # dropout_layer = Dropout(0.5)(hidden_layer_3)
 
     hidden_layer_4 = Dense(
-        1326 * 2,
+        Y.shape[1] * 2,
         activation="relu",
         name="hidden_layer_4",
         kernel_initializer=init,
         kernel_regularizer=l1_l2(l1=l1_rate, l2=l2_rate),
-    )(dropout_layer)
-
-    hidden_layer_5 = Dense(
-        1326 * 2,
-        activation="relu",
-        name="hidden_layer_5",
-        kernel_initializer=init,
-        kernel_regularizer=l1_l2(l1=l1_rate, l2=l2_rate),
-    )(hidden_layer_4)
+    )(hidden_layer_3)
 
     # Define output layer
     value_layer_P1 = Dense(
@@ -317,7 +309,7 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
         name="value_layer_P1",
         kernel_initializer=init,
         kernel_regularizer=l1_l2(l1=l1_rate, l2=l2_rate),
-    )(hidden_layer_5)
+    )(hidden_layer_4)
 
     # Naturally, the target variable is centered around 0 with a SD of ~0.1, thus
     # to get an SD of 1, it is scaled by 10. To make this scaling implicit in the model,
