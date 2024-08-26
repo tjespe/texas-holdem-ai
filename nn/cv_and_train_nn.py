@@ -325,7 +325,7 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
     scaling_layer = Lambda(lambda x: x * 10)(value_layer_P1)
 
     # Create an Adam optimizer with a small learning rate
-    small_lr_optimizer = Adam(learning_rate=0.00001)
+    small_lr_optimizer = Adam(learning_rate=0.0001)
 
     # Create model
     model = Model(inputs=input_layer, outputs=scaling_layer)
