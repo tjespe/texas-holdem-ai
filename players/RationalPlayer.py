@@ -25,6 +25,7 @@ class RationalPlayer(Player):
             CardCollection(self.hand),
             CardCollection(state.public_cards),
             state.player_is_active.sum(),
+            1000,
         )
         rational_max = winning_prob * state.pot
         avg_forced_loss = (state.big_blind + state.small_blind) / state.n_players
