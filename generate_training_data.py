@@ -153,10 +153,11 @@ def generate_data_point(
                 end_depth=100,  # Not used as end_stage is used instead
                 max_successors_at_action_nodes=3,
                 max_successors_at_chance_nodes=100,
+                min_simulations=3,
                 max_simulations=1000,
                 cached_root=root,
                 sliding_window=10,
-                # strat_convergence_threshold=0.03,
+                strat_convergence_threshold=0.005,
                 raise_exception_on_non_convergence=True,
             )
             rows.append(root.to_df_row(ranges, 0))
