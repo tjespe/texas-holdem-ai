@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.regularizers import l1_l2
 from tensorflow.keras.initializers import RandomNormal
+
 # from tensorflow.keras.optimizers.legacy import Adam # Using legacy because it runs faster on M1 Macs
 from keras.optimizers import Adam
 import json
@@ -96,6 +97,7 @@ bet_columns = [
     "pot",
 ]
 
+
 def scale_bets(df):
     df[bet_columns] = df[bet_columns].div(df["game_size"], axis=0)
     return df
@@ -109,16 +111,21 @@ df[bet_columns]
 
 # Scale range features so that the mean becomes 0 and the standard deviation becomes 1
 range_columns = [col for col in df.columns if col.startswith("prob_")]
+
+
 def scale_ranges(df, training_mean, training_sd):
     df[range_columns] = (df[range_columns] - training_mean) / training_sd
     return df
 
+
 def get_training_range_mean_and_sd(df):
     return df[range_columns].to_numpy().mean(), df[range_columns].to_numpy().std()
+
 
 def revert_range_scaling(df, training_mean, training_sd):
     df[range_columns] = df[range_columns] * training_sd + training_mean
     return df
+
 
 mean_training_range_val, sd_training_range_val = get_training_range_mean_and_sd(df)
 scale_ranges(df, mean_training_range_val, sd_training_range_val)
@@ -212,7 +219,9 @@ plt.savefig("target_distribution.png")
 
 
 # Check representation of possible public cards
-card_cols = [col for col in df.columns if col.startswith("public_card_") and "*" not in col]
+card_cols = [
+    col for col in df.columns if col.startswith("public_card_") and "*" not in col
+]
 card_counts = df[card_cols].sum()
 fig, ax = plt.subplots(figsize=(20, 10))
 plt.bar(range(len(card_counts)), card_counts)
@@ -224,11 +233,7 @@ plt.savefig("public_card_distribution.png")
 sub_stages = np.where(
     df["player_has_bet"] & df["opponent_has_bet"],
     "respond_to_raise",
-    np.where(
-        df["opponent_has_bet"],
-        "respond",
-        "first_bet"
-    )
+    np.where(df["opponent_has_bet"], "respond", "first_bet"),
 )
 fig, ax = plt.subplots(figsize=(20, 10))
 plt.hist(sub_stages, bins=3)
@@ -238,7 +243,7 @@ plt.savefig("sub_stages.png")
 # In[19]:
 
 
-Y_columns = [col for col in df.columns if col.startswith('value_of_hand_')]
+Y_columns = [col for col in df.columns if col.startswith("value_of_hand_")]
 X_columns = [col for col in df.columns if col not in Y_columns]
 X = df[X_columns].values
 Y = df[Y_columns].values
@@ -249,7 +254,7 @@ print(X.shape, Y.shape)
 # In[20]:
 
 
-print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+print("Num GPUs Available: ", len(tf.config.list_physical_devices("GPU")))
 
 # In[21]:
 
@@ -287,7 +292,23 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
     )(hidden_layer_2)
 
     # Add a dropout layer to prevent overfitting
-    # dropout_layer = Dropout(0.5)(hidden_layer_3)
+    dropout_layer = Dropout(0.5)(hidden_layer_3)
+
+    hidden_layer_4 = Dense(
+        1326 * 5,
+        activation="relu",
+        name="hidden_layer_4",
+        kernel_initializer=init,
+        kernel_regularizer=l1_l2(l1=l1_rate, l2=l2_rate),
+    )(dropout_layer)
+
+    hidden_layer_5 = Dense(
+        1326 * 3,
+        activation="relu",
+        name="hidden_layer_5",
+        kernel_initializer=init,
+        kernel_regularizer=l1_l2(l1=l1_rate, l2=l2_rate),
+    )(hidden_layer_4)
 
     # Define output layer
     value_layer_P1 = Dense(
@@ -296,7 +317,7 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
         name="value_layer_P1",
         kernel_initializer=init,
         kernel_regularizer=l1_l2(l1=l1_rate, l2=l2_rate),
-    )(hidden_layer_3)
+    )(hidden_layer_5)
 
     # Naturally, the target variable is centered around 0 with a SD of ~0.1, thus
     # to get an SD of 1, it is scaled by 10. To make this scaling implicit in the model,
@@ -312,13 +333,16 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
 
     return model
 
+
 # ### Split data
 
 # In[22]:
 
 
 # Split the data into training and test sets
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
+X_train, X_test, Y_train, Y_test = train_test_split(
+    X, Y, test_size=0.2, random_state=42
+)
 
 # ### Cross validation
 
@@ -335,10 +359,10 @@ validation_actuals = []
 
 # Define the early stopping callback
 early_stopping = EarlyStopping(
-    monitor='val_loss',      # Monitor the validation loss
-    patience=5,              # Number of epochs with no improvement after which training will be stopped
-    verbose=1,               # To print the message when stopping
-    restore_best_weights=True  # Restore model weights from the epoch with the best value of the monitored quantity
+    monitor="val_loss",  # Monitor the validation loss
+    patience=5,  # Number of epochs with no improvement after which training will be stopped
+    verbose=1,  # To print the message when stopping
+    restore_best_weights=True,  # Restore model weights from the epoch with the best value of the monitored quantity
 )
 
 folds = list(kf.split(X_train))
@@ -350,20 +374,21 @@ for i, (train_index, val_index) in enumerate(folds):
     X_train_fold, X_val_fold = X_train[train_index], X_train[val_index]
     Y_train_fold, Y_val_fold = Y_train[train_index], Y_train[val_index]
 
-    print("@@@ FOLD", i+1, "@@@")
+    print("@@@ FOLD", i + 1, "@@@")
     print("Size of training set:", X_train_fold.shape[0])
-    
+
     # Define and compile the neural network inside the loop to reset weights for each fold
     model = generate_model()
-    
+
     # Train the model
     history = model.fit(
-        X_train_fold, Y_train_fold,
+        X_train_fold,
+        Y_train_fold,
         epochs=1000,
         validation_data=(X_val_fold, Y_val_fold),
-        callbacks=[early_stopping]  # Include the early stopping callback here
+        callbacks=[early_stopping],  # Include the early stopping callback here
     )
-    
+
     # Save the history in fold_results
     fold_results.append(history.history)
     validation_predictions.append(model.predict(X_val_fold))
@@ -397,11 +422,11 @@ print(f"Baseline RMSE: {baseline_rmse:.4f}")
 
 plt.figure(figsize=(12, 6))
 for i, fold_history in enumerate(fold_results, 1):
-    plt.plot(fold_history['val_loss'], label=f'Fold {i}')
+    plt.plot(fold_history["val_loss"], label=f"Fold {i}")
 
-plt.title('Validation Loss per Fold')
-plt.xlabel('Epochs')
-plt.ylabel('Mean Squared Error (MSE)')
+plt.title("Validation Loss per Fold")
+plt.xlabel("Epochs")
+plt.ylabel("Mean Squared Error (MSE)")
 plt.legend()
 plt.savefig("val_loss_per_fold.png")
 
@@ -425,7 +450,7 @@ plt.scatter(
     label="Means of actuals",
     s=1,
     c="red",
-)        
+)
 plt.xlabel("Hand index")
 plt.ylabel("Mean value of hand")
 plt.legend()
@@ -476,7 +501,7 @@ for i in sample_is:
 optimal_epochs = []
 
 for result in fold_results:
-    val_loss_per_epoch = result['val_loss']
+    val_loss_per_epoch = result["val_loss"]
     best_epoch = val_loss_per_epoch.index(min(val_loss_per_epoch))
     optimal_epochs.append(best_epoch)
 
@@ -519,7 +544,7 @@ print(f"Baseline RMSE: {baseline_rmse:.4f}")
 
 # As a better baseline, calculate the RMSE of predicting the mean of the target variable
 mean_target = np.mean(Y_train, axis=0)
-mean_baseline_mse = np.mean((Y_test - mean_target)**2)
+mean_baseline_mse = np.mean((Y_test - mean_target) ** 2)
 print(f"Mean Baseline MSE: {mean_baseline_mse:.4f}")
 mean_baseline_rmse = np.sqrt(mean_baseline_mse)
 print(f"Mean Baseline RMSE: {mean_baseline_rmse:.4f}")
