@@ -17,7 +17,8 @@ import matplotlib.pyplot as plt
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.regularizers import l1_l2
 from tensorflow.keras.initializers import RandomNormal
-from tensorflow.keras.optimizers.legacy import Adam # Using legacy because it runs faster on M1 Macs
+# from tensorflow.keras.optimizers.legacy import Adam # Using legacy because it runs faster on M1 Macs
+from keras.optimizers import Adam
 import json
 import re
 import gc
@@ -303,7 +304,7 @@ def generate_model(l1_rate=1e-9, l2_rate=1e-8):
     scaling_layer = Lambda(lambda x: x * 10)(value_layer_P1)
 
     # Create an Adam optimizer with a small learning rate
-    small_lr_optimizer = Adam(learning_rate=0.000001)
+    small_lr_optimizer = Adam(learning_rate=0.00001)
 
     # Create model
     model = Model(inputs=input_layer, outputs=scaling_layer)
