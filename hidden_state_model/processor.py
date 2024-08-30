@@ -47,6 +47,7 @@ class Processor:
             "p": row["p"],
             "relative_ev": row["relative_ev"],
             "stage": state.stage,
+            "player_name": row["player_name"],
         }
         if parent_result:
             prev_stage = parent_result["stage"]
