@@ -9,7 +9,6 @@ log_file = open("stats/AwareRationalPlayer.log", "a")
 
 
 def debug_print(*args, **kwargs):
-    return
     # print(*args, **kwargs)
     print(*args, **kwargs, file=log_file, flush=True)
 

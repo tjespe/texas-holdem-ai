@@ -2,6 +2,7 @@ import uuid
 import pandas as pd
 
 from State import State
+from cpp_poker.cpp_poker import CardCollection
 
 feature_skeleton = {
     f"{action}_{stage}": 0
@@ -35,13 +36,14 @@ class Processor:
             first_better_i=row["first_better_i"],
             big_blind=row["big_blind"],
         )
+        table_rank = CardCollection(list(state.public_cards)).rank_hand().get_rank()
         parent_result = self.processed.get(parent_id)
         result = {
             "game_id": uuid.uuid4(),
             **(parent_result or feature_skeleton),
             "action": row["action"],
             "amount": row["amount"],
-            "rank": row["rank"],
+            "excess_rank": row["rank"] - table_rank,
             "p": row["p"],
             "relative_ev": row["relative_ev"],
             "stage": state.stage,

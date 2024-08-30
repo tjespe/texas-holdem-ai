@@ -3,7 +3,7 @@ from typing import Union
 import pandas as pd
 
 from State import State
-from cpp_poker.cpp_poker import CardCollection, CheatSheet
+from cpp_poker.cpp_poker import CardCollection, CheatSheet, Hand
 
 
 class Observer:
@@ -55,6 +55,12 @@ class Observer:
         p = CheatSheet.get_winning_probability(
             hand, table, state.player_is_active.sum()
         )
+        hand_cards = CardCollection(list(hand))
+        hand_index = None
+        for i, hand in enumerate(Hand.COMBINATIONS):
+            if hand_cards == hand:
+                hand_index = i
+                break
         rank_obj = CardCollection(list(hand + table)).rank_hand()
         rank = rank_obj.get_rank()
         tiebreakers = rank_obj.get_tiebreakers()
@@ -64,6 +70,7 @@ class Observer:
             "rank": rank,
             "relative_ev": relative_ev,
             "tiebreakers": tiebreakers,
+            "hand_index": hand_index,
         }
 
     def _write_df(self):
