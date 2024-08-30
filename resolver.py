@@ -266,33 +266,25 @@ def subtree_traversal_rollout(
         # expected utility for each hand for player 0.
         # However, we only do it if both players are active
         if sum(node.state.player_is_active) > 1:
-            util_payoff = U @ ranges[1 - perspective]
+            payoff = U @ ranges[1 - perspective]
         elif node.state.player_is_active[perspective]:
             # If only the perspective player is active, we take the max utility for each hand
             # to get an array of only 1's and 0's, where 1 means the perspective player wins
             # and 0 means that the hand is impossible.
-            util_payoff = U.max(axis=1)
+            payoff = U.max(axis=1)
             # Assert payoffs only include 1's (for wins) and 0's (for impossible states)
-            assert np.all(np.isin(util_payoff, [0, 1]))
+            assert np.all(np.isin(payoff, [0, 1]))
         else:
             # If only the opponent is active, we take the min utility for each hand
             # to get an array of only -1's and 0's
-            util_payoff = U.min(axis=1)
+            payoff = U.min(axis=1)
             # Assert payoffs only include -1's (for losses) and 0's (for impossible states)
-            assert np.all(np.isin(util_payoff, [0, -1]))
-        EU = ranges[perspective] @ util_payoff
+            assert np.all(np.isin(payoff, [0, -1]))
+        EU = ranges[perspective] @ payoff
         if sum(node.state.player_is_active) == 1:
             assert np.isclose(np.abs(EU), 1)
-        # TODO: refactor to separate this poker logic from the resolution logic
-        money_payoff = np.where(
-            util_payoff > 0,
-            # Wherever perspective player wins, subtract own bets
-            node.state.pot - node.state.bet_in_game[perspective],
-            # If we lose, subtract opponent bets
-            node.state.pot - node.state.bet_in_game[1 - perspective],
-        )
-        relative_money_payoff = money_payoff / node.state.game_size
-        payoff = util_payoff * relative_money_payoff
+        # Scale payoff by the pot size/game size to make it comparable across different games
+        payoff *= node.state.pot / node.state.game_size
         node.values[:] = -payoff
         node.values[perspective] = payoff
         if np.isnan(node.values).any():
@@ -321,16 +313,8 @@ def subtree_traversal_rollout(
                 "for player",
                 perspective,
             )
-            util_payoff = estimate_value_vector(node, ranges, perspective)
-            money_payoff = np.where(
-                util_payoff > 0,
-                # Wherever perspective player wins, subtract own bets
-                node.state.pot - node.state.bet_in_game[perspective],
-                # If we lose, subtract opponent bets
-                node.state.pot - node.state.bet_in_game[1 - perspective],
-            )
-            relative_money_payoff = money_payoff / node.state.game_size
-            payoff = util_payoff * relative_money_payoff
+            payoff = estimate_value_vector(node, ranges, perspective)
+            payoff *= node.state.pot / node.state.game_size
             node.values[:] = -payoff
             node.values[perspective] = payoff
             if np.isnan(node.values).any():
