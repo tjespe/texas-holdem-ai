@@ -5,16 +5,18 @@ from cpp_poker.cpp_poker import Oracle
 
 
 def get_random_betting_distribution(
-    call_bet: int, max_bet: int, big_blind: int, always_add_fold_chance=True
+    call_bet: int,
+    max_bet: int,
+    big_blind: int,
+    always_add_fold_chance=True,
+    likelihood_decay=0.5,  # Higher values make higher bets less likely
 ):
     distribution = np.ones(max_bet + 1)
-    # Make higher bets less likely
-    likelihood_decay = 0.5  # Higher values make higher bets less likely
     distribution = distribution / (
         (np.arange(distribution.shape[0]) + 1) * likelihood_decay
     )
     # Ensure illegal raises are not made
-    distribution[call_bet + 1 : call_bet + 1 + big_blind] = 0
+    distribution[call_bet + 1 : call_bet + big_blind] = 0
     # Ensure too low bets are not made
     distribution[:call_bet] = 0
     # Add a chance of folding

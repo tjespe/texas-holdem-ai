@@ -48,6 +48,9 @@ class GameManager:
 
                 time.sleep(sleep)
             self.round += 1
+            # Allow players to cheat
+            for player in self.players:
+                player.cheat([player.hand for player in self.players])
             if print_state:
                 os.system("clear")
                 print(f"Round {self.round}")

@@ -17,7 +17,7 @@ class Player(ABC):
         Given the current state of the game, return the amount of money to bet.
         0 is treated as check/call/fold depending on the context.
         """
-    
+
     def observe_bet(self, from_state: State, bet: int):
         """
         This method allows the player to observe what other players are doing.
@@ -31,6 +31,13 @@ class Player(ABC):
         """
         This method is called when the round is over, in case the player wants
         to do something, e.g. clean up state variables.
+        """
+        # By default, do nothing
+        pass
+
+    def cheat(self, hands: list[tuple[int, int]]):
+        """
+        This method allows the player to look at the other players' hands.
         """
         # By default, do nothing
         pass

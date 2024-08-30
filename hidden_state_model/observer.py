@@ -77,7 +77,6 @@ class Observer:
         if self.df_fname:
             # Only write rows with hand data
             filtered_df = self.df[self.df["rank"].notnull()]
-            print(filtered_df)
             filtered_df.to_parquet(self.df_fname, index=True)
 
     def observe_action(

@@ -10,6 +10,7 @@ from players.RationalPlayer import RationalPlayer
 from players.AwareRationalPlayer import AwareRationalPlayer
 from players.ResolverPlayer import ResolverPlayer
 from players.RandomPlayer import RandomPlayer
+from players.CheatingPlayer import CheatingPlayer
 
 players = [
     HumanPlayer(name=inquirer.text(message="What is your name?")),
@@ -19,11 +20,12 @@ players = [
     # AwareRationalPlayer(
     #     name="Styggberget", aggression_sensitivity=1.2, randomness=0.05
     # ),
-    AwareRationalPlayerWithRandomStyle(name="Henning", switch_freq=0.1),
+    # AwareRationalPlayerWithRandomStyle(name="Henning", switch_freq=0.1),
     # RandomPlayer(),
     # RationalPlayer(),
     # AwareRationalPlayer(name="Optuna", randomness=0.5, aggression_sensitivity=1.0),
+    CheatingPlayer(),
 ]
 
 game_manager = GameManager(players, big_blind=4)
-game_manager.play_round(print_state=True, sleep=0)
+game_manager.play_round(print_state=True, sleep=0.1)

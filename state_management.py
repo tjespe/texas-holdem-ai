@@ -1,4 +1,4 @@
-from cpp_poker.cpp_poker import Card, Oracle, CardCollection
+from cpp_poker.cpp_poker import Card, Oracle, CardCollection, TerminalColors
 from PlayerABC import Player
 from helpers import get_random_bet_for_state
 from State import State
@@ -288,9 +288,19 @@ def end_round(state: State, players: list[Player], print_result=False) -> State:
             print("Player cards:")
             for i, player in enumerate(players):
                 if state.player_is_active[i]:
-                    print(
-                        f"{player.name}{' (WINNER 🥳)' if i in winners else ''}:\n{Card.get_cli_repr_for_cards(player.hand)}"
+                    rank = (
+                        TerminalColors.FOLDED
+                        + (
+                            CardCollection(list(player.hand) + list(state.public_cards))
+                            .rank_hand()
+                            .get_rank_name()
+                        )
+                        + TerminalColors.DEFAULT
                     )
+                    print(
+                        f"{player.name}, {rank}{' (WINNER 🥳)' if i in winners else ''}:"
+                    )
+                    print(Card.get_cli_repr_for_cards(player.hand))
         else:
             print(
                 "Player",

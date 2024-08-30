@@ -46,7 +46,7 @@ std::string HandRank::get_rank_name() const
         rank_str = "Three of a Kind";
         break;
     case TWO_PAIR:
-        rank_str = "Two Pair";
+        rank_str = "Two Pairs";
         break;
     case ONE_PAIR:
         rank_str = "One Pair";
