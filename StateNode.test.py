@@ -48,7 +48,7 @@ class StateNodeTestCase(unittest.TestCase):
             bet_in_stage=(0, 0),
             bet_in_game=(2, 2),
             player_has_played=(True, False),
-            folded_players=(False, False),
+            player_is_folded=(False, False),
             first_better_i=0,
             big_blind=2,
         )

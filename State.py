@@ -1,3 +1,4 @@
+import uuid
 import pandas as pd
 from typing import Literal, Tuple, Union
 import numpy as np
@@ -47,9 +48,10 @@ class State:
         bet_in_stage: Tuple[int],
         bet_in_game: Tuple[int],
         player_has_played: Tuple[bool],
-        folded_players: Tuple[bool],
+        player_is_folded: Tuple[bool],
         first_better_i: int,
         big_blind: int,
+        prev_state: "State" = None,
     ):
         self.public_cards = public_cards
         self.player_piles = player_piles
@@ -57,11 +59,12 @@ class State:
         self.bet_in_stage = bet_in_stage
         self.bet_in_game = bet_in_game
         self.player_has_played = player_has_played
-        self.player_is_folded = folded_players
+        self.player_is_folded = player_is_folded
         self._first_better_i = first_better_i
         self.n_players = len(player_piles)
         self.big_blind = big_blind
-        assert len(folded_players) == len(player_piles)
+        self.prev_state = prev_state
+        assert len(player_is_folded) == len(player_piles)
         assert len(bet_in_stage) <= len(player_piles)
 
     def __eq__(self, other):

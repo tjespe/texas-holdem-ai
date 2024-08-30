@@ -1,16 +1,27 @@
+from datetime import datetime
+import pandas as pd
 from cpp_poker.cpp_poker import Card, Oracle, CardCollection, CheatSheet, TerminalColors
 from PlayerABC import Player
 from State import State
 import inquirer
 
+from hidden_state_model.observer import Observer
+
+
+time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+observer = Observer(f"hidden_state_model/data/{time_str}.parquet")
+
 
 class HumanPlayer(Player):
+    name: str
+    allow_hints: bool
+
     def __init__(self, name: str, allow_hints=False):
         super().__init__()
         self.name = name
         self.allow_hints = allow_hints
 
-    def play(self, state: State, display_cards=True) -> int:
+    def _play(self, state: State, display_cards=True) -> int:
         if display_cards:
             print("Your cards are")
             print(Card.get_cli_repr_for_cards(self.hand))
@@ -92,10 +103,17 @@ class HumanPlayer(Player):
                         f"Based on the expected value, you should {TerminalColors.BLUE}fold{TerminalColors.DEFAULT}."
                     )
                 print()  # Add a newline
-                return self.play(state, display_cards=False)
+                return self._play(state, display_cards=False)
         except ValueError:
             print("Invalid input. Please enter an integer.")
-            return self.play(state)
+            return self._play(state)
+
+    def play(self, state: State) -> int:
+        action = self._play(state)
+        observer.observe_action(
+            state, self.name, HumanPlayer.__name__, action, self.hand
+        )
+        return action
 
     def __repr__(self) -> str:
         return f"HumanPlayer('{self.name}')"

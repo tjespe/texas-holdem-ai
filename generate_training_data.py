@@ -108,7 +108,7 @@ def generate_data_point(
         bet_in_game=bet_in_game,
         bet_in_stage=bet_in_stage,
         player_has_played=player_has_played,
-        folded_players=(False, False),
+        player_is_folded=(False, False),
         first_better_i=first_better_i,
         big_blind=2,
     )

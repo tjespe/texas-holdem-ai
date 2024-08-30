@@ -14,7 +14,7 @@ example_terminal_state = State(
     bet_in_stage=(100, 100),
     bet_in_game=(100, 100),
     player_has_played=(True, True),
-    folded_players=(False, False),
+    player_is_folded=(False, False),
     first_better_i=0,
     big_blind=2,
 )
@@ -26,7 +26,7 @@ example_non_terminal_state = State(
     bet_in_stage=(100, 100),
     bet_in_game=(100, 100),
     player_has_played=(True, False),
-    folded_players=(False, False),
+    player_is_folded=(False, False),
     first_better_i=0,
     big_blind=2,
 )
@@ -38,7 +38,7 @@ example_turn_state = State(
     bet_in_stage=(100, 100),
     bet_in_game=(100, 100),
     player_has_played=(True, False),
-    folded_players=(False, False),
+    player_is_folded=(False, False),
     first_better_i=0,
     big_blind=2,
 )

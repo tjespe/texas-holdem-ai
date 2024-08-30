@@ -28,6 +28,7 @@ def _copy_and_modify(state: State, **kwargs):
         kwargs.get("folded_players", state.player_is_folded),
         kwargs.get("first_better_i", state.first_better_i),
         kwargs.get("big_blind", state.big_blind),
+        state,
     )
 
 
@@ -68,7 +69,7 @@ def generate_root_state(
         current_player_i=first_better_i,
         bet_in_stage=tuple(0 for _ in range(n_players)),
         bet_in_game=tuple(0 for _ in range(n_players)),
-        folded_players=tuple(False for _ in range(n_players)),
+        player_is_folded=tuple(False for _ in range(n_players)),
         first_better_i=first_better_i,
         player_has_played=tuple(False for _ in range(n_players)),
         big_blind=big_blind,

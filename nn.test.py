@@ -26,7 +26,7 @@ class TestNN(unittest.TestCase):
                 bet_in_stage=(0, 0),
                 bet_in_game=(120, 120),
                 player_has_played=(False, False),
-                folded_players=(False, False),
+                player_is_folded=(False, False),
                 first_better_i=0,
                 big_blind=2,
             ),
@@ -70,7 +70,10 @@ class TestNN(unittest.TestCase):
                 break
         assert straight_flush_hand is not None
         hand_value = result[straight_flush_hand]
-        assert hand_value > 0, "Straight flush hand value was below zero, i.e. not predicted to win: %s" % hand_value
+        assert hand_value > 0, (
+            "Straight flush hand value was below zero, i.e. not predicted to win: %s"
+            % hand_value
+        )
 
 
 if __name__ == "__main__":
