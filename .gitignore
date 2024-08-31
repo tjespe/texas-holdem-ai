@@ -6,3 +6,4 @@ stats/*.csv
 cheat-sheet.txt
 db.sqlite
 stats/CheatingPlayer.log
+users.txt

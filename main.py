@@ -1,5 +1,6 @@
 import inquirer
 from GameManager import GameManager
+from login import login
 from players.AllInPlayer import AllInPlayer
 from players.AwareRationalPlayerWithRandomStyle import (
     AwareRationalPlayerWithRandomStyle,
@@ -13,7 +14,7 @@ from players.RandomPlayer import RandomPlayer
 from players.CheatingPlayer import CheatingPlayer
 
 players = [
-    HumanPlayer(name=inquirer.text(message="What is your name?")),
+    HumanPlayer(name=login()),
     # AllInPlayer(name="Aladdin"),
     # AwareRationalPlayer(name="Larnes"),
     # AwareRationalPlayer(name="William", randomness=0.2, aggression_sensitivity=0.5),
