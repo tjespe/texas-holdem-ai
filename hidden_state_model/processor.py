@@ -125,7 +125,11 @@ class Processor:
                 continue
             row = self.df.loc[state_id]
             parent_id = row["prev_entry"]
-            if parent_id not in self.processed and parent_id in self.df.index:
+            if (
+                parent_id
+                and parent_id not in self.processed
+                and parent_id in self.df.index
+            ):
                 queue.append(state_id)
                 continue
             if result := self._process_state(row, parent_id):

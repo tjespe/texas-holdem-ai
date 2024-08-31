@@ -53,6 +53,7 @@ class State:
         big_blind: int,
         prev_state: "State" = None,
     ):
+        self.id = str(uuid.uuid4())
         self.public_cards = public_cards
         self.player_piles = player_piles
         self.current_player_i = current_player_i

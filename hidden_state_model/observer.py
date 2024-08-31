@@ -90,11 +90,11 @@ class Observer:
         prev_entry = None
         prev_state = state.prev_state
         while prev_state:
-            if id(prev_state) in self.df.index:
-                prev_entry = id(prev_state)
+            if prev_state.id in self.df.index:
+                prev_entry = prev_state.id
                 break
             prev_state = prev_state.prev_state
-        self.df.loc[id(state)] = {
+        self.df.loc[state.id] = {
             "prev_entry": prev_entry,
             "public_cards": state.public_cards,
             "player_piles": state.player_piles,
