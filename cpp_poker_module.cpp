@@ -162,7 +162,20 @@ PYBIND11_MODULE(cpp_poker, m)
                     ":param hand: A set of integers representing the hand\n"
                     ":param table: A list of integers representing the table cards\n"
                     ":param num_players: An integer representing the number of players\n"
-                    ":return: A float representing the winning probability");
+                    ":return: A float representing the winning probability")
+        .def_static("get_all_winning_probabilities", py::overload_cast<CardCollection &, int, int>(&CheatSheet::get_all_winning_probabilities),
+                    py::arg("table"), py::arg("num_players"), py::arg("num_simulations"),
+                    "Get the winning probabilities for every possible hand given a table\n"
+                    ":param table: A list of integers representing the table cards\n"
+                    ":param num_players: An integer representing the number of players\n"
+                    ":param num_simulations: An integer representing the number of simulations to run\n"
+                    ":return: A list of floats representing the winning probabilities")
+        .def_static("get_all_winning_probabilities", py::overload_cast<CardCollection &, int>(&CheatSheet::get_all_winning_probabilities),
+                    py::arg("table"), py::arg("num_players"),
+                    "Get the winning probabilities for every possible hand given a table\n"
+                    ":param table: A list of integers representing the table cards\n"
+                    ":param num_players: An integer representing the number of players\n"
+                    ":return: A list of floats representing the winning probabilities");
 
     py::class_<Oracle>(m, "Oracle")
         .def_static("find_winner", &Oracle::find_winner)

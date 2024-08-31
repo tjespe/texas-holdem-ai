@@ -5,6 +5,7 @@
 #include <csignal>
 #include <cstdlib>
 #include <algorithm>
+#include "Hand.hpp"
 
 std::string CheatSheet::cache_file_path = "cheat-sheet.txt";
 bool CheatSheet::cache_loaded = false;
@@ -98,6 +99,19 @@ float CheatSheet::get_winning_probability(CardCollection &hand, CardCollection &
 {
     return get_winning_probability(hand, table, num_players, 10000);
 }
+
+std::vector<float> CheatSheet::get_all_winning_probabilities(CardCollection &table, int num_players, int num_simulations) {
+    std::vector<float> winning_probabilities(Hand::COMBINATIONS.size(), 0.0);
+    for (int i = 0; i < Hand::COMBINATIONS.size(); ++i) {
+        winning_probabilities[i] = get_winning_probability(Hand::COMBINATIONS[i], table, num_players, num_simulations);
+    }
+    return winning_probabilities;
+}
+
+std::vector<float> CheatSheet::get_all_winning_probabilities(CardCollection &table, int num_players) {
+    return get_all_winning_probabilities(table, num_players, 10000);
+}
+
 
 std::pair<float, int> CheatSheet::find_or_simulate(CardCollection &hand, CardCollection &table, int num_players, int num_simulations)
 {

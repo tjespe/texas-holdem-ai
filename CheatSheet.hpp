@@ -12,6 +12,11 @@ class CheatSheet
 public:
     static float get_winning_probability(CardCollection &hand, CardCollection &table, int num_players, int num_simulations);
     static float get_winning_probability(CardCollection &hand, CardCollection &table, int num_players);
+
+    /** Returns the winning probabilities for every possible hand given a table */
+    static std::vector<float> get_all_winning_probabilities(CardCollection &table, int num_players, int num_simulations);
+    static std::vector<float> get_all_winning_probabilities(CardCollection &table, int num_players);
+
     static void save_cache();
 
 private:
