@@ -4,6 +4,7 @@
 #include <iterator>  // For std::next
 #include <sstream>
 #include <random>
+#include "Hand.hpp"
 
 CardCollection::CardCollection() : cards(0) {}
 
@@ -467,6 +468,16 @@ HandRank CardCollection::rank_hand() const
         hand_rank = this->get_high_card_rank();
     }
     return *hand_rank;
+}
+
+std::vector<HandRank> CardCollection::rank_all_hands() const
+{
+    std::vector<HandRank> hand_ranks;
+    for (int i = 0; i < Hand::COMBINATIONS.size(); ++i) {
+        CardCollection hand = Hand::COMBINATIONS[i];
+        hand_ranks.push_back((hand+*this).rank_hand());
+    }
+    return hand_ranks;
 }
 
 int CardCollection::beats(const CardCollection &other) const

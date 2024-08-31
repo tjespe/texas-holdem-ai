@@ -38,10 +38,12 @@ class CheatingPlayer(Player):
     """
 
     all_hands = None
+    bluff_prob = None
 
-    def __init__(self, name: str = "Cleopatra"):
+    def __init__(self, name: str = "Cleopatra", bluff_prob=0.15):
         super().__init__()
         self.name = name
+        self.bluff_prob = bluff_prob
 
     def cheat(self, hands: list[tuple[int, int]]):
         self.all_hands = hands
@@ -73,11 +75,15 @@ class CheatingPlayer(Player):
         else:
             winning_prob = combine_probabilities(winner_probs, current_player_i)
         debug_print("Cheating winning prob:", winning_prob)
+        if np.random.rand() < self.bluff_prob:
+            winning_prob *= 2
+            winning_prob = min(1, winning_prob)
+            debug_print("Bluffing, so increasing winning prob to", winning_prob)
         rational_max = winning_prob * state.pot
         debug_print("Rational max:", rational_max)
-        avg_forced_loss = (state.big_blind + state.small_blind) / state.n_players
-        rational_max += avg_forced_loss
-        debug_print("Rational max with forced loss:", rational_max)
+        # avg_forced_loss = (state.big_blind + state.small_blind) / state.n_players
+        # rational_max += avg_forced_loss
+        # debug_print("Rational max with forced loss:", rational_max)
         if call_bet > rational_max:
             # If the other player was irrational, join based on winning chance
             pot_before_bet = state.pot - call_bet
@@ -108,7 +114,7 @@ class CheatingPlayer(Player):
             max_bet,
             state.big_blind,
             always_add_fold_chance=False,
-            likelihood_decay=0.1 - 0.09 * len(state.public_cards) / 5,
+            likelihood_decay=0.4 - 0.3 * len(state.public_cards) / 5,
         )
         for i, d in enumerate(distribution):
             debug_print(f"Bet: {i}, prob: {d}")

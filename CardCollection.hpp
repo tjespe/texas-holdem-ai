@@ -52,6 +52,9 @@ public:
     HandRank rank_hand() const;
     std::vector<Card> to_vector() const;
 
+    /** Returns a vector with the ranks for all possible hands combined with this collection */
+    std::vector<HandRank> rank_all_hands() const;
+
     /** Returns 1 if this collection beats the other, 0 if it's a tie, -1 if it loses */
     int beats(const CardCollection &other) const;
 
