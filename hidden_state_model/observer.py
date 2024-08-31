@@ -4,11 +4,13 @@ import pandas as pd
 
 from State import State
 from cpp_poker.cpp_poker import CardCollection, CheatSheet, Hand
+from hidden_state_model.processor import Processor
 
 
 class Observer:
     df: pd.DataFrame
     df_fname: Union[str, None]
+    processor: Union[Processor, None] = None
 
     DF_HEADERS = [
         "state_id",
@@ -32,12 +34,22 @@ class Observer:
         "tiebreakers",
     ]
 
-    def __init__(self, df_fname=None) -> None:
+    @property
+    def filtered_df(self):
+        """
+        Only write/send to processor rows with hand data
+        """
+        return self.df[self.df["rank"].notnull()]
+
+    def __init__(self, df_fname=None, df=None) -> None:
         self.df_fname = df_fname
-        if df_fname and os.path.exists(df_fname):
+        if df is not None:
+            self.df = df
+        elif df_fname and os.path.exists(df_fname):
             self.df = pd.read_parquet(df_fname)
         else:
             self.df = pd.DataFrame(columns=self.DF_HEADERS).set_index("state_id")
+        self.processor = Processor(self.df)
 
     def _classify_action(self, state: State, bet: int):
         call_bet = max(state.bet_in_game) - state.bet_in_game[state.current_player_i]
@@ -75,9 +87,7 @@ class Observer:
 
     def _write_df(self):
         if self.df_fname:
-            # Only write rows with hand data
-            filtered_df = self.df[self.df["rank"].notnull()]
-            filtered_df.to_parquet(self.df_fname, index=True)
+            self.filtered_df.to_parquet(self.df_fname, index=True)
 
     def observe_action(
         self,
@@ -85,6 +95,7 @@ class Observer:
         player_name: str,
         player_type: str,
         amount: int,
+        opponent_names: Union[list[str], None],
         hand: Union[tuple[int, int], None],
     ) -> None:
         prev_entry = None
@@ -107,20 +118,30 @@ class Observer:
             "big_blind": state.big_blind,
             "player_name": player_name,
             "player_type": player_type,
+            "opponent_names": opponent_names,
             "amount": amount,
             "action": self._classify_action(state, amount),
             **(self._classify_hand(hand, state) if hand else {}),
         }
         self._write_df()
 
-    def retrofill_hand_stats(self, state_ids: list[str], hand: tuple[int, int]):
-        for state_id in state_ids:
-            state_row = self.df.loc[self.df["state_id"] == state_id]
-            if state_row.empty:
-                raise ValueError(
-                    f"State with id {state_id} not found in observer dataframe"
-                )
-            state = State.from_tuple(state_row.iloc[0][State.TUPLE_HEADERS])
+    def retrofill_hand_stats(self, states: list[State], hand: tuple[int, int]):
+        for state in states:
             hand_stats = self._classify_hand(hand, state)
+            # Check if state id exists in df
+            if not state.id in self.df.index:
+                print("State not found in df:\n", state.get_cli_repr())
+                continue
             for k, v in hand_stats.items():
-                self.df.loc[self.df["state_id"] == state_id, k] = v
+                print("Writing to state row", state.id, k, v)
+                self.df.at[state.id, k] = v
+        print("Retrofill complete, tail:\n", self.df.tail())
+
+    def get_processed_df(self):
+        self.processor.update_df(self.df)
+        return self.processor.get_processed_df()
+
+    def clone(self):
+        c = Observer(df=self.df.copy())
+        c.processor = self.processor.clone()
+        return c

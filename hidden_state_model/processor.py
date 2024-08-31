@@ -118,7 +118,15 @@ class Processor:
                 return None
         return result
 
+    def update_df(self, df: pd.DataFrame) -> None:
+        """
+        Allows updating the dataframe while keeping the processed states
+        """
+        self.df = df
+
     def get_processed_df(self) -> pd.DataFrame:
+        if self.df is None:
+            raise ValueError("No dataframe to process")
         queue = self.df.index.to_list()
         while queue:
             state_id = queue.pop(0)
@@ -136,3 +144,9 @@ class Processor:
             if result := self._process_state(row, parent_id):
                 self.processed[state_id] = result
         return pd.DataFrame.from_dict(self.processed, orient="index")
+
+    def clone(self):
+        c = Processor(self.df.copy())
+        # Shallow copy of processed should be enough
+        c.processed = {**self.processed}
+        return c

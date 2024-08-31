@@ -15,11 +15,16 @@ observer = Observer(f"hidden_state_model/data/{time_str}.parquet")
 class HumanPlayer(Player):
     name: str
     allow_hints: bool
+    opponent_names: list[str]
 
     def __init__(self, name: str, allow_hints=False):
         super().__init__()
         self.name = name
         self.allow_hints = allow_hints
+        self.opponent_names = []
+
+    def get_to_know_each_other(self, players: list[Player]):
+        self.opponent_names = [p.name for p in players if p != self]
 
     def _play(self, state: State, display_cards=True) -> int:
         if display_cards:
@@ -111,7 +116,12 @@ class HumanPlayer(Player):
     def play(self, state: State) -> int:
         action = self._play(state)
         observer.observe_action(
-            state, self.name, HumanPlayer.__name__, action, self.hand
+            state,
+            self.name,
+            HumanPlayer.__name__,
+            action,
+            self.opponent_names,
+            self.hand,
         )
         return action
 

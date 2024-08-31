@@ -41,3 +41,19 @@ class Player(ABC):
         """
         # By default, do nothing
         pass
+
+    def get_to_know_each_other(self, players: list["Player"]):
+        """
+        This method is called by the manager in the beginning of the game and
+        allows the players to know each other's names and types.
+        """
+        # By default, do nothing
+        pass
+
+    def showdown(self, state: State, all_hands: list[Union[tuple[int, int], None]]):
+        """
+        This method is called when the game is over and the player can see
+        the hands of all other players in the game.
+        """
+        # By default, do nothing
+        pass

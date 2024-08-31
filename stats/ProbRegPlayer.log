@@ -1,0 +1,1880 @@
+Own hand: ♦ 2 ♠ 7 
+Probs: [0.44917395 0.39160001]
+Mapped probs: [0.27327742258455645, 0.2157034900569938]
+Mapped probs normalized: [0.55887135 0.44112865]
+Combined winning prob: 0.4411286503837753
+Rational max: 3.5290292030702024
+Max allowed bet: 96
+Max bet: 3
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Own hand: ♦ 2 ♠ 7 
+Probs: [0.49655557 0.2606    ]
+Mapped probs: [0.3671531871008407, 0.13119761913992065]
+Mapped probs normalized: [0.73673642 0.26326358]
+Combined winning prob: 0.26326358359805074
+Rational max: 2.106108668784406
+Max allowed bet: 96
+Max bet: 2
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Own hand: ♦ 2 ♠ 7 
+Probs: [0.51205368 0.20370001]
+Mapped probs: [0.40774834150016503, 0.09939466852217807]
+Mapped probs normalized: [0.80401057 0.19598943]
+Combined winning prob: 0.19598942814532544
+Rational max: 1.5679154251626035
+Max allowed bet: 96
+Max bet: 1
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Own hand: ♦ 2 ♠ 7 
+Own hand: ♦ 4 ♠ 4 
+Probs: [0.48168872 0.58389997]
+Mapped probs: [0.20043068884471663, 0.3026419428860786]
+Mapped probs normalized: [0.39841302 0.60158698]
+Combined winning prob: 0.6015869753137927
+Rational max: 4.8126958025103415
+Max allowed bet: 96
+Max bet: 4
+Bet: 0, prob: 0.6666666666666666
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.3333333333333333
+Own hand: ♦ 4 ♠ 4 
+Probs: [0.70006543 0.49360001]
+Mapped probs: [0.3545131285825145, 0.1480477046330215]
+Mapped probs normalized: [0.70541337 0.29458663]
+Combined winning prob: 0.2945866347876088
+Rational max: 3.535039617451306
+Folding
+Own hand: ♣ 5 ♠ 10 
+Probs: [0.5        0.48730001]
+Mapped probs: [0.25634999573230743, 0.24365000426769257]
+Mapped probs normalized: [0.51269999 0.48730001]
+Combined winning prob: 0.48730000853538513
+Rational max: 2.923800051212311
+Max allowed bet: 96
+Max bet: 2
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Own hand: ♣ 5 ♠ 10 
+Probs: [0.44917914 0.38679999]
+Mapped probs: [0.27543665221814556, 0.21305750402363374]
+Mapped probs normalized: [0.56384841 0.43615159]
+Combined winning prob: 0.43615159219669625
+Rational max: 3.48921273757357
+Max allowed bet: 94
+Max bet: 3
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Own hand: ♣ 5 ♠ 10 
+Probs: [0.68480559 0.38679999]
+Mapped probs: [0.41992279221917483, 0.12191719602854757]
+Mapped probs normalized: [0.7749941 0.2250059]
+Combined winning prob: 0.2250059033531659
+Rational max: 2.7000708402379905
+Folding
+Own hand: ♥ 8 ♠ 10 
+Probs: [0.5        0.54820001]
+Mapped probs: [0.22589999437332153, 0.27410000562667847]
+Mapped probs normalized: [0.45179999 0.54820001]
+Combined winning prob: 0.5482000112533569
+Rational max: 3.2892000675201416
+Max allowed bet: 96
+Max bet: 3
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Bet: 3, prob: 0.0
+Own hand: ♥ 8 ♠ 10 
+Probs: [0.44739726 0.77679998]
+Mapped probs: [0.09985907972889932, 0.4292617923933804]
+Mapped probs normalized: [0.1887264 0.8112736]
+Combined winning prob: 0.811273595523894
+Rational max: 6.490188764191152
+Max allowed bet: 94
+Max bet: 6
+Bet: 0, prob: 0.30156657963446476
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2741514360313316
+Bet: 5, prob: 0.22845953002610964
+Bet: 6, prob: 0.19582245430809397
+Own hand: ♥ 8 ♠ 10 
+Probs: [0.54179543 0.75669998]
+Mapped probs: [0.1318188383856077, 0.3467233915778615]
+Mapped probs normalized: [0.27545916 0.72454084]
+Combined winning prob: 0.7245408448159937
+Bluffing, so increasing winning prob to 1
+Rational max: 16
+Max allowed bet: 90
+Max bet: 16
+Bet: 0, prob: 0.10552563978106919
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.13190704972633646
+Bet: 5, prob: 0.10992254143861373
+Bet: 6, prob: 0.09421932123309748
+Bet: 7, prob: 0.08244190607896029
+Bet: 8, prob: 0.07328169429240915
+Bet: 9, prob: 0.06595352486316823
+Bet: 10, prob: 0.05995774987560749
+Bet: 11, prob: 0.054961270719306864
+Bet: 12, prob: 0.05073348066397556
+Bet: 13, prob: 0.04710966061654874
+Bet: 14, prob: 0.04396901657544549
+Bet: 15, prob: 0.041220953039480146
+Bet: 16, prob: 0.03879619109598131
+Own hand: ♥ 8 ♠ 10 
+Probs: [0.56751578 1.        ]
+Mapped probs: [0.0, 0.43248421599208897]
+Mapped probs normalized: [0. 1.]
+Combined winning prob: 1.0
+Bluffing, so increasing winning prob to 1
+Rational max: 24
+Max allowed bet: 86
+Max bet: 24
+Bet: 0, prob: 0.0545665417035417
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.10913308340708336
+Bet: 5, prob: 0.09094423617256947
+Bet: 6, prob: 0.07795220243363098
+Bet: 7, prob: 0.0682081771294271
+Bet: 8, prob: 0.06062949078171298
+Bet: 9, prob: 0.05456654170354168
+Bet: 10, prob: 0.049605947003219714
+Bet: 11, prob: 0.045472118086284735
+Bet: 12, prob: 0.041974262848878216
+Bet: 13, prob: 0.03897610121681549
+Bet: 14, prob: 0.03637769446902779
+Bet: 15, prob: 0.03410408856471355
+Bet: 16, prob: 0.0320979657079657
+Bet: 17, prob: 0.03031474539085649
+Bet: 18, prob: 0.028719232475548258
+Bet: 19, prob: 0.02728327085177084
+Bet: 20, prob: 0.025984067477876995
+Bet: 21, prob: 0.024802973501609857
+Bet: 22, prob: 0.02372458334936595
+Bet: 23, prob: 0.022736059043142368
+Bet: 24, prob: 0.021826616681416673
+Own hand: ♠ Q ♠ A 
+Probs: [0.48111069 0.69209999]
+Mapped probs: [0.14813398808760722, 0.3591232830247638]
+Mapped probs normalized: [0.2920293 0.7079707]
+Combined winning prob: 0.7079706954958728
+Rational max: 5.663765563966982
+Max allowed bet: 96
+Max bet: 5
+Bet: 0, prob: 0.5217391304347826
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2608695652173913
+Bet: 5, prob: 0.21739130434782608
+Own hand: ♠ Q ♠ A 
+Probs: [0.70069133 0.54409999]
+Mapped probs: [0.3194451855915521, 0.16285384472756845]
+Mapped probs normalized: [0.66233844 0.33766156]
+Combined winning prob: 0.337661563656501
+Bluffing, so increasing winning prob to 0.675323127313002
+Rational max: 8.103877527756024
+Max allowed bet: 96
+Max bet: 8
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.6644295302013423
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Bet: 7, prob: 0.0
+Bet: 8, prob: 0.3355704697986577
+Own hand: ♠ Q ♠ A 
+Probs: [0.58395721 0.59369999]
+Mapped probs: [0.23726182048022115, 0.2470045991998736]
+Mapped probs normalized: [0.48994068 0.51005932]
+Combined winning prob: 0.5100593168591873
+Bluffing, so increasing winning prob to 1
+Rational max: 24
+Max allowed bet: 88
+Max bet: 24
+Bet: 0, prob: 0.08453867678621632
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.10567334598277038
+Bet: 5, prob: 0.08806112165230866
+Bet: 6, prob: 0.07548096141626456
+Bet: 7, prob: 0.06604584123923149
+Bet: 8, prob: 0.058707414434872436
+Bet: 9, prob: 0.05283667299138519
+Bet: 10, prob: 0.04803333908307745
+Bet: 11, prob: 0.04403056082615433
+Bet: 12, prob: 0.04064359460875784
+Bet: 13, prob: 0.03774048070813228
+Bet: 14, prob: 0.03522444866092347
+Bet: 15, prob: 0.033022920619615745
+Bet: 16, prob: 0.031080395877285404
+Bet: 17, prob: 0.029353707217436218
+Bet: 18, prob: 0.027808775258623786
+Bet: 19, prob: 0.026418336495692595
+Bet: 20, prob: 0.025160320472088184
+Bet: 21, prob: 0.024016669541538724
+Bet: 22, prob: 0.022972466517993558
+Bet: 23, prob: 0.022015280413077164
+Bet: 24, prob: 0.021134669196554077
+Own hand: ♠ Q ♠ A 
+Probs: [0.58032731 0.81099999]
+Mapped probs: [0.10968186759305239, 0.34035454755143574]
+Mapped probs normalized: [0.24371776 0.75628224]
+Combined winning prob: 0.7562822387209753
+Bluffing, so increasing winning prob to 1
+Rational max: 46
+Max allowed bet: 77
+Max bet: 46
+Bet: 0, prob: 0.040739329059055314
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.0814786581181106
+Bet: 5, prob: 0.06789888176509216
+Bet: 6, prob: 0.05819904151293615
+Bet: 7, prob: 0.05092416132381913
+Bet: 8, prob: 0.04526592117672811
+Bet: 9, prob: 0.0407393290590553
+Bet: 10, prob: 0.03703575369005028
+Bet: 11, prob: 0.03394944088254608
+Bet: 12, prob: 0.03133794543004254
+Bet: 13, prob: 0.029099520756468076
+Bet: 14, prob: 0.02715955270603687
+Bet: 15, prob: 0.025462080661909563
+Bet: 16, prob: 0.023964311211209
+Bet: 17, prob: 0.022632960588364056
+Bet: 18, prob: 0.0214417521363449
+Bet: 19, prob: 0.02036966452952765
+Bet: 20, prob: 0.01939968050431205
+Bet: 21, prob: 0.01851787684502514
+Bet: 22, prob: 0.017712751764806654
+Bet: 23, prob: 0.01697472044127304
+Bet: 24, prob: 0.01629573162362212
+Bet: 25, prob: 0.01566897271502127
+Bet: 26, prob: 0.015088640392242704
+Bet: 27, prob: 0.014549760378234038
+Bet: 28, prob: 0.01404804450312252
+Bet: 29, prob: 0.013579776353018436
+Bet: 30, prob: 0.013141719051308162
+Bet: 31, prob: 0.012731040330954782
+Bet: 32, prob: 0.012345251230016759
+Bet: 33, prob: 0.0119821556056045
+Bet: 34, prob: 0.011639808302587228
+Bet: 35, prob: 0.011316480294182028
+Bet: 36, prob: 0.011010629475420352
+Bet: 37, prob: 0.01072087606817245
+Bet: 38, prob: 0.01044598181001418
+Bet: 39, prob: 0.010184832264763825
+Bet: 40, prob: 0.009936421721720805
+Bet: 41, prob: 0.009699840252156025
+Bet: 42, prob: 0.009474262571873325
+Bet: 43, prob: 0.00925893842251257
+Bet: 44, prob: 0.009053184235345622
+Bet: 45, prob: 0.008856375882403327
+Bet: 46, prob: 0.008667942352990489
+Own hand: ♥ A ♣ Q 
+Probs: [0.5        0.62940001]
+Mapped probs: [0.18529999256134033, 0.31470000743865967]
+Mapped probs normalized: [0.37059999 0.62940001]
+Combined winning prob: 0.6294000148773193
+Rational max: 3.776400089263916
+Max allowed bet: 33
+Max bet: 3
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Bet: 3, prob: 0.0
+Own hand: ♥ A ♣ Q 
+Probs: [0.44861608 0.84289998]
+Mapped probs: [0.07047759576091928, 0.4647614952233109]
+Mapped probs normalized: [0.13167498 0.86832502]
+Combined winning prob: 0.8683250215687334
+Rational max: 6.946600172549867
+Max allowed bet: 31
+Max bet: 6
+Bet: 0, prob: 0.30156657963446476
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2741514360313316
+Bet: 5, prob: 0.22845953002610964
+Bet: 6, prob: 0.19582245430809397
+Own hand: ♠ K ♠ A 
+Probs: [0.47816822 0.68440002]
+Mapped probs: [0.15090988098009733, 0.3571416789476028]
+Mapped probs normalized: [0.29703655 0.70296345]
+Combined winning prob: 0.7029634531550832
+Rational max: 5.623707625240666
+Max allowed bet: 96
+Max bet: 5
+Bet: 0, prob: 0.5217391304347826
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2608695652173913
+Bet: 5, prob: 0.21739130434782608
+Own hand: ♠ K ♠ A 
+Probs: [0.52760011 0.6038    ]
+Mapped probs: [0.2090351633849816, 0.2852350542934248]
+Mapped probs normalized: [0.42291677 0.57708323]
+Combined winning prob: 0.5770832311790451
+Rational max: 4.616665849432361
+Max allowed bet: 96
+Max bet: 4
+Bet: 0, prob: 0.5238095238095238
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.47619047619047616
+Own hand: ♠ K ♠ A 
+Probs: [0.54289828 0.60339999]
+Mapped probs: [0.21531346128925835, 0.2758151755674159]
+Mapped probs normalized: [0.43840543 0.56159457]
+Combined winning prob: 0.561594569872143
+Rational max: 4.492756558977144
+Max allowed bet: 96
+Max bet: 4
+Bet: 0, prob: 0.4444444444444444
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.5555555555555555
+Own hand: ♥ 5 ♦ J 
+Probs: [0.5        0.51990002]
+Mapped probs: [0.24004998803138733, 0.25995001196861267]
+Mapped probs normalized: [0.48009998 0.51990002]
+Combined winning prob: 0.5199000239372253
+Rational max: 3.119400143623352
+Max allowed bet: 94
+Max bet: 3
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Bet: 3, prob: 0.0
+Own hand: ♥ 5 ♦ J 
+Probs: [0.44635995 0.8251    ]
+Mapped probs: [0.07806835341403574, 0.456808406686939]
+Mapped probs normalized: [0.14595578 0.85404422]
+Combined winning prob: 0.8540442224498632
+Rational max: 6.832353779598906
+Max allowed bet: 92
+Max bet: 6
+Bet: 0, prob: 0.30156657963446476
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2741514360313316
+Bet: 5, prob: 0.22845953002610964
+Bet: 6, prob: 0.19582245430809397
+Own hand: ♥ 5 ♦ J 
+Probs: [0.68714262 0.8251    ]
+Mapped probs: [0.1201812414789234, 0.2581386235679154]
+Mapped probs normalized: [0.31767098 0.68232902]
+Combined winning prob: 0.682329022125116
+Rational max: 8.187948265501392
+Max allowed bet: 92
+Max bet: 8
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.6644295302013423
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Bet: 7, prob: 0.0
+Bet: 8, prob: 0.3355704697986577
+Own hand: ♥ 5 ♦ J 
+Probs: [0.68714262 0.84789997]
+Mapped probs: [0.1045144111781848, 0.26527176198665925]
+Mapped probs normalized: [0.28263472 0.71736528]
+Combined winning prob: 0.7173652809035828
+Rational max: 11.477844494457324
+Max allowed bet: 88
+Max bet: 11
+Bet: 0, prob: 0.13560731604405282
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.169509145055066
+Bet: 5, prob: 0.14125762087922167
+Bet: 6, prob: 0.12107796075361858
+Bet: 7, prob: 0.10594321565941625
+Bet: 8, prob: 0.09417174725281445
+Bet: 9, prob: 0.084754572527533
+Bet: 10, prob: 0.07704961138866637
+Bet: 11, prob: 0.07062881043961083
+Own hand: ♥ 5 ♦ J 
+Probs: [0.56825354 0.82779998]
+Mapped probs: [0.09785327271943955, 0.35739971195593445]
+Mapped probs normalized: [0.21494263 0.78505737]
+Combined winning prob: 0.7850573724646407
+Rational max: 29.832180153656346
+Max allowed bet: 77
+Max bet: 29
+Bet: 0, prob: 0.04971034286314485
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.09942068572628966
+Bet: 5, prob: 0.08285057143857472
+Bet: 6, prob: 0.07101477551877834
+Bet: 7, prob: 0.062137928578931044
+Bet: 8, prob: 0.05523371429238315
+Bet: 9, prob: 0.04971034286314483
+Bet: 10, prob: 0.045191220784677126
+Bet: 11, prob: 0.04142528571928736
+Bet: 12, prob: 0.038238725279342176
+Bet: 13, prob: 0.03550738775938917
+Bet: 14, prob: 0.03314022857542989
+Bet: 15, prob: 0.031068964289465522
+Bet: 16, prob: 0.029241378154791078
+Bet: 17, prob: 0.027616857146191574
+Bet: 18, prob: 0.0261633383490236
+Bet: 19, prob: 0.024855171431572416
+Bet: 20, prob: 0.02367159183959278
+Bet: 21, prob: 0.022595610392338563
+Bet: 22, prob: 0.021613192549193406
+Bet: 23, prob: 0.02071264285964368
+Bet: 24, prob: 0.019884137145257934
+Bet: 25, prob: 0.019119362639671088
+Bet: 26, prob: 0.01841123809746105
+Bet: 27, prob: 0.017753693879694585
+Bet: 28, prob: 0.017141497539015463
+Bet: 29, prob: 0.016570114287714946
+Own hand: ♥ 5 ♦ J 
+Probs: [0.74031238 0.82779998]
+Mapped probs: [0.1274818102900902, 0.2149694027250657]
+Mapped probs normalized: [0.37226269 0.62773731]
+Combined winning prob: 0.6277373084251618
+Rational max: 36.40876388865939
+Max allowed bet: 77
+Max bet: 36
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.0
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Bet: 7, prob: 0.0
+Bet: 8, prob: 0.0
+Bet: 9, prob: 0.0
+Bet: 10, prob: 0.0
+Bet: 11, prob: 0.0
+Bet: 12, prob: 0.0
+Bet: 13, prob: 0.0
+Bet: 14, prob: 0.0
+Bet: 15, prob: 0.0
+Bet: 16, prob: 0.0
+Bet: 17, prob: 0.0
+Bet: 18, prob: 0.0
+Bet: 19, prob: 0.0
+Bet: 20, prob: 0.19024860021840012
+Bet: 21, prob: 0.0
+Bet: 22, prob: 0.0
+Bet: 23, prob: 0.0
+Bet: 24, prob: 0.07609944008736003
+Bet: 25, prob: 0.07317253854553848
+Bet: 26, prob: 0.07046244452533336
+Bet: 27, prob: 0.0679459286494286
+Bet: 28, prob: 0.06560296559255174
+Bet: 29, prob: 0.06341620007280002
+Bet: 30, prob: 0.06137051619948389
+Bet: 31, prob: 0.059452687568250014
+Bet: 32, prob: 0.05765109097527275
+Bet: 33, prob: 0.055955470652470606
+Bet: 34, prob: 0.054356742919542865
+Bet: 35, prob: 0.052846833394000016
+Bet: 36, prob: 0.05141854059956758
+Own hand: ♥ 2 ♦ Q 
+Probs: [0.48126755 0.51849997]
+Mapped probs: [0.23173034015404945, 0.2689627593421667]
+Mapped probs normalized: [0.46281912 0.53718088]
+Combined winning prob: 0.5371808790909836
+Bluffing, so increasing winning prob to 1
+Rational max: 8
+Max allowed bet: 96
+Max bet: 8
+Bet: 0, prob: 0.34915136820228615
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.17457568410114307
+Bet: 5, prob: 0.14547973675095255
+Bet: 6, prob: 0.12469691721510218
+Bet: 7, prob: 0.10910980256321441
+Bet: 8, prob: 0.09698649116730171
+Own hand: ♥ 2 ♦ Q 
+Probs: [0.52626559 0.49039999]
+Mapped probs: [0.2681849540456805, 0.23231934607710364]
+Mapped probs normalized: [0.53582947 0.46417053]
+Combined winning prob: 0.4641705296440228
+Bluffing, so increasing winning prob to 0.9283410592880456
+Rational max: 7.4267284743043644
+Max allowed bet: 96
+Max bet: 7
+Bet: 0, prob: 0.2574533296182781
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2340484814711619
+Bet: 5, prob: 0.19504040122596822
+Bet: 6, prob: 0.16717748676511562
+Bet: 7, prob: 0.1462803009194762
+Own hand: ♦ 8 ♠ 9 
+Probs: [0.5        0.54329997]
+Mapped probs: [0.22835001349449158, 0.2716499865055084]
+Mapped probs normalized: [0.45670003 0.54329997]
+Combined winning prob: 0.5432999730110168
+Bluffing, so increasing winning prob to 1
+Rational max: 6
+Max allowed bet: 94
+Max bet: 6
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.7368421052631579
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.0
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.26315789473684204
+Own hand: ♦ 8 ♠ 9 
+Probs: [0.44849877 0.56190002]
+Mapped probs: [0.19648730312215754, 0.3098885509503963]
+Mapped probs normalized: [0.3880266 0.6119734]
+Combined winning prob: 0.6119733957654215
+Bluffing, so increasing winning prob to 1
+Rational max: 8
+Max allowed bet: 92
+Max bet: 8
+Bet: 0, prob: 0.22782937453768393
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2071176132160763
+Bet: 5, prob: 0.1725980110133969
+Bet: 6, prob: 0.14794115229719734
+Bet: 7, prob: 0.12944850826004767
+Bet: 8, prob: 0.11506534067559793
+Own hand: ♦ A ♠ 2 
+Probs: [0.4811087 0.5474   ]
+Mapped probs: [0.21774979823853707, 0.2840410970160761]
+Mapped probs normalized: [0.4339453 0.5660547]
+Combined winning prob: 0.5660547046632863
+Rational max: 4.528437637306291
+Max allowed bet: 96
+Max bet: 4
+Bet: 0, prob: 0.6666666666666666
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.3333333333333333
+Own hand: ♥ 7 ♣ Q 
+Probs: [0.5        0.56720001]
+Mapped probs: [0.21639999747276306, 0.28360000252723694]
+Mapped probs normalized: [0.43279999 0.56720001]
+Combined winning prob: 0.5672000050544739
+Rational max: 3.4032000303268433
+Max allowed bet: 94
+Max bet: 3
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Bet: 3, prob: 0.0
+Own hand: ♥ 7 ♣ Q 
+Probs: [0.44846085 0.35479999]
+Mapped probs: [0.28934694386795806, 0.19568608422008263]
+Mapped probs normalized: [0.59655101 0.40344899]
+Combined winning prob: 0.40344898777607097
+Rational max: 3.2275919022085677
+Max allowed bet: 92
+Max bet: 3
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Own hand: ♥ 7 ♣ Q 
+Probs: [0.6897475  0.35479999]
+Mapped probs: [0.44502509922830225, 0.11007758125009105]
+Mapped probs normalized: [0.8016987 0.1983013]
+Combined winning prob: 0.198301296537111
+Rational max: 2.379615558445332
+Folding
+Own hand: ♥ K ♠ 2 
+Probs: [0.48074488 0.50080001]
+Mapped probs: [0.2399878377862122, 0.26004297092665746]
+Mapped probs normalized: [0.4799461 0.5200539]
+Combined winning prob: 0.520053897470907
+Rational max: 4.160431179767256
+Max allowed bet: 96
+Max bet: 4
+Bet: 0, prob: 0.6666666666666666
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.3333333333333333
+Own hand: ♥ K ♠ 2 
+Probs: [0.69687282 0.52450001]
+Mapped probs: [0.33136301729626344, 0.1589902096394982]
+Mapped probs normalized: [0.67576392 0.32423608]
+Combined winning prob: 0.3242360831048973
+Rational max: 3.8908329972587676
+Folding
+Own hand: ♣ A ♠ 5 
+Probs: [0.47919389 0.56419998]
+Mapped probs: [0.20883270349081304, 0.29383880078382285]
+Mapped probs normalized: [0.41544568 0.58455432]
+Combined winning prob: 0.5845543228232871
+Rational max: 4.676434582586297
+Max allowed bet: 96
+Max bet: 4
+Bet: 0, prob: 0.6666666666666666
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.3333333333333333
+Own hand: ♣ A ♠ 5 
+Probs: [0.5265683  0.92650002]
+Mapped probs: [0.038702758149353866, 0.4386344819150074]
+Mapped probs normalized: [0.08108053 0.91891947]
+Combined winning prob: 0.918919466362743
+Rational max: 7.351355730901944
+Max allowed bet: 96
+Max bet: 7
+Bet: 0, prob: 0.2574533296182781
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2340484814711619
+Bet: 5, prob: 0.19504040122596822
+Bet: 6, prob: 0.16717748676511562
+Bet: 7, prob: 0.1462803009194762
+Own hand: ♠ 2 ♠ K 
+Probs: [0.5        0.55580002]
+Mapped probs: [0.22209998965263367, 0.27790001034736633]
+Mapped probs normalized: [0.44419998 0.55580002]
+Combined winning prob: 0.5558000206947327
+Rational max: 3.334800124168396
+Max allowed bet: 94
+Max bet: 3
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Bet: 3, prob: 0.0
+Own hand: ♠ 2 ♠ K 
+Probs: [0.4461987  0.81470001]
+Mapped probs: [0.08268061648505771, 0.45118192017747877]
+Mapped probs normalized: [0.15487248 0.84512752]
+Combined winning prob: 0.8451275172782511
+Rational max: 6.761020138226009
+Max allowed bet: 92
+Max bet: 6
+Bet: 0, prob: 0.30156657963446476
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2741514360313316
+Bet: 5, prob: 0.22845953002610964
+Bet: 6, prob: 0.19582245430809397
+Own hand: ♥ 2 ♦ 2 
+Probs: [0.47919389 0.50260001]
+Mapped probs: [0.23835103247546088, 0.2617571599045791]
+Mapped probs normalized: [0.47659894 0.52340106]
+Combined winning prob: 0.5234010637955432
+Rational max: 4.1872085103643455
+Max allowed bet: 88
+Max bet: 4
+Bet: 0, prob: 0.6666666666666666
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.3333333333333333
+Own hand: ♥ 2 ♦ 2 
+Probs: [0.69729518 0.46700001]
+Mapped probs: [0.3716583248661254, 0.14136315391003137]
+Mapped probs normalized: [0.72444983 0.27555017]
+Combined winning prob: 0.27555016652959946
+Rational max: 3.3066019983551938
+Folding
+Own hand: ♣ 2 ♠ Q 
+Probs: [0.5        0.51849997]
+Mapped probs: [0.2407500147819519, 0.2592499852180481]
+Mapped probs normalized: [0.48150003 0.51849997]
+Combined winning prob: 0.5184999704360962
+Bluffing, so increasing winning prob to 1
+Rational max: 6
+Max allowed bet: 94
+Max bet: 6
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.7368421052631579
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.0
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.26315789473684204
+Own hand: ♣ 2 ♠ Q 
+Probs: [0.61692558 0.51849997]
+Mapped probs: [0.29704968678355415, 0.198624073533616]
+Mapped probs normalized: [0.59928467 0.40071533]
+Combined winning prob: 0.4007153281757765
+Bluffing, so increasing winning prob to 0.801430656351553
+Rational max: 9.617167876218636
+Max allowed bet: 92
+Max bet: 9
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.6545454545454545
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Bet: 7, prob: 0.0
+Bet: 8, prob: 0.18181818181818185
+Bet: 9, prob: 0.16363636363636364
+Own hand: ♣ 2 ♠ Q 
+Probs: [0.48413062 0.39809999]
+Mapped probs: [0.2913982273092557, 0.20536759325015583]
+Mapped probs normalized: [0.58659073 0.41340927]
+Combined winning prob: 0.413409265997588
+Bluffing, so increasing winning prob to 0.826818531995176
+Rational max: 21.497281831874574
+Max allowed bet: 83
+Max bet: 21
+Bet: 0, prob: 0.12038435988676949
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.10944032716979044
+Bet: 5, prob: 0.09120027264149203
+Bet: 6, prob: 0.07817166226413602
+Bet: 7, prob: 0.06840020448111903
+Bet: 8, prob: 0.06080018176099468
+Bet: 9, prob: 0.05472016358489522
+Bet: 10, prob: 0.04974560325899565
+Bet: 11, prob: 0.04560013632074601
+Bet: 12, prob: 0.04209243352684248
+Bet: 13, prob: 0.03908583113206801
+Bet: 14, prob: 0.03648010905659681
+Bet: 15, prob: 0.03420010224055951
+Bet: 16, prob: 0.032188331520526595
+Bet: 17, prob: 0.03040009088049734
+Bet: 18, prob: 0.02880008609731327
+Bet: 19, prob: 0.02736008179244761
+Bet: 20, prob: 0.026057220754712004
+Bet: 21, prob: 0.024872801629497825
+Own hand: ♣ 2 ♠ Q 
+Probs: [0.53559134 0.32659999]
+Mapped probs: [0.36066721941600627, 0.1516758599960872]
+Mapped probs normalized: [0.70395646 0.29604354]
+Combined winning prob: 0.2960435420931871
+Bluffing, so increasing winning prob to 0.5920870841863742
+Rational max: 21.315135030709474
+Max allowed bet: 78
+Max bet: 21
+Bet: 0, prob: 0.09052436662594687
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.11315545828243358
+Bet: 5, prob: 0.09429621523536132
+Bet: 6, prob: 0.08082532734459542
+Bet: 7, prob: 0.07072216142652099
+Bet: 8, prob: 0.06286414349024087
+Bet: 9, prob: 0.05657772914121679
+Bet: 10, prob: 0.05143429921928799
+Bet: 11, prob: 0.04714810761768066
+Bet: 12, prob: 0.0435213301086283
+Bet: 13, prob: 0.04041266367229771
+Bet: 14, prob: 0.03771848609414453
+Bet: 15, prob: 0.035361080713260495
+Bet: 16, prob: 0.03328101714189223
+Bet: 17, prob: 0.031432071745120437
+Bet: 18, prob: 0.029777752179587787
+Bet: 19, prob: 0.028288864570608394
+Bet: 20, prob: 0.026941775781531802
+Bet: 21, prob: 0.025717149609643997
+Own hand: ♣ 2 ♠ Q 
+Probs: [0.5371407  0.28330001]
+Mapped probs: [0.3849687298611954, 0.1311280466693115]
+Mapped probs normalized: [0.74592353 0.25407647]
+Combined winning prob: 0.25407646905068476
+Bluffing, so increasing winning prob to 0.5081529381013695
+Rational max: 32.52178803848765
+Max allowed bet: 64
+Max bet: 32
+Bet: 0, prob: 0.04749544880119833
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.09499089760239662
+Bet: 5, prob: 0.07915908133533052
+Bet: 6, prob: 0.06785064114456903
+Bet: 7, prob: 0.05936931100149789
+Bet: 8, prob: 0.052772720890220344
+Bet: 9, prob: 0.04749544880119831
+Bet: 10, prob: 0.0431776807283621
+Bet: 11, prob: 0.03957954066766526
+Bet: 12, prob: 0.03653496061630639
+Bet: 13, prob: 0.03392532057228451
+Bet: 14, prob: 0.031663632534132215
+Bet: 15, prob: 0.029684655500748947
+Bet: 16, prob: 0.027938499294822536
+Bet: 17, prob: 0.026386360445110172
+Bet: 18, prob: 0.024997604632209642
+Bet: 19, prob: 0.023747724400599156
+Bet: 20, prob: 0.022616880381523007
+Bet: 21, prob: 0.02158884036418105
+Bet: 22, prob: 0.02065019513095579
+Bet: 23, prob: 0.01978977033383263
+Bet: 24, prob: 0.018998179520479323
+Bet: 25, prob: 0.018267480308153197
+Bet: 26, prob: 0.01759090696340678
+Bet: 27, prob: 0.016962660286142257
+Bet: 28, prob: 0.016377740965930455
+Bet: 29, prob: 0.015831816267066107
+Bet: 30, prob: 0.015321112516515585
+Bet: 31, prob: 0.014842327750374473
+Bet: 32, prob: 0.014392560242787367
+Own hand: ♥ 6 ♥ 9 
+Probs: [0.47919389 0.53100002]
+Mapped probs: [0.22474192421721192, 0.2765480555563948]
+Mapped probs normalized: [0.44832718 0.55167282]
+Combined winning prob: 0.551672817560187
+Rational max: 4.413382540481496
+Max allowed bet: 61
+Max bet: 4
+Bet: 0, prob: 0.6666666666666666
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.3333333333333333
+Own hand: ♥ 6 ♥ 9 
+Probs: [0.5265683  0.50239998]
+Mapped probs: [0.26202039539937255, 0.23785207777556078]
+Mapped probs normalized: [0.52417448 0.47582552]
+Combined winning prob: 0.4758255165859534
+Rational max: 3.806604132687627
+Max allowed bet: 61
+Max bet: 3
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Own hand: ♥ 6 ♥ 9 
+Probs: [0.54080854 0.49900001]
+Mapped probs: [0.2709450735718567, 0.22913654246531792]
+Mapped probs normalized: [0.54180171 0.45819829]
+Combined winning prob: 0.45819829227292486
+Rational max: 3.665586338183399
+Max allowed bet: 61
+Max bet: 3
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Own hand: ♥ 6 ♥ 9 
+Probs: [0.50526944 0.62199998]
+Mapped probs: [0.19099186017273675, 0.3077223958803622]
+Mapped probs normalized: [0.38296852 0.61703148]
+Combined winning prob: 0.6170314807435513
+Rational max: 4.93625184594841
+Max allowed bet: 61
+Max bet: 4
+Bet: 0, prob: 0.3333333333333334
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.6666666666666665
+Own hand: ♥ 3 ♠ 8 
+Probs: [0.5        0.43439999]
+Mapped probs: [0.28280000388622284, 0.21719999611377716]
+Mapped probs normalized: [0.56560001 0.43439999]
+Combined winning prob: 0.4343999922275543
+Rational max: 2.606399953365326
+Max allowed bet: 67
+Max bet: 2
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Own hand: ♥ 3 ♠ 8 
+Probs: [0.4461987  0.29719999]
+Mapped probs: [0.3135884515247495, 0.16458974210414876]
+Mapped probs normalized: [0.65579831 0.34420169]
+Combined winning prob: 0.3442016894477681
+Rational max: 2.7536135155821446
+Max allowed bet: 65
+Max bet: 2
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Own hand: ♥ 3 ♠ 8 
+Probs: [0.68982869 0.29719999]
+Mapped probs: [0.4848116095820354, 0.0921829105842561]
+Mapped probs normalized: [0.84023607 0.15976393]
+Combined winning prob: 0.15976392732064199
+Rational max: 1.9171671278477038
+Folding
+Own hand: ♣ 8 ♣ 9 
+Probs: [0.47919389 0.55870003]
+Mapped probs: [0.2114682502173257, 0.2909743885183311]
+Mapped probs normalized: [0.42088038 0.57911962]
+Combined winning prob: 0.5791196170184463
+Rational max: 4.63295693614757
+Max allowed bet: 61
+Max bet: 4
+Bet: 0, prob: 0.6666666666666666
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.3333333333333333
+Own hand: ♣ 8 ♣ 9 
+Probs: [0.5265683 0.6401   ]
+Mapped probs: [0.18951192947736567, 0.30304363312049115]
+Mapped probs normalized: [0.38475239 0.61524761]
+Combined winning prob: 0.6152476108932076
+Rational max: 4.9219808871456605
+Max allowed bet: 61
+Max bet: 4
+Bet: 0, prob: 0.5238095238095238
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.47619047619047616
+Own hand: ♣ 8 ♣ 9 
+Probs: [0.54080854 0.94859999]
+Mapped probs: [0.027797562306737536, 0.4355890125081821]
+Mapped probs normalized: [0.05998785 0.94001215]
+Combined winning prob: 0.9400121543921722
+Rational max: 7.520097235137378
+Max allowed bet: 61
+Max bet: 7
+Bet: 0, prob: 0.2013784836679653
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.25172310458495656
+Bet: 5, prob: 0.20976925382079714
+Bet: 6, prob: 0.17980221756068326
+Bet: 7, prob: 0.15732694036559786
+Own hand: ♥ Q ♣ A 
+Probs: [0.5        0.62940001]
+Mapped probs: [0.18529999256134033, 0.31470000743865967]
+Mapped probs normalized: [0.37059999 0.62940001]
+Combined winning prob: 0.6294000148773193
+Rational max: 3.776400089263916
+Max allowed bet: 67
+Max bet: 3
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Bet: 3, prob: 0.0
+Own hand: ♥ Q ♣ A 
+Probs: [0.4461987  0.43669999]
+Mapped probs: [0.25134373586275727, 0.24184501857434337]
+Mapped probs normalized: [0.5096299 0.4903701]
+Combined winning prob: 0.49037009947717153
+Rational max: 3.9229607958173722
+Max allowed bet: 65
+Max bet: 3
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Own hand: ♥ Q ♣ A 
+Probs: [0.51910192 0.40180001]
+Mapped probs: [0.310526763428635, 0.19322485285630128]
+Mapped probs normalized: [0.61642832 0.38357168]
+Combined winning prob: 0.383571678203823
+Bluffing, so increasing winning prob to 0.767143356407646
+Rational max: 6.137146851261168
+Max allowed bet: 65
+Max bet: 6
+Bet: 0, prob: 0.23897581792318637
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2987197724039829
+Bet: 5, prob: 0.24893314366998576
+Bet: 6, prob: 0.21337126600284495
+Own hand: ♣ 8 ♠ 10 
+Probs: [0.47919389 0.54820001]
+Mapped probs: [0.2164997926549484, 0.2855059171276762]
+Mapped probs normalized: [0.43126958 0.56873042]
+Combined winning prob: 0.5687304179295176
+Rational max: 4.549843343436141
+Max allowed bet: 69
+Max bet: 4
+Bet: 0, prob: 0.6666666666666666
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.3333333333333333
+Own hand: ♥ 5 ♥ A 
+Probs: [0.5        0.60039997]
+Mapped probs: [0.1998000144958496, 0.3001999855041504]
+Mapped probs normalized: [0.39960003 0.60039997]
+Combined winning prob: 0.6003999710083008
+Rational max: 3.6023998260498047
+Max allowed bet: 75
+Max bet: 3
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Bet: 3, prob: 0.0
+Own hand: ♥ 5 ♥ A 
+Probs: [0.4461987  0.98449999]
+Mapped probs: [0.006916083950585014, 0.5452173711444404]
+Mapped probs normalized: [0.01252611 0.98747389]
+Combined winning prob: 0.9874738908016456
+Rational max: 7.899791126413165
+Max allowed bet: 73
+Max bet: 7
+Bet: 0, prob: 0.2574533296182781
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2340484814711619
+Bet: 5, prob: 0.19504040122596822
+Bet: 6, prob: 0.16717748676511562
+Bet: 7, prob: 0.1462803009194762
+Own hand: ♥ 9 ♣ 10 
+Probs: [0.47919389 0.55739999]
+Mapped probs: [0.21209121995584324, 0.2902973213496526]
+Mapped probs normalized: [0.42216572 0.57783428]
+Combined winning prob: 0.5778342806053903
+Rational max: 4.622674244843123
+Max allowed bet: 77
+Max bet: 4
+Bet: 0, prob: 0.6666666666666666
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.3333333333333333
+Own hand: ♥ 9 ♣ 10 
+Probs: [0.69729518 0.7432    ]
+Mapped probs: [0.17906539900128568, 0.22497022451659673]
+Mapped probs normalized: [0.44319211 0.55680789]
+Combined winning prob: 0.5568078937144503
+Rational max: 6.681694724573403
+Max allowed bet: 77
+Max bet: 6
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 1.0
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Own hand: ♥ 9 ♣ 10 
+Probs: [0.72906247 0.81720001]
+Mapped probs: [0.1332726164807564, 0.2214101479806153]
+Mapped probs normalized: [0.3757516 0.6242484]
+Combined winning prob: 0.6242483993177768
+Rational max: 14.981961583626642
+Max allowed bet: 73
+Max bet: 14
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.0
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Bet: 7, prob: 0.0
+Bet: 8, prob: 0.4266458292635281
+Bet: 9, prob: 0.0
+Bet: 10, prob: 0.0
+Bet: 11, prob: 0.0
+Bet: 12, prob: 0.20511818714592692
+Bet: 13, prob: 0.19046688806407502
+Bet: 14, prob: 0.17776909552647002
+Own hand: ♥ 9 ♣ 10 
+Probs: [0.71158124 0.56760001]
+Mapped probs: [0.30768772158823504, 0.16370648918835065]
+Mapped probs normalized: [0.6527185 0.3472815]
+Combined winning prob: 0.34728150122729934
+Bluffing, so increasing winning prob to 0.6945630024545987
+Rational max: 44.452032157094315
+Max allowed bet: 65
+Max bet: 44
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.0
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Bet: 7, prob: 0.0
+Bet: 8, prob: 0.0
+Bet: 9, prob: 0.0
+Bet: 10, prob: 0.0
+Bet: 11, prob: 0.0
+Bet: 12, prob: 0.0
+Bet: 13, prob: 0.0
+Bet: 14, prob: 0.0
+Bet: 15, prob: 0.0
+Bet: 16, prob: 0.0
+Bet: 17, prob: 0.0
+Bet: 18, prob: 0.0
+Bet: 19, prob: 0.0
+Bet: 20, prob: 0.0
+Bet: 21, prob: 0.0
+Bet: 22, prob: 0.0
+Bet: 23, prob: 0.0
+Bet: 24, prob: 0.0
+Bet: 25, prob: 0.0
+Bet: 26, prob: 0.0
+Bet: 27, prob: 0.0
+Bet: 28, prob: 0.0
+Bet: 29, prob: 0.0
+Bet: 30, prob: 0.0
+Bet: 31, prob: 0.0
+Bet: 32, prob: 0.3121206575685106
+Bet: 33, prob: 0.0
+Bet: 34, prob: 0.0
+Bet: 35, prob: 0.0
+Bet: 36, prob: 0.0843569344779758
+Bet: 37, prob: 0.08213701514960803
+Bet: 38, prob: 0.08003093783807962
+Bet: 39, prob: 0.07803016439212762
+Bet: 40, prob: 0.07612698965085622
+Bet: 41, prob: 0.07431444227821679
+Bet: 42, prob: 0.07258619943453733
+Bet: 43, prob: 0.07093651308375239
+Bet: 44, prob: 0.06936014612633566
+Own hand: ♦ K ♠ Q 
+Probs: [0.5        0.60860002]
+Mapped probs: [0.19569998979568481, 0.3043000102043152]
+Mapped probs normalized: [0.39139998 0.60860002]
+Combined winning prob: 0.6086000204086304
+Rational max: 3.6516001224517822
+Max allowed bet: 26
+Max bet: 3
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Bet: 3, prob: 0.0
+Own hand: ♦ K ♠ Q 
+Probs: [0.4461987 0.8599   ]
+Mapped probs: [0.06251243941611581, 0.4762137333810589]
+Mapped probs normalized: [0.1160375 0.8839625]
+Combined winning prob: 0.8839624978835933
+Bluffing, so increasing winning prob to 1
+Rational max: 8
+Max allowed bet: 24
+Max bet: 8
+Bet: 0, prob: 0.22782937453768393
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2071176132160763
+Bet: 5, prob: 0.1725980110133969
+Bet: 6, prob: 0.14794115229719734
+Bet: 7, prob: 0.12944850826004767
+Bet: 8, prob: 0.11506534067559793
+Own hand: ♦ K ♠ Q 
+Probs: [0.51910192 0.86210001]
+Mapped probs: [0.07158415170863856, 0.41458223965810964]
+Mapped probs normalized: [0.14724208 0.85275792]
+Combined winning prob: 0.8527579179066744
+Bluffing, so increasing winning prob to 1
+Rational max: 8
+Max allowed bet: 24
+Max bet: 8
+Bet: 0, prob: 0.1766716326351766
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.22083954079397072
+Bet: 5, prob: 0.18403295066164227
+Bet: 6, prob: 0.15774252913855052
+Bet: 7, prob: 0.1380247129962317
+Bet: 8, prob: 0.12268863377442818
+Own hand: ♥ 6 ♠ A 
+Probs: [0.47919389 0.60259998]
+Mapped probs: [0.19043166093470681, 0.31383775260103813]
+Mapped probs normalized: [0.37763873 0.62236127]
+Combined winning prob: 0.6223612699420483
+Rational max: 4.978890159536387
+Max allowed bet: 28
+Max bet: 4
+Bet: 0, prob: 0.6666666666666666
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.3333333333333333
+Own hand: ♥ 6 ♠ A 
+Probs: [0.5265683  0.85280001]
+Mapped probs: [0.07751084743411511, 0.4037425604232489]
+Mapped probs normalized: [0.16106036 0.83893964]
+Combined winning prob: 0.8389396393488228
+Rational max: 6.711517114790582
+Max allowed bet: 28
+Max bet: 6
+Bet: 0, prob: 0.30156657963446476
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2741514360313316
+Bet: 5, prob: 0.22845953002610964
+Bet: 6, prob: 0.19582245430809397
+Own hand: ♥ 6 ♠ A 
+Probs: [0.54080854 0.84179997]
+Mapped probs: [0.08555592548005653, 0.38654735594044276]
+Mapped probs normalized: [0.1812229 0.8187771]
+Combined winning prob: 0.8187771005898762
+Rational max: 6.5502168047190095
+Max allowed bet: 28
+Max bet: 6
+Bet: 0, prob: 0.23897581792318637
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2987197724039829
+Bet: 5, prob: 0.24893314366998576
+Bet: 6, prob: 0.21337126600284495
+Own hand: ♣ Q ♠ 6 
+Probs: [0.5        0.55860001]
+Mapped probs: [0.2206999957561493, 0.2793000042438507]
+Mapped probs normalized: [0.44139999 0.55860001]
+Combined winning prob: 0.5586000084877014
+Rational max: 3.3516000509262085
+Max allowed bet: 34
+Max bet: 3
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Bet: 3, prob: 0.0
+Own hand: ♣ Q ♠ 6 
+Probs: [0.4461987  0.44940001]
+Mapped probs: [0.2456770028359002, 0.24887830681442355]
+Mapped probs normalized: [0.49676345 0.50323655]
+Combined winning prob: 0.5032365479816472
+Rational max: 4.0258923838531775
+Max allowed bet: 32
+Max bet: 4
+Bet: 0, prob: 0.5238095238095238
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.47619047619047616
+Own hand: ♣ Q ♠ 6 
+Probs: [0.51910192 0.51980001]
+Mapped probs: [0.2492727368277007, 0.2499708269706227]
+Mapped probs normalized: [0.49930085 0.50069915]
+Combined winning prob: 0.5006991478644319
+Rational max: 4.005593182915455
+Max allowed bet: 32
+Max bet: 4
+Bet: 0, prob: 0.4444444444444444
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.5555555555555555
+Own hand: ♥ 8 ♠ 4 
+Probs: [0.47919389 0.45109999]
+Mapped probs: [0.2630295283840435, 0.23493563340181525]
+Mapped probs normalized: [0.5282087 0.4717913]
+Combined winning prob: 0.47179130475566333
+Rational max: 3.7743304380453067
+Max allowed bet: 36
+Max bet: 3
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Own hand: ♥ 8 ♠ 4 
+Probs: [0.69729518 0.3881    ]
+Mapped probs: [0.4266749210066966, 0.11747974065691055]
+Mapped probs normalized: [0.78410597 0.21589403]
+Combined winning prob: 0.21589402597002055
+Rational max: 2.5907283116402464
+Folding
+Own hand: ♥ 2 ♠ J 
+Probs: [0.5        0.48930001]
+Mapped probs: [0.2553499937057495, 0.2446500062942505]
+Mapped probs normalized: [0.51069999 0.48930001]
+Combined winning prob: 0.489300012588501
+Rational max: 2.935800075531006
+Max allowed bet: 34
+Max bet: 2
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Own hand: ♥ 2 ♠ J 
+Probs: [0.4461987  0.58810002]
+Mapped probs: [0.18378923888164836, 0.32569055125250573]
+Mapped probs normalized: [0.36073902 0.63926098]
+Combined winning prob: 0.6392609825931392
+Bluffing, so increasing winning prob to 1
+Rational max: 8
+Max allowed bet: 32
+Max bet: 8
+Bet: 0, prob: 0.22782937453768393
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2071176132160763
+Bet: 5, prob: 0.1725980110133969
+Bet: 6, prob: 0.14794115229719734
+Bet: 7, prob: 0.12944850826004767
+Bet: 8, prob: 0.11506534067559793
+Own hand: ♣ 9 ♠ 2 
+Probs: [0.47919389 0.44170001]
+Mapped probs: [0.26753394148283666, 0.23004006619398304]
+Mapped probs normalized: [0.53767668 0.46232332]
+Combined winning prob: 0.4623233180286958
+Rational max: 3.6985865442295665
+Max allowed bet: 36
+Max bet: 3
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Own hand: ♣ 9 ♠ 2 
+Probs: [0.5265683 0.428    ]
+Mapped probs: [0.30119706519326866, 0.20262876964701731]
+Mapped probs normalized: [0.59781981 0.40218019]
+Combined winning prob: 0.40218018933318717
+Rational max: 3.2174415146654973
+Max allowed bet: 36
+Max bet: 3
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Own hand: ♣ 9 ♠ 2 
+Probs: [0.71153542 0.97460002]
+Mapped probs: [0.018072987621134063, 0.2811375807709666]
+Mapped probs normalized: [0.06040224 0.93959776]
+Combined winning prob: 0.9395977631463528
+Rational max: 11.275173157756234
+Max allowed bet: 36
+Max bet: 11
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.2933876643822931
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Bet: 7, prob: 0.0
+Bet: 8, prob: 0.2037414335988146
+Bet: 9, prob: 0.18336729023893314
+Bet: 10, prob: 0.16669753658084832
+Bet: 11, prob: 0.15280607519911096
+Own hand: ♣ 9 ♠ 2 
+Probs: [0.70879801 0.97460002]
+Mapped probs: [0.018003457442520288, 0.28380546103894655]
+Mapped probs normalized: [0.05965184 0.94034816]
+Combined winning prob: 0.9403481595802284
+Rational max: 31.971837425727767
+Max allowed bet: 25
+Max bet: 25
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.12340322271190046
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Bet: 7, prob: 0.0
+Bet: 8, prob: 0.08569668243881975
+Bet: 9, prob: 0.07712701419493778
+Bet: 10, prob: 0.07011546744994344
+Bet: 11, prob: 0.06427251182911481
+Bet: 12, prob: 0.05932847245764444
+Bet: 13, prob: 0.05509072442495556
+Bet: 14, prob: 0.05141800946329186
+Bet: 15, prob: 0.048204383871836114
+Bet: 16, prob: 0.04536883187937516
+Bet: 17, prob: 0.04284834121940988
+Bet: 18, prob: 0.04059316536575673
+Bet: 19, prob: 0.03856350709746889
+Bet: 20, prob: 0.036727149616637034
+Bet: 21, prob: 0.03505773372497172
+Bet: 22, prob: 0.03353348443258164
+Bet: 23, prob: 0.032136255914557404
+Bet: 24, prob: 0.03085080567797511
+Bet: 25, prob: 0.02966423622882222
+Own hand: ♣ 9 ♠ 2 
+Probs: [0.62861234 1.        ]
+Mapped probs: [0.0, 0.3713876625788657]
+Mapped probs normalized: [0. 1.]
+Combined winning prob: 1.0
+Rational max: 70.0
+Max allowed bet: 5
+Max bet: 5
+Bet: 0, prob: 0.21428571428571436
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.4285714285714285
+Bet: 5, prob: 0.35714285714285715
+Own hand: ♥ 3 ♠ Q 
+Probs: [0.5        0.52020001]
+Mapped probs: [0.23989999294281006, 0.26010000705718994]
+Mapped probs normalized: [0.47979999 0.52020001]
+Combined winning prob: 0.5202000141143799
+Rational max: 3.1212000846862793
+Max allowed bet: 78
+Max bet: 3
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Bet: 3, prob: 0.0
+Own hand: ♥ 3 ♠ Q 
+Probs: [0.4461987 0.3353   ]
+Mapped probs: [0.2965882790396936, 0.18568957381525977]
+Mapped probs normalized: [0.61497387 0.38502613]
+Combined winning prob: 0.38502612698474153
+Rational max: 3.0802090158779323
+Max allowed bet: 76
+Max bet: 3
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Own hand: ♥ 3 ♠ Q 
+Probs: [0.68982869 0.3353    ]
+Mapped probs: [0.4585291334717768, 0.10400043867016451]
+Mapped probs normalized: [0.81512005 0.18487995]
+Combined winning prob: 0.18487994910945305
+Rational max: 2.2185593893134365
+Folding
+Own hand: ♥ 7 ♦ 7 
+Probs: [0.61291787 0.69080001]
+Mapped probs: [0.18951419882656625, 0.26739633913883315]
+Mapped probs normalized: [0.4147731 0.5852269]
+Combined winning prob: 0.5852269031253605
+Rational max: 7.022722837504326
+Max allowed bet: 72
+Max bet: 7
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 1.0
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Bet: 7, prob: 0.0
+Own hand: ♥ 7 ♦ 7 
+Probs: [0.68456093 0.64480001]
+Mapped probs: [0.24315603558896912, 0.20339511777488514]
+Mapped probs normalized: [0.54452 0.45548]
+Combined winning prob: 0.45547999650816445
+Rational max: 11.842479909212276
+Max allowed bet: 68
+Max bet: 11
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.0
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Bet: 7, prob: 0.0
+Bet: 8, prob: 0.0
+Bet: 9, prob: 0.0
+Bet: 10, prob: 1.0
+Bet: 11, prob: 0.0
+Own hand: ♥ 7 ♦ 7 
+Probs: [0.56578046 0.60619998]
+Mapped probs: [0.22280435670156107, 0.263223876192475]
+Mapped probs normalized: [0.45841855 0.54158145]
+Combined winning prob: 0.5415814522237088
+Rational max: 19.496932280053517
+Max allowed bet: 58
+Max bet: 19
+Bet: 0, prob: 0.09555625640250653
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.11944532050313314
+Bet: 5, prob: 0.09953776708594428
+Bet: 6, prob: 0.08531808607366653
+Bet: 7, prob: 0.07465332531445822
+Bet: 8, prob: 0.06635851139062952
+Bet: 9, prob: 0.05972266025156657
+Bet: 10, prob: 0.054293327501424155
+Bet: 11, prob: 0.04976888354297214
+Bet: 12, prob: 0.045940507885820436
+Bet: 13, prob: 0.042659043036833266
+Bet: 14, prob: 0.039815106834377716
+Bet: 15, prob: 0.03732666265722911
+Bet: 16, prob: 0.035130976618568566
+Bet: 17, prob: 0.03317925569531476
+Bet: 18, prob: 0.03143297907977188
+Bet: 19, prob: 0.029861330125783285
+Own hand: ♥ 7 ♦ 7 
+Probs: [0.55229907 0.60509998]
+Mapped probs: [0.21810291782395444, 0.2709038191755439]
+Mapped probs normalized: [0.44601209 0.55398791]
+Combined winning prob: 0.5539879078922011
+Rational max: 37.67117773666968
+Max allowed bet: 42
+Max bet: 37
+Bet: 0, prob: 0.04455198938340896
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.08910397876681787
+Bet: 5, prob: 0.0742533156390149
+Bet: 6, prob: 0.06364569911915563
+Bet: 7, prob: 0.055689986729261176
+Bet: 8, prob: 0.049502210426009934
+Bet: 9, prob: 0.04455198938340894
+Bet: 10, prob: 0.04050180853037177
+Bet: 11, prob: 0.03712665781950745
+Bet: 12, prob: 0.03427076106416072
+Bet: 13, prob: 0.031822849559577815
+Bet: 14, prob: 0.029701326255605964
+Bet: 15, prob: 0.027844993364630588
+Bet: 16, prob: 0.02620705257847585
+Bet: 17, prob: 0.024751105213004967
+Bet: 18, prob: 0.023448415464952077
+Bet: 19, prob: 0.02227599469170447
+Bet: 20, prob: 0.021215233039718544
+Bet: 21, prob: 0.020250904265185884
+Bet: 22, prob: 0.01937043016669954
+Bet: 23, prob: 0.018563328909753724
+Bet: 24, prob: 0.017820795753363577
+Bet: 25, prob: 0.01713538053208036
+Bet: 26, prob: 0.016500736808669977
+Bet: 27, prob: 0.015911424779788907
+Bet: 28, prob: 0.015362754959796188
+Bet: 29, prob: 0.014850663127802982
+Bet: 30, prob: 0.014371609478519013
+Bet: 31, prob: 0.013922496682315294
+Bet: 32, prob: 0.013500602843457254
+Bet: 33, prob: 0.013103526289237924
+Bet: 34, prob: 0.012729139823831124
+Bet: 35, prob: 0.012375552606502483
+Bet: 36, prob: 0.012041078211732146
+Bet: 37, prob: 0.011724207732476039
+Own hand: ♥ 5 ♠ Q 
+Probs: [0.5    0.5406]
+Mapped probs: [0.2296999990940094, 0.2703000009059906]
+Mapped probs normalized: [0.4594 0.5406]
+Combined winning prob: 0.5406000018119812
+Rational max: 3.243600010871887
+Max allowed bet: 14
+Max bet: 3
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Bet: 3, prob: 0.0
+Own hand: ♥ 5 ♠ Q 
+Probs: [0.4461987 0.421    ]
+Mapped probs: [0.25834904776695916, 0.23315034783541783]
+Mapped probs normalized: [0.52563452 0.47436548]
+Combined winning prob: 0.4743654822803413
+Rational max: 3.7949238582427305
+Max allowed bet: 12
+Max bet: 3
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Own hand: ♥ 5 ♠ Q 
+Probs: [0.51910192 0.76810002]
+Mapped probs: [0.1203797225194442, 0.3693778285887273]
+Mapped probs normalized: [0.24579452 0.75420548]
+Combined winning prob: 0.7542054793293912
+Bluffing, so increasing winning prob to 1
+Rational max: 8
+Max allowed bet: 12
+Max bet: 8
+Bet: 0, prob: 0.1766716326351766
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.22083954079397072
+Bet: 5, prob: 0.18403295066164227
+Bet: 6, prob: 0.15774252913855052
+Bet: 7, prob: 0.1380247129962317
+Bet: 8, prob: 0.12268863377442818
+Own hand: ♥ 5 ♠ Q 
+Probs: [0.69204694 0.76810002]
+Mapped probs: [0.160485669232073, 0.23653875271834826]
+Mapped probs normalized: [0.40422115 0.59577885]
+Combined winning prob: 0.5957788479517924
+Bluffing, so increasing winning prob to 1
+Rational max: 24
+Max allowed bet: 6
+Max bet: 6
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 1.0
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Own hand: ♥ 5 ♠ Q 
+Probs: [0.69204694 0.75880003]
+Mapped probs: [0.16692170128414416, 0.23367479125540477]
+Mapped probs normalized: [0.41668288 0.58331712]
+Combined winning prob: 0.5833171173667607
+Bluffing, so increasing winning prob to 1
+Rational max: 28
+Max allowed bet: 2
+Max bet: 2
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Own hand: ♣ 8 ♠ Q 
+Probs: [0.47919389 0.56910002]
+Mapped probs: [0.20648463512009238, 0.2963907706554422]
+Mapped probs normalized: [0.41060794 0.58939206]
+Combined winning prob: 0.5893920586518808
+Rational max: 4.715136469215047
+Max allowed bet: 26
+Max bet: 4
+Bet: 0, prob: 0.6666666666666666
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.3333333333333333
+Own hand: ♣ 8 ♠ Q 
+Probs: [0.5265683  0.47510001]
+Mapped probs: [0.2763956943598767, 0.22492740634765246]
+Mapped probs normalized: [0.55133245 0.44866755]
+Combined winning prob: 0.44866754799491004
+Rational max: 3.5893403839592803
+Max allowed bet: 26
+Max bet: 3
+Bet: 0, prob: 1.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Own hand: ♣ 8 ♠ Q 
+Probs: [0.71153542 0.3633    ]
+Mapped probs: [0.4530346074979685, 0.10479917923781261]
+Mapped probs normalized: [0.81213189 0.18786811]
+Combined winning prob: 0.18786811005309528
+Rational max: 2.2544173206371436
+Folding
+Own hand: ♦ 9 ♣ 4 
+Probs: [0.5        0.45269999]
+Mapped probs: [0.27365000545978546, 0.22634999454021454]
+Mapped probs normalized: [0.54730001 0.45269999]
+Combined winning prob: 0.4526999890804291
+Rational max: 2.7161999344825745
+Max allowed bet: 24
+Max bet: 2
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Own hand: ♦ 9 ♣ 4 
+Probs: [0.61692558 0.45269999]
+Mapped probs: [0.33764337868792926, 0.173417784082324]
+Mapped probs normalized: [0.66067117 0.33932883]
+Combined winning prob: 0.33932882542335485
+Bluffing, so increasing winning prob to 0.6786576508467097
+Rational max: 8.143891810160516
+Max allowed bet: 22
+Max bet: 8
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.782608695652174
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Bet: 7, prob: 0.0
+Bet: 8, prob: 0.2173913043478261
+Own hand: ♦ 9 ♣ 4 
+Probs: [0.61692558 0.79729998]
+Mapped probs: [0.12505082746241164, 0.30542522489362584]
+Mapped probs normalized: [0.29049427 0.70950573]
+Combined winning prob: 0.7095057279539797
+Bluffing, so increasing winning prob to 1
+Rational max: 16
+Max allowed bet: 18
+Max bet: 16
+Bet: 0, prob: 0.13957449667686503
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.1268859060698773
+Bet: 5, prob: 0.10573825505823106
+Bet: 6, prob: 0.09063279004991234
+Bet: 7, prob: 0.0793036912936733
+Bet: 8, prob: 0.0704921700388207
+Bet: 9, prob: 0.06344295303493865
+Bet: 10, prob: 0.057675411849944215
+Bet: 11, prob: 0.05286912752911553
+Bet: 12, prob: 0.04880227156533742
+Bet: 13, prob: 0.04531639502495617
+Bet: 14, prob: 0.04229530202329242
+Bet: 15, prob: 0.03965184564683665
+Bet: 16, prob: 0.0373193841381992
+Own hand: ♦ 9 ♣ 4 
+Probs: [0.54313699 0.74760002]
+Mapped probs: [0.137087767212362, 0.3415507912614775]
+Mapped probs normalized: [0.28641188 0.71358812]
+Combined winning prob: 0.7135881245140958
+Bluffing, so increasing winning prob to 1
+Rational max: 38
+Max allowed bet: 7
+Max bet: 7
+Bet: 0, prob: 0.2013784836679653
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.25172310458495656
+Bet: 5, prob: 0.20976925382079714
+Bet: 6, prob: 0.17980221756068326
+Bet: 7, prob: 0.15732694036559786
+Own hand: ♦ 9 ♣ 4 
+Probs: [0.54728984 0.76800001]
+Mapped probs: [0.1269712381213943, 0.3476814095602692]
+Mapped probs normalized: [0.26750349 0.73249651]
+Combined winning prob: 0.7324965135208718
+Bluffing, so increasing winning prob to 1
+Rational max: 38
+Max allowed bet: 7
+Max bet: 7
+Bet: 0, prob: 0.13614262560777962
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.27228525121555913
+Bet: 5, prob: 0.22690437601296595
+Bet: 6, prob: 0.19448946515397084
+Bet: 7, prob: 0.17017828200972446
+Own hand: ♦ 10 ♣ 4 
+Probs: [0.47919389 0.47960001]
+Mapped probs: [0.24937249278540516, 0.2497786183071747]
+Mapped probs normalized: [0.49959318 0.50040682]
+Combined winning prob: 0.5004068162052976
+Rational max: 4.003254529642381
+Max allowed bet: 48
+Max bet: 4
+Bet: 0, prob: 0.6666666666666666
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.3333333333333333
+Own hand: ♦ 10 ♣ 4 
+Probs: [0.69729518 0.3831    ]
+Mapped probs: [0.4301613935746615, 0.11596621799324706]
+Mapped probs normalized: [0.78765729 0.21234271]
+Combined winning prob: 0.21234271173419178
+Rational max: 2.548112540810301
+Folding
+Own hand: ♦ K ♣ 5 
+Probs: [0.5    0.5399]
+Mapped probs: [0.2300499975681305, 0.2699500024318695]
+Mapped probs normalized: [0.4601 0.5399]
+Combined winning prob: 0.539900004863739
+Rational max: 3.239400029182434
+Max allowed bet: 46
+Max bet: 3
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 1.0
+Bet: 3, prob: 0.0
+Own hand: ♦ K ♣ 5 
+Probs: [0.4461987 0.5812   ]
+Mapped probs: [0.1868680155119174, 0.3218693153896412]
+Mapped probs normalized: [0.36731729 0.63268271]
+Combined winning prob: 0.6326827143178989
+Rational max: 5.061461714543191
+Max allowed bet: 44
+Max bet: 5
+Bet: 0, prob: 0.375
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.34090909090909094
+Bet: 5, prob: 0.28409090909090906
+Own hand: ♦ K ♣ 5 
+Probs: [0.5480898  0.52950001]
+Mapped probs: [0.25787624752853927, 0.23928645343607918]
+Mapped probs normalized: [0.51869589 0.48130411]
+Combined winning prob: 0.4813041142704478
+Rational max: 7.7008658283271645
+Max allowed bet: 40
+Max bet: 7
+Bet: 0, prob: 0.2013784836679653
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.25172310458495656
+Bet: 5, prob: 0.20976925382079714
+Bet: 6, prob: 0.17980221756068326
+Bet: 7, prob: 0.15732694036559786
+Own hand: ♦ K ♣ 5 
+Probs: [0.57159978 0.39820001]
+Mapped probs: [0.34398874516227057, 0.1705889694852615]
+Mapped probs normalized: [0.66848745 0.33151255]
+Combined winning prob: 0.33151254830790533
+Rational max: 8.61932625600554
+Max allowed bet: 35
+Max bet: 8
+Bet: 0, prob: 0.11825434068512439
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.23650868137024866
+Bet: 5, prob: 0.1970905678085406
+Bet: 6, prob: 0.16893477240732052
+Bet: 7, prob: 0.14781792585640544
+Bet: 8, prob: 0.13139371187236037
+Own hand: ♦ K ♣ 5 
+Probs: [0.6327799  0.39820001]
+Mapped probs: [0.38080693789265, 0.1462270474695472]
+Mapped probs normalized: [0.72254721 0.27745279]
+Combined winning prob: 0.27745278583705485
+Bluffing, so increasing winning prob to 0.5549055716741097
+Rational max: 37.73357887383946
+Max allowed bet: 28
+Max bet: 28
+Bet: 0, prob: 0.0
+Bet: 1, prob: 0.0
+Bet: 2, prob: 0.0
+Bet: 3, prob: 0.0
+Bet: 4, prob: 0.0
+Bet: 5, prob: 0.0
+Bet: 6, prob: 0.0
+Bet: 7, prob: 0.0
+Bet: 8, prob: 0.0
+Bet: 9, prob: 0.0
+Bet: 10, prob: 0.0
+Bet: 11, prob: 0.0
+Bet: 12, prob: 0.0
+Bet: 13, prob: 0.0
+Bet: 14, prob: 0.0
+Bet: 15, prob: 0.0
+Bet: 16, prob: 0.0
+Bet: 17, prob: 0.0
+Bet: 18, prob: 0.0
+Bet: 19, prob: 0.0
+Bet: 20, prob: 0.0
+Bet: 21, prob: 0.0
+Bet: 22, prob: 0.0
+Bet: 23, prob: 0.0
+Bet: 24, prob: 0.0
+Bet: 25, prob: 0.0
+Bet: 26, prob: 0.0
+Bet: 27, prob: 0.0
+Bet: 28, prob: 1.0

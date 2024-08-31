@@ -27,6 +27,8 @@ class GameManager:
         self.deck = Deck()
         self.state = generate_root_state(len(self.players), buy_in, big_blind)
         self.round = 0
+        for player in self.players:
+            player.get_to_know_each_other(self.players)
 
     @property
     def player_names(self):
@@ -86,6 +88,17 @@ class GameManager:
         if print_state:
             os.system("clear")
             print(self.state.get_cli_repr(self.player_names))
+        showdown = self.state.player_is_active.sum() > 1
+        if showdown:
+            print("Showdown!")
+            for player in self.players:
+                player.showdown(
+                    self.state,
+                    [
+                        player.hand if self.state.player_is_active[i] else None
+                        for i, player in enumerate(self.players)
+                    ],
+                )
         self.state = end_round(self.state, self.players, print_result=True)
         for player in self.players:
             player.round_over(self.state)

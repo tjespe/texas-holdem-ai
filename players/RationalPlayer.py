@@ -28,8 +28,6 @@ class RationalPlayer(Player):
             1000,
         )
         rational_max = winning_prob * state.pot
-        avg_forced_loss = (state.big_blind + state.small_blind) / state.n_players
-        rational_max += avg_forced_loss
         if call_bet > rational_max:
             return 0
 

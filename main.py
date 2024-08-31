@@ -12,6 +12,7 @@ from players.AwareRationalPlayer import AwareRationalPlayer
 from players.ResolverPlayer import ResolverPlayer
 from players.RandomPlayer import RandomPlayer
 from players.CheatingPlayer import CheatingPlayer
+from players.ProbRegPlayer import ProbRegPlayer
 
 players = [
     HumanPlayer(name=login()),
@@ -25,7 +26,8 @@ players = [
     # RandomPlayer(),
     # RationalPlayer(),
     # AwareRationalPlayer(name="Optuna", randomness=0.5, aggression_sensitivity=1.0),
-    CheatingPlayer(),
+    # CheatingPlayer(),
+    ProbRegPlayer(),
 ]
 
 game_manager = GameManager(players, big_blind=4)

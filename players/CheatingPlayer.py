@@ -81,9 +81,6 @@ class CheatingPlayer(Player):
             debug_print("Bluffing, so increasing winning prob to", winning_prob)
         rational_max = winning_prob * state.pot
         debug_print("Rational max:", rational_max)
-        # avg_forced_loss = (state.big_blind + state.small_blind) / state.n_players
-        # rational_max += avg_forced_loss
-        # debug_print("Rational max with forced loss:", rational_max)
         if call_bet > rational_max:
             # If the other player was irrational, join based on winning chance
             pot_before_bet = state.pot - call_bet

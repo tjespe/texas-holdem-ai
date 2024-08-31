@@ -223,9 +223,6 @@ class AwareRationalPlayer(Player):
         )
         rational_max = winning_prob * state.pot
         debug_print(f"Rational max: {rational_max}")
-        avg_forced_loss = (state.big_blind + state.small_blind) / state.n_players
-        rational_max += avg_forced_loss
-        debug_print(f"Rational max adjusted for blinds: {rational_max}")
         if call_bet > rational_max:
             opponent_bluff_chance = self.evaluate_bluff_chance(current_player_i)
             debug_print(f"Opponent bluff chance: {opponent_bluff_chance}")
