@@ -15,7 +15,6 @@ for file in os.listdir(data_dir):
     full_fname = os.path.join(data_dir, file)
     if file.endswith(".parquet"):
         read.append(file)
-        print(f"Reading {file}")
         df = pd.read_parquet(full_fname)
         dfs.append(df)
     if file.endswith(".csv"):

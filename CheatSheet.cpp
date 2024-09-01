@@ -144,7 +144,6 @@ void CheatSheet::decode_and_print_cards(uint64_t encoded_value) {
 float CheatSheet::get_winning_probability(CardCollection &hand, CardCollection &table, int num_players, int num_simulations)
 {
     uint64_t key = convert_cards_to_equiv_str(hand, table);
-    decode_and_print_cards(key);
     return find_or_simulate(hand, table, num_players, num_simulations).first;
 }
 

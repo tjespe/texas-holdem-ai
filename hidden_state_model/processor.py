@@ -1,4 +1,5 @@
 import uuid
+import numpy as np
 import pandas as pd
 
 from State import State
@@ -39,7 +40,7 @@ class Processor:
         table_rank = CardCollection(list(state.public_cards)).rank_hand().get_rank()
         parent_result = self.processed.get(parent_id)
         result = {
-            "game_id": uuid.uuid4(),
+            "game_id": str(uuid.uuid4()),
             **(parent_result or feature_skeleton),
             "action": row["action"],
             "amount": row["amount"],
@@ -130,9 +131,15 @@ class Processor:
         queue = self.df.index.to_list()
         while queue:
             state_id = queue.pop(0)
-            if state_id in self.processed:
-                continue
             row = self.df.loc[state_id]
+            if state_id in self.processed:
+                # If this row is complete already, skip
+                exc_rank = self.processed[state_id].get("excess_rank")
+                if exc_rank is not None and not pd.isna(exc_rank):
+                    continue
+                # If we don't have complete info now either, skip
+                if row["rank"] is None or pd.isna(row["rank"]):
+                    continue
             parent_id = row["prev_entry"]
             if (
                 parent_id

@@ -42,13 +42,18 @@ class ProbRegPlayer(Player):
     Player that regresses the opponent's winning probability based on historical data.
     """
 
-    bluff_prob = None
+    bluff_prob: float
+    rel_weight_player_in_reg: float
+    called_bluff: bool
+    is_bluffing: bool
     observer: Observer
     player_names: Union[list[str], None]
     player_types: Union[list[str], None]
     player_probs: Union[np.ndarray, None]
 
-    def __init__(self, name: str = "Regine", bluff_prob=0.08):
+    def __init__(
+        self, name: str = "Regine", bluff_prob=0.08, rel_weight_player_in_reg=2
+    ):
         super().__init__()
         self.name = name
         self.bluff_prob = bluff_prob
@@ -57,12 +62,12 @@ class ProbRegPlayer(Player):
         self.player_names = None
         self.observer = get_observer_with_all_data()
         self.player_probs = None
+        self.rel_weight_player_in_reg = rel_weight_player_in_reg
 
     def get_to_know_each_other(self, players: list[Player]):
         self.player_names = [p.name for p in players]
         self.player_types = [p.__class__.__name__ for p in players]
         self.player_probs = np.ones(len(self.player_names)) / len(self.player_names)
-        print("Initial self.player_probs", self.player_probs)
 
     def round_over(self, state: State):
         self.called_bluff = False
@@ -70,7 +75,6 @@ class ProbRegPlayer(Player):
         self.player_probs = np.array(state.player_is_active) / np.sum(
             state.player_is_active
         )
-        print("Reinitialized self.player_probs", self.player_probs)
 
     def observe_bet(self, from_state: State, bet: int):
         player_i = from_state.current_player_i
@@ -86,13 +90,12 @@ class ProbRegPlayer(Player):
             [n for n in self.player_names if n != player_name],
             None,
         )
-        print("self.player_probs pre reg update", self.player_probs)
         self.player_probs[player_i] = fit_and_predict(
             self.observer.get_processed_df(),
             from_state.id,
             player_name,
+            relative_weight_player=self.rel_weight_player_in_reg,
         )
-        print("self.player_probs post reg update", self.player_probs)
 
     def showdown(self, state: State, all_hands: list[Union[tuple[int, int], None]]):
         for i, hand in enumerate(all_hands):
@@ -114,7 +117,6 @@ class ProbRegPlayer(Player):
             return 0
         current_bet = state.bet_in_stage[current_player_i]
         call_bet = max(state.bet_in_stage) - current_bet
-        print("self.player_probs", self.player_probs)
         self.player_probs[self.index] = CheatSheet.get_winning_probability(
             CardCollection(self.hand),
             CardCollection(state.public_cards),
@@ -160,7 +162,7 @@ class ProbRegPlayer(Player):
             max_bet,
             state.big_blind,
             always_add_fold_chance=False,
-            likelihood_decay=0.6 - 0.3 * len(state.public_cards) / 5,
+            likelihood_decay=0.5 - 0.3 * len(state.public_cards) / 5,
         )
         for i, d in enumerate(distribution):
             debug_print(f"Bet: {i}, prob: {d}")

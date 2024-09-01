@@ -35,9 +35,9 @@ def fit_and_predict(
     y = train_df["p"]
     matching_player = train_df["player_name"] == player_name
     sample_weights = matching_player * relative_weight_player + (1 - matching_player)
-    print("X:", X)
-    print("y:", y)
-    print("sample_weights:", sample_weights)
+    print("X.shape:", X.shape)
+    print("y.shape:", y.shape)
+    print("sample_weights:\n", pd.DataFrame(sample_weights).describe())
     model.fit(X, y, regressor__sample_weight=sample_weights)
     X_pred = df.loc[state_id].drop(["excess_rank", "game_id", "p", "relative_ev"])
     # Correct the shape of the input

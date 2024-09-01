@@ -61,7 +61,7 @@ def _update_tuple(t: tuple, i: int, new_value: any):
 
 
 def generate_root_state(
-    n_players: int, pile_size: int = 100, big_blind: int = 2, first_better_i: int = 0
+    n_players: int, pile_size: int = 100, big_blind: int = 4, first_better_i: int = 0
 ):
     return State(
         public_cards=(),

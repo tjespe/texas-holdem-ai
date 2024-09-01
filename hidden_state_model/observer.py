@@ -12,27 +12,27 @@ class Observer:
     df_fname: Union[str, None]
     processor: Union[Processor, None] = None
 
-    DF_HEADERS = [
-        "state_id",
-        "prev_entry",
-        "public_cards",
-        "player_piles",
-        "current_player_i",
-        "bet_in_stage",
-        "bet_in_game",
-        "player_has_played",
-        "player_is_folded",
-        "first_better_i",
-        "big_blind",
-        "player_name",
-        "player_type",
-        "action",
-        "amount",
-        "p",
-        "relative_ev",
-        "rank",
-        "tiebreakers",
-    ]
+    DF_HEADERS_AND_DTYPES = {
+        "prev_entry": "str",
+        "public_cards": "object",
+        "player_piles": "object",
+        "current_player_i": "int64",
+        "bet_in_stage": "object",
+        "bet_in_game": "object",
+        "player_has_played": "object",
+        "player_is_folded": "object",
+        "first_better_i": "int64",
+        "big_blind": "int64",
+        "player_name": "object",
+        "player_type": "object",
+        "action": "object",
+        "amount": "int64",
+        "p": "float64",
+        "relative_ev": "float64",
+        "rank": "Int64",
+        "tiebreakers": "object",
+        "hand_index": "Int64",
+    }
 
     @property
     def filtered_df(self):
@@ -48,8 +48,15 @@ class Observer:
         elif df_fname and os.path.exists(df_fname):
             self.df = pd.read_parquet(df_fname)
         else:
-            self.df = pd.DataFrame(columns=self.DF_HEADERS).set_index("state_id")
+            self.df = pd.DataFrame(
+                columns=["state_id", *self.DF_HEADERS_AND_DTYPES.keys()]
+            ).set_index("state_id")
+            self._ensure_dtypes()
         self.processor = Processor(self.df)
+
+    def _ensure_dtypes(self):
+        for col, dtype in self.DF_HEADERS_AND_DTYPES.items():
+            self.df[col] = self.df[col].astype(dtype)
 
     def _classify_action(self, state: State, bet: int):
         call_bet = max(state.bet_in_game) - state.bet_in_game[state.current_player_i]
@@ -61,7 +68,7 @@ class Observer:
             return "call"
         return "raise"
 
-    def _classify_hand(self, hand: tuple[int, int], state: State) -> str:
+    def _get_hand_stats(self, hand: tuple[int, int], state: State) -> str:
         hand = CardCollection(list(hand))
         table = CardCollection(list(state.public_cards))
         p = CheatSheet.get_winning_probability(
@@ -121,21 +128,20 @@ class Observer:
             "opponent_names": opponent_names,
             "amount": amount,
             "action": self._classify_action(state, amount),
-            **(self._classify_hand(hand, state) if hand else {}),
+            **(self._get_hand_stats(hand, state) if hand else {}),
         }
         self._write_df()
 
     def retrofill_hand_stats(self, states: list[State], hand: tuple[int, int]):
+        self._ensure_dtypes()
         for state in states:
-            hand_stats = self._classify_hand(hand, state)
+            hand_stats = self._get_hand_stats(hand, state)
             # Check if state id exists in df
             if not state.id in self.df.index:
-                print("State not found in df:\n", state.get_cli_repr())
+                print("WARNING: State not found in df:\n", state.get_cli_repr())
                 continue
             for k, v in hand_stats.items():
-                print("Writing to state row", state.id, k, v)
                 self.df.at[state.id, k] = v
-        print("Retrofill complete, tail:\n", self.df.tail())
 
     def get_processed_df(self):
         self.processor.update_df(self.df)
