@@ -1,11 +1,9 @@
 .vscode
 __pycache__
 .DS_Store
-stats/AwareRationalPlayer.log
 stats/*.csv
+stats/*.log
 cheat-sheet.txt
 db.sqlite
-stats/CheatingPlayer.log
 users.txt
 cheat-sheet-v2.txt
-stats/ProbRegPlayer.log
