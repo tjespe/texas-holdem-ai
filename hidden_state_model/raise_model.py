@@ -5,7 +5,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 # Identify categorical columns (excluding 'game_id')
-categorical_cols = ["action", "stage", "player_name"]
+categorical_cols = ["excess_rank", "stage", "player_name"]
+
 
 # Preprocessing pipeline: OneHotEncoding for categorical and scaling for numerical
 preprocessor = ColumnTransformer(
@@ -24,23 +25,19 @@ model = Pipeline(
 )
 
 
-def fit_and_predict(
+def fit_and_predict_raise(
     df: pd.DataFrame,
     state_id: str,
     player_name: str = None,
     relative_weight_player=1,
 ):
-    train_df = df[df["p"].notnull()]
-    print("Dropped rows with null p:", len(df) - len(train_df))
-    X = train_df.drop(["excess_rank", "game_id", "p", "relative_ev"], axis=1)
-    y = train_df["p"]
+    train_df = df[(df["p"].notnull()) & (df["action"] == "raise")]
+    X = train_df.drop(["game_id", "action", "amount"], axis=1)
+    y = train_df["amount"]
     matching_player = train_df["player_name"] == player_name
     sample_weights = matching_player * relative_weight_player + (1 - matching_player)
-    print("X.shape:", X.shape)
-    print("y.shape:", y.shape)
-    print("sample_weights:\n", pd.DataFrame(sample_weights).describe())
     model.fit(X, y, regressor__sample_weight=sample_weights)
-    X_pred = df.loc[state_id].drop(["excess_rank", "game_id", "p", "relative_ev"])
+    X_pred = df.loc[state_id].drop(["game_id", "action", "amount"])
     # Correct the shape of the input
     X_pred = X_pred.to_frame().T
     return model.predict(X_pred)

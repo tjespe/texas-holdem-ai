@@ -26,7 +26,7 @@ class Observer:
         "player_name": "object",
         "player_type": "object",
         "action": "object",
-        "amount": "int64",
+        "amount": "Int64",
         "p": "float64",
         "relative_ev": "float64",
         "rank": "Int64",
@@ -132,6 +132,40 @@ class Observer:
         }
         self._write_df()
 
+    def observe_state(
+        self,
+        state: State,
+        player_name: str,
+        player_type: str,
+        opponent_names: Union[list[str], None],
+        hand: Union[tuple[int, int], None],
+    ) -> None:
+        prev_entry = None
+        prev_state = state.prev_state
+        while prev_state:
+            if prev_state.id in self.df.index:
+                prev_entry = prev_state.id
+                break
+            prev_state = prev_state.prev_state
+        self.df.loc[state.id] = {
+            "prev_entry": prev_entry,
+            "public_cards": state.public_cards,
+            "player_piles": state.player_piles,
+            "current_player_i": state.current_player_i,
+            "bet_in_stage": state.bet_in_stage,
+            "bet_in_game": state.bet_in_game,
+            "player_has_played": state.player_has_played,
+            "player_is_folded": state.player_is_folded,
+            "first_better_i": state.first_better_i,
+            "big_blind": state.big_blind,
+            "player_name": player_name,
+            "player_type": player_type,
+            "opponent_names": opponent_names,
+            "amount": None,
+            "action": None,
+            **(self._get_hand_stats(hand, state) if hand else {}),
+        }
+
     def retrofill_hand_stats(self, states: list[State], hand: tuple[int, int]):
         self._ensure_dtypes()
         for state in states:
@@ -142,6 +176,14 @@ class Observer:
                 continue
             for k, v in hand_stats.items():
                 self.df.at[state.id, k] = v
+
+    def retrofill_action(self, state: State, amount: int):
+        self._ensure_dtypes()
+        if not state.id in self.df.index:
+            print("WARNING: State not found in df:\n", state.get_cli_repr())
+            return
+        self.df.at[state.id, "action"] = self._classify_action(state, amount)
+        self.df.at[state.id, "amount"] = amount
 
     def get_processed_df(self):
         self.processor.update_df(self.df)

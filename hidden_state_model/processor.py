@@ -115,7 +115,6 @@ class Processor:
                 )
         else:
             if state.stage != "preflop":
-                print("Cannot process state without parent", row)
                 return None
         return result
 
@@ -135,10 +134,22 @@ class Processor:
             if state_id in self.processed:
                 # If this row is complete already, skip
                 exc_rank = self.processed[state_id].get("excess_rank")
-                if exc_rank is not None and not pd.isna(exc_rank):
+                action = self.processed[state_id].get("action")
+                had_rank_info = exc_rank is not None and not pd.isna(exc_rank)
+                had_action_info = action is not None
+                if had_rank_info and had_action_info:
                     continue
-                # If we don't have complete info now either, skip
-                if row["rank"] is None or pd.isna(row["rank"]):
+                # Check if new info is available
+                has_rank_info = row["rank"] is not None and not pd.isna(row["rank"])
+                has_action_info = row["action"] is not None and not pd.isna(
+                    row["action"]
+                )
+                new_info = False
+                if has_rank_info and not had_rank_info:
+                    new_info = True
+                if has_action_info and not had_action_info:
+                    new_info = True
+                if not new_info:
                     continue
             parent_id = row["prev_entry"]
             if (

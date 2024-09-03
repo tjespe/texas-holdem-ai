@@ -13,9 +13,10 @@ from players.ResolverPlayer import ResolverPlayer
 from players.RandomPlayer import RandomPlayer
 from players.CheatingPlayer import CheatingPlayer
 from players.ProbRegPlayer import ProbRegPlayer
+from players.HumanMocker import HumanMocker
 
 players = [
-    HumanPlayer(name=login()),
+    # HumanPlayer(name=login()),
     # AllInPlayer(name="Aladdin"),
     # AwareRationalPlayer(name="Larnes"),
     # AwareRationalPlayer(name="William", randomness=0.2, aggression_sensitivity=0.5),
@@ -28,7 +29,9 @@ players = [
     # AwareRationalPlayer(name="Optuna", randomness=0.5, aggression_sensitivity=1.0),
     # CheatingPlayer(),
     ProbRegPlayer(),
+    HumanMocker(mock="Arin"),
+    # HumanMocker(mock="Arin Bavian"),
 ]
 
 game_manager = GameManager(players, big_blind=4)
-game_manager.play_round(print_state=True, sleep=0.1)
+game_manager.play_round(print_state=True, sleep=0)
