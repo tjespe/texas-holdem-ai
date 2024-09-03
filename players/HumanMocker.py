@@ -2,6 +2,7 @@ import numpy as np
 from PlayerABC import Player
 from State import State
 from hidden_state_model.action_model import fit_and_predict_proba
+from hidden_state_model.observer import Observer
 from hidden_state_model.raise_model import fit_and_predict_raise
 from hidden_state_model.helpers import get_observer_with_all_data
 from cpp_poker.cpp_poker import Oracle
@@ -13,21 +14,18 @@ class HumanMocker(Player):
         self.name = f"Mr. {mock}"
         self.mock = mock
         self.rel_weight_player = rel_weight_player
-        self.observer = get_observer_with_all_data()
+
+        # Keep predictor separate from observer, because we don't want our predictor to
+        # be updated with new data based on what this player does
+        self.predictor = get_observer_with_all_data().predictor
+
+        # Initialize an empty observer to use for processing states
+        self.observer = Observer()
 
     def _play(self, state: State) -> int:
-        self.observer.observe_state(
-            state,
-            self.mock,
-            HumanMocker.__name__,
-            None,
-            self.hand,
-        )
-        actions, distrib = fit_and_predict_proba(
-            self.observer.get_processed_df(),
-            state.id,
-            self.mock,
-            relative_weight_player=self.rel_weight_player,
+        state_row = self.observer.processor.get_df_row(state.id)
+        actions, distrib = self.predictor.predict_for_row(
+            "action", state_row, self.mock, self.rel_weight_player, probabilities=True
         )
         print("Got distribution: ", distrib, "for", actions, "from model")
         # Sample random action from distribution
@@ -58,9 +56,9 @@ class HumanMocker(Player):
                 )
                 return call_amount
             amount = int(
-                fit_and_predict_raise(
-                    self.observer.get_processed_df(),
-                    state.id,
+                self.predictor.predict_for_row(
+                    "raise",
+                    state_row,
                     self.mock,
                     relative_weight_player=self.rel_weight_player,
                 )
@@ -68,10 +66,13 @@ class HumanMocker(Player):
             print(f"Got amount: {amount} from model")
             # Ensure higher than call_amount
             amount = max(call_amount, amount)
+            # If amount is higher than call_amount, ensure it is at least a big blind higher
+            if amount > call_amount:
+                amount = max(min_raise, amount)
             # Ensure lower than max_allowed
             amount = min(max_allowed, amount)
             print(
-                f"Amount adjusted for [call_amount, max_allowed]: [{call_amount}, {max_allowed}] range: {amount}"
+                f"Amount adjusted for [call_amount, min_raise, max_allowed]: [{call_amount}, {min_raise}, {max_allowed}] range: {amount}"
             )
             return amount
         else:

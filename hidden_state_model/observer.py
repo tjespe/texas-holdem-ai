@@ -1,16 +1,18 @@
 import os
-from typing import Union
+from typing import Literal, Union
 import pandas as pd
 
 from State import State
 from cpp_poker.cpp_poker import CardCollection, CheatSheet, Hand
+from hidden_state_model.predictor import Predictor
 from hidden_state_model.processor import Processor
 
 
 class Observer:
     df: pd.DataFrame
     df_fname: Union[str, None]
-    processor: Union[Processor, None] = None
+    processor: Processor
+    predictor: Predictor
 
     DF_HEADERS_AND_DTYPES = {
         "prev_entry": "str",
@@ -51,8 +53,9 @@ class Observer:
             self.df = pd.DataFrame(
                 columns=["state_id", *self.DF_HEADERS_AND_DTYPES.keys()]
             ).set_index("state_id")
-            self._ensure_dtypes()
+        self._ensure_dtypes()
         self.processor = Processor(self.df)
+        self.predictor = Predictor(self)
 
     def _ensure_dtypes(self):
         for col, dtype in self.DF_HEADERS_AND_DTYPES.items():
@@ -112,6 +115,9 @@ class Observer:
                 prev_entry = prev_state.id
                 break
             prev_state = prev_state.prev_state
+        if hand:
+            # Reset dependant models when we have new training data
+            self.predictor.clear_model_cache()
         self.df.loc[state.id] = {
             "prev_entry": prev_entry,
             "public_cards": state.public_cards,
@@ -161,8 +167,6 @@ class Observer:
             "player_name": player_name,
             "player_type": player_type,
             "opponent_names": opponent_names,
-            "amount": None,
-            "action": None,
             **(self._get_hand_stats(hand, state) if hand else {}),
         }
 
@@ -172,18 +176,20 @@ class Observer:
             hand_stats = self._get_hand_stats(hand, state)
             # Check if state id exists in df
             if not state.id in self.df.index:
-                print("WARNING: State not found in df:\n", state.get_cli_repr())
                 continue
             for k, v in hand_stats.items():
                 self.df.at[state.id, k] = v
+        # Reset dependant models
+        self.predictor.clear_model_cache()
 
     def retrofill_action(self, state: State, amount: int):
         self._ensure_dtypes()
         if not state.id in self.df.index:
-            print("WARNING: State not found in df:\n", state.get_cli_repr())
             return
         self.df.at[state.id, "action"] = self._classify_action(state, amount)
         self.df.at[state.id, "amount"] = amount
+        # Reset dependant models
+        self.predictor.clear_model_cache()
 
     def get_processed_df(self):
         self.processor.update_df(self.df)
@@ -192,4 +198,5 @@ class Observer:
     def clone(self):
         c = Observer(df=self.df.copy())
         c.processor = self.processor.clone()
+        c.predictor = c.predictor.clone(observer=c)
         return c

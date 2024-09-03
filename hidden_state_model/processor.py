@@ -21,9 +21,13 @@ class Processor:
     df: pd.DataFrame
     processed: dict[str, dict]
 
+    # Set of state_ids that have been completely processed, i.e. have all properties
+    fully_processed: set[str]
+
     def __init__(self, df: pd.DataFrame) -> None:
         self.df = df
         self.processed = {}
+        self.fully_processed = set()
 
     def _process_state(self, row: pd.Series, parent_id: str) -> dict:
         state = State(
@@ -130,26 +134,16 @@ class Processor:
         queue = self.df.index.to_list()
         while queue:
             state_id = queue.pop(0)
+            if state_id in self.fully_processed:
+                continue
             row = self.df.loc[state_id]
             if state_id in self.processed:
-                # If this row is complete already, skip
-                exc_rank = self.processed[state_id].get("excess_rank")
-                action = self.processed[state_id].get("action")
-                had_rank_info = exc_rank is not None and not pd.isna(exc_rank)
-                had_action_info = action is not None
-                if had_rank_info and had_action_info:
-                    continue
                 # Check if new info is available
                 has_rank_info = row["rank"] is not None and not pd.isna(row["rank"])
                 has_action_info = row["action"] is not None and not pd.isna(
                     row["action"]
                 )
-                new_info = False
-                if has_rank_info and not had_rank_info:
-                    new_info = True
-                if has_action_info and not had_action_info:
-                    new_info = True
-                if not new_info:
+                if not has_rank_info and not has_action_info:
                     continue
             parent_id = row["prev_entry"]
             if (
@@ -161,7 +155,18 @@ class Processor:
                 continue
             if result := self._process_state(row, parent_id):
                 self.processed[state_id] = result
+                if (
+                    result["amount"] is not None and not pd.isna(result["amount"])
+                ) and (
+                    result["excess_rank"] is not None
+                    and not pd.isna(result["excess_rank"])
+                ):
+                    self.fully_processed.add(state_id)
         return pd.DataFrame.from_dict(self.processed, orient="index")
+
+    def get_df_row(self, state_id: str) -> pd.Series:
+        df = self.get_processed_df()
+        return df.loc[state_id]
 
     def clone(self):
         c = Processor(self.df.copy())

@@ -16,17 +16,30 @@ preprocessor = ColumnTransformer(
 )
 
 # Create the full pipeline with logistic regression
-model = Pipeline(
-    [
-        ("preprocess", preprocessor),
-        (
-            "classifier",
-            LogisticRegression(
-                multi_class="multinomial", solver="lbfgs", max_iter=10_000
-            ),
-        ),
-    ]
-)
+
+
+def fit_model(
+    df: pd.DataFrame, player_name: str = None, relative_weight_player=1, model=None
+):
+    train_df = df[df["p"].notnull() & df["action"].notnull()]
+    X = train_df.drop(["game_id", "action", "amount"], axis=1)
+    y = train_df["action"]
+    matching_player = train_df["player_name"] == player_name
+    if model is None:
+        model = Pipeline(
+            [
+                ("preprocess", preprocessor),
+                (
+                    "classifier",
+                    LogisticRegression(
+                        multi_class="multinomial", solver="lbfgs", max_iter=10_000
+                    ),
+                ),
+            ]
+        )
+    sample_weights = matching_player * relative_weight_player + (1 - matching_player)
+    model.fit(X, y, classifier__sample_weight=sample_weights)
+    return model
 
 
 def fit_and_predict_proba(
@@ -35,12 +48,7 @@ def fit_and_predict_proba(
     player_name: str = None,
     relative_weight_player=1,
 ):
-    train_df = df[df["p"].notnull() & df["action"].notnull()]
-    X = train_df.drop(["game_id", "action", "amount"], axis=1)
-    y = train_df["action"]
-    matching_player = train_df["player_name"] == player_name
-    sample_weights = matching_player * relative_weight_player + (1 - matching_player)
-    model.fit(X, y, classifier__sample_weight=sample_weights)
+    model = fit_model(df, player_name, relative_weight_player)
     X_pred = df.loc[state_id].drop(["game_id", "action", "amount"])
     # Correct the shape of the input
     X_pred = X_pred.to_frame().T

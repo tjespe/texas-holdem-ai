@@ -6,7 +6,6 @@ from PlayerABC import Player
 from helpers import get_random_betting_distribution
 from hidden_state_model.helpers import get_observer_with_all_data
 from hidden_state_model.observer import Observer
-from hidden_state_model.prob_model import fit_and_predict
 
 
 log_file = open("stats/ProbRegPlayer.log", "a")
@@ -82,6 +81,10 @@ class ProbRegPlayer(Player):
             return
         player_name = self.player_names[player_i]
         player_type = self.player_types[player_i]
+        # print(
+        #     "DF in ProbRegPlayer before observation:\n",
+        #     self.observer.get_processed_df().tail(2),
+        # )
         self.observer.observe_action(
             from_state,
             player_name,
@@ -90,11 +93,8 @@ class ProbRegPlayer(Player):
             [n for n in self.player_names if n != player_name],
             None,
         )
-        self.player_probs[player_i] = fit_and_predict(
-            self.observer.get_processed_df(),
-            from_state.id,
-            player_name,
-            relative_weight_player=self.rel_weight_player_in_reg,
+        self.player_probs[player_i] = self.observer.predictor.predict(
+            "prob", from_state.id, player_name, self.rel_weight_player_in_reg
         )
 
     def showdown(self, state: State, all_hands: list[Union[tuple[int, int], None]]):
