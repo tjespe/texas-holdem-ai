@@ -29,7 +29,7 @@ players = [
     # AwareRationalPlayer(name="Optuna", randomness=0.5, aggression_sensitivity=1.0),
     # CheatingPlayer(),
     ProbRegPlayer(),
-    HumanMocker(mock="Arin"),
+    # HumanMocker(mock="Arin"),
     # HumanMocker(mock="Arin Bavian"),
 ]
 

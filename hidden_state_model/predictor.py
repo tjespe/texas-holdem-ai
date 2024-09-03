@@ -5,6 +5,7 @@ import pandas as pd
 from hidden_state_model.action_model import fit_model as fit_action_model
 from hidden_state_model.raise_model import fit_model as fit_raise_model
 from hidden_state_model.prob_model import fit_model as fit_prob_model
+from hidden_state_model.rank_model import fit_model as fit_rank_model
 
 if TYPE_CHECKING:
     from hidden_state_model.observer import Observer
@@ -15,11 +16,13 @@ class Predictor:
         "action": {},
         "raise": {},
         "prob": {},
+        "rank": {},
     }
     fitters = {
         "action": fit_action_model,
         "raise": fit_raise_model,
         "prob": fit_prob_model,
+        "rank": fit_rank_model,
     }
     observer: "Observer"
 
@@ -38,7 +41,7 @@ class Predictor:
 
     def predict(
         self,
-        attribute: Literal["action", "raise", "prob"],
+        attribute: Literal["action", "raise", "prob", "rank"],
         state_id: str,
         player_name: Union[str, None],
         relative_weight_player=1,
@@ -55,7 +58,7 @@ class Predictor:
 
     def predict_for_row(
         self,
-        attribute: Literal["action", "raise", "prob"],
+        attribute: Literal["action", "raise", "prob", "rank"],
         row: pd.Series,
         player_name: Union[str, None],
         relative_weight_player=1,
@@ -87,7 +90,7 @@ class Predictor:
                 model.classes_,
                 model.predict_proba(X_pred)[0],
             )
-        print(
-            f"Predicting {attribute} for row:\n",
-        )
+        print(f"Predicting {attribute} for row:\n", X_pred)
+        print("NaNs in row: ", X_pred.isna().sum().sum())
+        print("NaN columns: ", X_pred.columns[X_pred.isna().any()].tolist())
         return model.predict(X_pred)[0]

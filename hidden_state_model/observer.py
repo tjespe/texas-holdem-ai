@@ -199,6 +199,9 @@ class Observer:
         self.processor.update_df(self.df)
         return self.processor.get_processed_df()
 
+    def get_processed_df_row(self, state_id: str):
+        return self.get_processed_df().loc[state_id]
+
     def clone(self):
         c = Observer(df=self.df.copy())
         c.processor = self.processor.clone()
