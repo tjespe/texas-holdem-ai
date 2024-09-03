@@ -199,10 +199,9 @@ class ProbSimPlayer(Player):
         df_row["relative_ev"] = (
             state.pot * player_probs[state.current_player_i] / state.game_size
         )
-        actions, distrib = self.predictor.predict_for_row(
-            "action", df_row, self.rel_weight_player_in_reg, probabilities=True
+        action = self.predictor.predict_for_row(
+            "action", df_row, self.rel_weight_player_in_reg
         )
-        evs_per_action = []
         max_allowed = Oracle.get_max_bet_allowed(
             state.player_has_played,
             state.current_player_i,
@@ -213,81 +212,70 @@ class ProbSimPlayer(Player):
         call_bet = max(state.bet_in_stage) - state.bet_in_stage[self.index]
         min_raise = call_bet + state.big_blind
         can_raise = min_raise < max_allowed
-        for action in actions:
-            player_probs = [*player_probs]
-            predicted_ranks = [*predicted_ranks]
-            if (
-                action == "fold"
-                or action == "check"
-                or action == "call"
-                or (action == "raise" and not can_raise)
-            ):
-                bet = 0
-                observer.retrofill_action(
-                    state,
-                    bet,
+        player_probs = [*player_probs]
+        predicted_ranks = [*predicted_ranks]
+        if (
+            action == "fold"
+            or action == "check"
+            or action == "call"
+            or (action == "raise" and not can_raise)
+        ):
+            bet = 0
+            observer.retrofill_action(
+                state,
+                bet,
+            )
+            updated_df_row = observer.processor.get_df_row(state.id)
+            player_probs[state.current_player_i] = self.predictor.predict_for_row(
+                "prob", updated_df_row, player_name, self.rel_weight_player_in_reg
+            )
+            predicted_ranks[state.current_player_i] = self.predictor.predict_for_row(
+                "rank",
+                updated_df_row,
+                player_name,
+                self.rel_weight_player_in_reg,
+            )
+            return self.simulate_ev(
+                place_bet(state, bet),
+                bet_before_simulation,
+                player_probs,
+                predicted_ranks,
+                observer,
+            )
+        elif action == "raise":
+            amount = int(
+                self.observer.predictor.predict_for_row(
+                    "raise",
+                    df_row,
+                    player_name,
+                    self.rel_weight_player_in_reg,
                 )
-                updated_df_row = observer.processor.get_df_row(state.id)
-                player_probs[state.current_player_i] = self.predictor.predict_for_row(
-                    "prob", updated_df_row, player_name, self.rel_weight_player_in_reg
-                )
-                predicted_ranks[state.current_player_i] = (
-                    self.predictor.predict_for_row(
-                        "rank",
-                        updated_df_row,
-                        player_name,
-                        self.rel_weight_player_in_reg,
-                    )
-                )
-                evs_per_action.append(
-                    self.simulate_ev(
-                        place_bet(state, bet),
-                        bet_before_simulation,
-                        player_probs,
-                        predicted_ranks,
-                        observer,
-                    )
-                )
-            elif action == "raise":
-                amount = int(
-                    self.observer.predictor.predict_for_row(
-                        "raise",
-                        df_row,
-                        player_name,
-                        self.rel_weight_player_in_reg,
-                    )
-                )
-                amount = max(min_raise, amount)
-                amount = min(max_allowed, amount)
-                observer.retrofill_action(
-                    state,
-                    amount,
-                )
-                updated_df_row = observer.processor.get_df_row(state.id)
-                player_probs[state.current_player_i] = self.predictor.predict_for_row(
-                    "prob", updated_df_row, player_name, self.rel_weight_player_in_reg
-                )
-                predicted_ranks[state.current_player_i] = (
-                    self.predictor.predict_for_row(
-                        "rank",
-                        updated_df_row,
-                        player_name,
-                        self.rel_weight_player_in_reg,
-                    )
-                )
-                evs_per_action.append(
-                    self.simulate_ev(
-                        place_bet(state, amount),
-                        bet_before_simulation,
-                        player_probs,
-                        predicted_ranks,
-                        observer,
-                    )
-                )
-            else:
-                raise ValueError(f"Unknown action: {action}")
-
-        return np.dot(evs_per_action, distrib)
+            )
+            amount = max(min_raise, amount)
+            amount = min(max_allowed, amount)
+            observer.retrofill_action(
+                state,
+                amount,
+            )
+            updated_df_row = observer.processor.get_df_row(state.id)
+            player_probs[state.current_player_i] = self.predictor.predict_for_row(
+                "prob", updated_df_row, player_name, self.rel_weight_player_in_reg
+            )
+            predicted_ranks[state.current_player_i] = self.predictor.predict_for_row(
+                "rank",
+                updated_df_row,
+                player_name,
+                self.rel_weight_player_in_reg,
+            )
+            return self.simulate_ev(
+                place_bet(state, amount),
+                bet_before_simulation,
+                player_probs,
+                predicted_ranks,
+                observer,
+            )
+        else:
+            raise ValueError(f"Unknown action: {action}")
 
     def play(self, state: State, player_probs=None, predicted_ranks=None) -> int:
         if player_probs is None:
