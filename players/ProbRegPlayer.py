@@ -81,10 +81,7 @@ class ProbRegPlayer(Player):
             return
         player_name = self.player_names[player_i]
         player_type = self.player_types[player_i]
-        # print(
-        #     "DF in ProbRegPlayer before observation:\n",
-        #     self.observer.get_processed_df().tail(2),
-        # )
+        print("Observing bet from", player_name, "of", bet)
         self.observer.observe_action(
             from_state,
             player_name,
