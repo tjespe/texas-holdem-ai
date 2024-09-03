@@ -111,7 +111,11 @@ class Observer:
         prev_entry = None
         prev_state = state.prev_state
         while prev_state:
-            if prev_state.id in self.df.index:
+            if (
+                prev_state.id in self.df.index
+                and self.df.at[prev_state.id, "current_player_i"]
+                == state.current_player_i
+            ):
                 prev_entry = prev_state.id
                 break
             prev_state = prev_state.prev_state
