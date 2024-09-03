@@ -31,7 +31,7 @@ def login():
         with open("users.txt", "a") as f:
             f.write(f"\n{answers['username']},{answers['password']}")
         return answers["username"]
-    pwd = input("Enter your password: ")
+    pwd = inquirer.password("Enter your password")
     pwd_map = dict(users_with_passwords)
     if pwd_map.get(answer) == pwd:
         return answer

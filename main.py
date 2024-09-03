@@ -13,6 +13,7 @@ from players.ResolverPlayer import ResolverPlayer
 from players.RandomPlayer import RandomPlayer
 from players.CheatingPlayer import CheatingPlayer
 from players.ProbRegPlayer import ProbRegPlayer
+from players.ProbSimPlayer import ProbSimPlayer
 from players.HumanMocker import HumanMocker
 
 players = [
@@ -28,7 +29,8 @@ players = [
     # RationalPlayer(),
     # AwareRationalPlayer(name="Optuna", randomness=0.5, aggression_sensitivity=1.0),
     # CheatingPlayer(),
-    ProbRegPlayer(),
+    # ProbRegPlayer(),
+    ProbSimPlayer(),
     # HumanMocker(mock="Arin"),
     # HumanMocker(mock="Arin Bavian"),
 ]

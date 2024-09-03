@@ -19,9 +19,11 @@ preprocessor = ColumnTransformer(
 def fit_model(
     df: pd.DataFrame, player_name: str = None, relative_weight_player=1, model=None
 ):
-    train_df = df[df["p"].notnull()]
+    train_df = df[df["excess_rank"].notnull() & df["excess_rank"].notna()]
     X = train_df.drop(["excess_rank", "game_id", "p", "relative_ev"], axis=1)
-    y = train_df["excess_rank"]
+    y = train_df["excess_rank"].astype(int)
+    # Convert y to discrete categories if needed
+    print("Columns in X", list(X.columns))
     matching_player = train_df["player_name"] == player_name
     if model is None:
         model = Pipeline(
@@ -35,6 +37,10 @@ def fit_model(
                 ),
             ]
         )
+    print("y shape", y.shape)
+    print("NaNs in y", y.isnull().sum())
+    print("NaN rows in y", y[y.isnull()])
+    print("Unique values in y", y.unique())
     sample_weights = matching_player * relative_weight_player + (1 - matching_player)
     model.fit(X, y, classifier__sample_weight=sample_weights)
     return model

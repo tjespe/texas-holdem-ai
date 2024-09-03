@@ -108,11 +108,14 @@ class ProbSimPlayer(Player):
             [n for n in self.player_names if n != player_name],
             None,
         )
-        self.player_probs[player_i] = self.observer.predictor.predict(
-            "prob", from_state.id, player_name, self.rel_weight_player_in_reg
+        df_row = self.observer.get_processed_df_row(from_state.id).drop(
+            ["excess_rank", "p", "relative_ev"]
         )
-        self.predicted_ranks[player_i] = self.observer.predictor.predict(
-            "rank", from_state.id, player_name, self.rel_weight_player_in_reg
+        self.player_probs[player_i] = self.observer.predictor.predict_for_row(
+            "prob", df_row, player_name, self.rel_weight_player_in_reg
+        )
+        self.predicted_ranks[player_i] = self.observer.predictor.predict_for_row(
+            "rank", df_row, player_name, self.rel_weight_player_in_reg
         )
 
     def showdown(self, state: State, all_hands: list[Union[tuple[int, int], None]]):
@@ -135,7 +138,7 @@ class ProbSimPlayer(Player):
         bet_before_simulation: int,
         player_probs: list[float],
         predicted_ranks: list[int],
-        observer=Observer(),
+        observer: Observer,
     ) -> int:
         """
         Simulates game to end and calculates the expected value of the game, defined as
@@ -160,7 +163,6 @@ class ProbSimPlayer(Player):
         # Handle table needs card
         if state.all_players_are_done:
             n_cards = 3 if state.stage == "preflop" else 1
-            print("State is not terminal, but we need a card:\n", state.get_cli_repr())
             return self.simulate_ev(
                 # Add a card to progress the game although the card should not matter
                 add_cards(state, tuple(range(n_cards))),
@@ -173,7 +175,9 @@ class ProbSimPlayer(Player):
         # Handle own turn
         if state.current_player_i == self.index:
             return self.simulate_ev(
-                place_bet(state, self.play(state, player_probs, predicted_ranks)),
+                place_bet(
+                    state, self.play(state, player_probs, predicted_ranks, observer)
+                ),
                 bet_before_simulation,
                 player_probs,
                 predicted_ranks,
@@ -277,11 +281,17 @@ class ProbSimPlayer(Player):
         else:
             raise ValueError(f"Unknown action: {action}")
 
-    def play(self, state: State, player_probs=None, predicted_ranks=None) -> int:
-        if player_probs is None:
+    def play(
+        self, state: State, player_probs=None, predicted_ranks=None, observer=None
+    ) -> int:
+        in_simulation = True
+        if player_probs is None and predicted_ranks is None and observer is None:
+            # These should all be None in a simulation, but in a real game they should
+            # be set to the instance variables
             player_probs = self.player_probs
-        if predicted_ranks is None:
             predicted_ranks = self.predicted_ranks
+            observer = self.observer
+            in_simulation = False
         if state.player_is_folded[self.index]:
             return 0
         current_bet = state.bet_in_stage[self.index]
@@ -291,20 +301,29 @@ class ProbSimPlayer(Player):
             CardCollection(state.public_cards),
             state.player_is_active.sum(),
         )
-        debug_print("Own hand:", CardCollection(self.hand).str())
+        print_prefix = ">>> " if in_simulation else ""
+        debug_print(print_prefix, "Own hand:", CardCollection(self.hand).str())
         winning_prob = combine_probabilities(player_probs, self.index)
-        debug_print("Combined winning prob:", winning_prob)
+        debug_print(print_prefix, "Combined winning prob:", winning_prob)
         if self.is_bluffing or np.random.rand() < self.bluff_prob:
             self.is_bluffing = True
             winning_prob *= 2
             winning_prob = min(1, winning_prob)
-            debug_print("Bluffing, so increasing winning prob to", winning_prob)
+            debug_print(
+                print_prefix, "Bluffing, so increasing winning prob to", winning_prob
+            )
+        print(">>> Start of simulation")
+        is_bluffing = self.is_bluffing
         ev_of_calling = self.simulate_ev(
             place_bet(state, call_bet),
             state.bet_in_game[self.index],
             player_probs,
             predicted_ranks,
+            observer.clone(),
         )
+        # Reset is_bluffing to what it was before the simulation in case it was changed
+        self.is_bluffing = is_bluffing
+        print(">>> End of simulation")
         print("EV of calling:", ev_of_calling)
         rational_max = call_bet + ev_of_calling
         debug_print("Rational max:", rational_max)
