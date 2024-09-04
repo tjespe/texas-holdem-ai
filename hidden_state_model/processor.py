@@ -113,6 +113,9 @@ class Processor:
                 else:
                     # If we're on a new stage, the opponent must have checked
                     result[f"opponent_check_{prev_stage}"] += 1
+            elif prev_action == "fold":
+                # Do nothing
+                pass
             else:
                 raise NotImplementedError(
                     "Not implemented how to deal with", prev_action

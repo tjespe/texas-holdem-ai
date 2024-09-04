@@ -7,6 +7,10 @@ from cpp_poker.cpp_poker import CardCollection, CheatSheet, Hand
 from hidden_state_model.predictor import Predictor
 from hidden_state_model.processor import Processor
 
+import warnings
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
+
 
 class Observer:
     df: pd.DataFrame

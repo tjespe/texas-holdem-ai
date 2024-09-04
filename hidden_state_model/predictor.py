@@ -90,7 +90,4 @@ class Predictor:
                 model.classes_,
                 model.predict_proba(X_pred)[0],
             )
-        print(f"Predicting {attribute} for row:\n", X_pred)
-        print("NaNs in row: ", X_pred.isna().sum().sum())
-        print("NaN columns: ", X_pred.columns[X_pred.isna().any()].tolist())
         return model.predict(X_pred)[0]

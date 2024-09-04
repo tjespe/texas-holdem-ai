@@ -205,7 +205,9 @@ def place_bet(state: State, bet: int, is_blind=False) -> State:
     if bet == 0 and min_required_bet > 0:
         return fold_current_player(state)
     if bet < min_required_bet and not is_blind:
-        raise BettingRuleViolation("Bet is too low")
+        raise BettingRuleViolation(
+            f"Bet {bet} is too low, minimum is {min_required_bet}"
+        )
     if (
         bet > min_required_bet
         and bet < min_required_bet + state.big_blind
