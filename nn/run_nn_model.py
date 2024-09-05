@@ -45,9 +45,9 @@ def load_stage_model(stage: State.StageType):
 
 
 models = {
-    "flop": load_stage_model("flop"),
-    "turn": load_stage_model("turn"),
-    "river": load_stage_model("river"),
+    # "flop": load_stage_model("flop"),
+    # "turn": load_stage_model("turn"),
+    # "river": load_stage_model("river"),
 }
 
 
@@ -86,11 +86,13 @@ def estimate_value_vector(
     prediction = model.predict(X)
     return prediction[0]
 
+
 def _get_stage(node: StateNode):
     stage = node.state.stage
     if stage == "terminal":
         stage = "river"
     return stage
+
 
 def estimate_value_vectors(
     nodes: list[StateNode], ranges_per_child: list[np.ndarray], perspective: int
@@ -109,8 +111,12 @@ def estimate_value_vectors(
             ranges_at_stage = [ranges_per_child[i] for i in indices]
             stages_at_stage = set([_get_stage(node) for node in nodes_at_stage])
             if len(stages_at_stage) != 1:
-                raise ValueError("Nodes at stage have different stages: %s" % stages_at_stage)
-            predictions_at_stage = estimate_value_vectors(nodes_at_stage, ranges_at_stage, perspective)
+                raise ValueError(
+                    "Nodes at stage have different stages: %s" % stages_at_stage
+                )
+            predictions_at_stage = estimate_value_vectors(
+                nodes_at_stage, ranges_at_stage, perspective
+            )
             predictions[indices] = predictions_at_stage
         return predictions
     stage = nodes[0].state.stage

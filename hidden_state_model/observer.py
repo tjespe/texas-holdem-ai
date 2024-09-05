@@ -1,5 +1,5 @@
 import os
-from typing import Literal, Union
+from typing import Callable, Literal, Union
 import pandas as pd
 
 from State import State
@@ -215,4 +215,9 @@ class Observer:
         c = Observer(df=self.df.copy())
         c.processor = self.processor.clone()
         c.predictor = c.predictor.clone(observer=c)
+        return c
+
+    def clone_with_filtered_df(self, filter_fn: Callable[[pd.DataFrame], pd.DataFrame]):
+        df = filter_fn(self.df.copy())
+        c = Observer(df=df)
         return c

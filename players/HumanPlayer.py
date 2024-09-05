@@ -1,5 +1,4 @@
 from datetime import datetime
-import pandas as pd
 from cpp_poker.cpp_poker import Card, Oracle, CardCollection, CheatSheet, TerminalColors
 from PlayerABC import Player
 from State import State
@@ -75,15 +74,25 @@ class HumanPlayer(Player):
             elif answer == "Call" or answer == "Check":
                 return call_bet
             elif answer == "Raise":
+                min_raise = call_bet + state.big_blind
+
+                def validate(_, x):
+                    if not x.isdigit():
+                        return False
+                    x = int(x)
+                    return min_raise <= x <= max_bet
+
                 questions = [
                     inquirer.Text(
                         "amount",
-                        message=f"How much do you want to bet? Minimum is {call_bet + state.big_blind} and maximum is "
-                        + str(max_bet),
-                        validate=lambda _, x: x.isdigit(),
+                        message=f"How much do you want to bet? Minimum is {min_raise} and maximum is {max_bet} (Press Ctrl+C if you don't want to raise)",
+                        validate=validate,
                     ),
                 ]
-                return int(inquirer.prompt(questions)["amount"])
+                resp = inquirer.prompt(questions)
+                if resp is None:
+                    return self._play(state, display_cards=False)
+                return int(resp["amount"])
             elif answer == "Get hint":
                 print(" Calculating winning probability...", end="\r")
                 winning_prob = CheatSheet.get_winning_probability(

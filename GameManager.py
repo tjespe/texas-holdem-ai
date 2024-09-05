@@ -132,8 +132,5 @@ class GameManager:
                         )
                     ]
                 )
-                if replay["play_again"] == "Yes":
-                    self.__init__(self.players)
-                    self.play_round(print_state=print_state, sleep=sleep)
         else:
             self.play_round(print_state=print_state, sleep=sleep)

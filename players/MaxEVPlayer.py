@@ -13,7 +13,7 @@ log_file = open("stats/MaxEVPlayer.log", "a")
 
 
 def debug_print(indentation: int, *args, **kwargs):
-    print(".", end="", flush=True)
+    print(" ", end="", flush=True)
     print((indentation * "  ") + "- ", *args, **kwargs, file=log_file, flush=True)
 
 
@@ -38,8 +38,6 @@ class MaxEVPlayer(Player):
     ):
         super().__init__()
         self.name = name
-        self.called_bluff = False
-        self.is_bluffing = False
         self.player_names = None
         self.observer = get_observer_with_all_data()
         self.player_probs = None
@@ -58,7 +56,8 @@ class MaxEVPlayer(Player):
         player_name,
         probabilities=False,
     ):
-        return self.predictor.predict_for_row(
+        print(".", end="", flush=True)
+        res = self.predictor.predict_for_row(
             attribute,
             df_row,
             player_name,
@@ -67,6 +66,8 @@ class MaxEVPlayer(Player):
             self.rel_weight_opponent_in_reg,
             probabilities=probabilities,
         )
+        print("_", end="", flush=True)
+        return res
 
     def get_to_know_each_other(self, players: list[Player]):
         self.player_names = [p.name for p in players]
@@ -75,8 +76,6 @@ class MaxEVPlayer(Player):
         self.predicted_ranks = np.zeros(len(self.player_names))
 
     def round_over(self, state: State):
-        self.called_bluff = False
-        self.is_bluffing = False
         self.player_probs = np.array(state.player_is_active) / np.sum(
             state.player_is_active
         )
@@ -124,8 +123,8 @@ class MaxEVPlayer(Player):
         bet_before_simulation: int,
         player_probs: list[float],
         predicted_ranks: list[int],
-        observer: Observer,
         print_indentation: int,
+        observer: Union[Observer, None] = None,
         discount_factor: float = 0.95,
     ) -> int:
         """
@@ -150,6 +149,16 @@ class MaxEVPlayer(Player):
         Returns:
             The expected value of the game.
         """
+        if observer is None:
+            # Generate an observer with only the necessary data
+            relevant_states = []
+            s = state
+            while s is not None:
+                relevant_states.append(s.id)
+                s = s.prev_state
+            observer = self.observer.clone_with_filtered_df(
+                lambda df: df[df.index.isin(relevant_states)]
+            )
         # Handle game over
         if state.is_terminal:
             debug_print(print_indentation, "[terminal]")
@@ -196,8 +205,8 @@ class MaxEVPlayer(Player):
                     bet_before_simulation,
                     player_probs,
                     predicted_ranks,
-                    observer,
                     print_indentation + 1,
+                    observer,
                     discount_factor,
                 )
                 * discount_factor
@@ -210,10 +219,10 @@ class MaxEVPlayer(Player):
                 state,
                 player_probs,
                 predicted_ranks,
-                observer,
                 print_indentation + 1,
                 True,
                 bet_before_simulation,
+                observer,
             )
             return ev
 
@@ -232,10 +241,11 @@ class MaxEVPlayer(Player):
         df_row["p"] = player_probs[player_i]
         df_row["excess_rank"] = predicted_ranks[player_i]
         df_row["relative_ev"] = state.pot * player_probs[player_i] / state.game_size
-        action = self.predict(
+        actions, distrib = self.predict(
             "action",
             df_row,
             player_name,
+            probabilities=True,
         )
         max_allowed = Oracle.get_max_bet_allowed(
             state.player_has_played,
@@ -247,41 +257,87 @@ class MaxEVPlayer(Player):
         call_bet = max(state.bet_in_stage) - state.bet_in_stage[player_i]
         min_raise = call_bet + state.big_blind
         can_raise = call_bet < min_raise < max_allowed
-        amount = 0
-        if action == "call" or (action == "raise" and not can_raise):
-            amount = call_bet
-        elif action == "raise":
-            amount = int(self.predict("raise", df_row, player_name))
-            if amount < min_raise:
-                amount = min_raise
-            if amount > max_allowed:
-                amount = max_allowed
-        observer.retrofill_action(state, amount)
-        updated_df_row = observer.get_processed_df_row(state.id)
-        player_probs = [*player_probs]
-        predicted_ranks = [*predicted_ranks]
-        player_probs[player_i] = self.predict("prob", updated_df_row, player_name)
-        predicted_ranks[player_i] = self.predict("rank", updated_df_row, player_name)
-        debug_print(print_indentation, f"Op. bet {amount} at", state.stage)
-        return self.simulate_ev(
-            place_bet(state, amount),
-            bet_before_simulation,
-            player_probs,
-            predicted_ranks,
-            observer,
-            print_indentation + 1,
-            discount_factor,
-        )
+        prob_threshold = 0.6  # at preflop
+        if state.stage == "flop":
+            prob_threshold = 0.5
+        elif state.stage == "turn":
+            prob_threshold = 0.4
+        elif state.stage == "river":
+            prob_threshold = 0
+        if prob_threshold > max(distrib):
+            prob_threshold = max(distrib)
+        mapped_actions = []
+        mapped_probs = []
+        evs = []
+        for action, prob in zip(actions, distrib):
+            if prob < prob_threshold:
+                # Skip actions with low probability
+                continue
+            if action == "fold" or action == "check":
+                bet = 0
+                if bet not in mapped_actions:
+                    mapped_actions.append(bet)
+                    mapped_probs.append(prob)
+                else:
+                    i = mapped_actions.index(bet)
+                    mapped_probs[i] += prob
+            elif action == "call" or (action == "raise" and not can_raise):
+                bet = call_bet
+                if bet not in mapped_actions:
+                    mapped_actions.append(bet)
+                    mapped_probs.append(prob)
+                else:
+                    i = mapped_actions.index(bet)
+                    mapped_probs[i] += prob
+            elif action == "raise":
+                amount = int(self.predict("raise", df_row, player_name))
+                if amount < min_raise:
+                    amount = min_raise
+                if amount > max_allowed:
+                    amount = max_allowed
+                if amount not in mapped_actions:
+                    mapped_actions.append(amount)
+                    mapped_probs.append(prob)
+                else:
+                    i = mapped_actions.index(amount)
+                    mapped_probs[i] += prob
+            else:
+                raise ValueError(f"Unknown action: {action}")
+        for bet in mapped_actions:
+            observer.retrofill_action(
+                state,
+                bet,
+            )
+            predicted_ranks = [*predicted_ranks]
+            player_probs = [*player_probs]
+            updated_df_row = observer.get_processed_df_row(state.id)
+            player_probs[player_i] = self.predict("prob", updated_df_row, player_name)
+            predicted_ranks[player_i] = self.predict(
+                "rank", updated_df_row, player_name
+            )
+            debug_print(print_indentation, f"Op. bet {bet} at", state.stage)
+            evs.append(
+                self.simulate_ev(
+                    place_bet(state, bet),
+                    bet_before_simulation,
+                    player_probs,
+                    predicted_ranks,
+                    print_indentation + 1,
+                    observer,
+                    discount_factor,
+                )
+            )
+        return np.dot(mapped_probs, evs) / sum(mapped_probs)
 
     def _play(
         self,
         state: State,
         player_probs: list[float],
         predicted_ranks: list[int],
-        observer: Observer,
         indentation: int,
         in_simulation: bool,
         bet_before_simulation=None,
+        observer: Union[Observer, None] = None,
     ) -> int:
         if state.player_is_folded[self.index]:
             return 0
@@ -307,9 +363,21 @@ class MaxEVPlayer(Player):
         )
 
         possibilities = {0, call_bet}
-        for pot_frac in [0.4, 0.8]:
-            bet = int(pot_frac * state.pot)
-            if bet > call_bet + state.big_blind and bet < max_allowed_bet:
+        min_raise = call_bet + state.big_blind
+        can_raise = call_bet < min_raise < max_allowed_bet
+        if can_raise:
+            raise_ops = 1
+            if len(state.public_cards) > 3 and not in_simulation:
+                raise_ops = 2
+            pot_fractions = np.random.uniform(0.3, 1.2, raise_ops)
+            for pot_frac in pot_fractions:
+                bet = int(pot_frac * state.pot)
+                if bet < call_bet:
+                    continue
+                if bet < min_raise:
+                    bet = min_raise
+                if bet > max_allowed_bet:
+                    bet = max_allowed_bet
                 possibilities.add(bet)
 
         if len(possibilities) == 1 and not in_simulation:
@@ -319,16 +387,38 @@ class MaxEVPlayer(Player):
         evs = {}
         for bet in possibilities:
             if bet not in evs:
+                if not in_simulation:
+                    debug_print(indentation, "@@@@ Evaluating bet", bet, "@@@@")
                 evs[bet] = self.simulate_ev(
                     place_bet(state, bet),
                     bet_before_simulation,
                     player_probs,
                     predicted_ranks,
-                    observer.clone(),
                     indentation + 1,
+                    observer,
                 )
 
-        bet, ev = max(evs.items(), key=lambda x: x[1])
+        if not in_simulation:
+            debug_print(indentation, "EVs:", evs)
+
+        def prio_opts(x):
+            bet = x[0]
+            ev = x[1]
+            if ev < 0:
+                return ev
+            denominator = int((bet + 2 * state.big_blind) * 0.5)
+            if denominator < 1:
+                denominator = 1
+            return ev / denominator
+
+        if not in_simulation:
+            debug_print(
+                indentation,
+                "Prio values:",
+                {bet: prio_opts((bet, ev)) for bet, ev in evs.items()},
+            )
+
+        bet, ev = max(evs.items(), key=prio_opts)
         return bet, ev
 
     def play(self, state: State) -> int:
@@ -336,7 +426,6 @@ class MaxEVPlayer(Player):
             state,
             self.player_probs,
             self.predicted_ranks,
-            self.observer,
             0,
             False,
         )
