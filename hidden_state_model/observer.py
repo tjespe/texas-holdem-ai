@@ -128,9 +128,6 @@ class Observer:
                 prev_entry = prev_state.id
                 break
             prev_state = prev_state.prev_state
-        if hand:
-            # Reset dependant models when we have new training data
-            self.predictor.clear_model_cache()
         self.df.loc[state.id] = {
             "prev_entry": prev_entry,
             "public_cards": state.public_cards,
@@ -192,8 +189,6 @@ class Observer:
                 continue
             for k, v in hand_stats.items():
                 self.df.at[state.id, k] = v
-        # Reset dependant models
-        self.predictor.clear_model_cache()
 
     def retrofill_action(self, state: State, amount: int):
         self._ensure_dtypes()
@@ -201,8 +196,6 @@ class Observer:
             return
         self.df.at[state.id, "action"] = self._classify_action(state, amount)
         self.df.at[state.id, "amount"] = amount
-        # Reset dependant models
-        self.predictor.clear_model_cache()
 
     def get_processed_df(self):
         self.processor.update_df(self.df)

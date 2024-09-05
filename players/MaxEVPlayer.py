@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from typing import Literal, Union
 import numpy as np
 from State import State
@@ -68,6 +69,24 @@ class MaxEVPlayer(Player):
         )
         print("_", end="", flush=True)
         return res
+
+    def ensure_model_is_fit(
+        self, attribute: Literal["prob", "rank", "action", "raise"], player_name: str
+    ):
+        self.predictor.ensure_model_is_fit(
+            attribute,
+            player_name,
+            self.rel_weight_player_in_reg,
+            self.name,
+            self.rel_weight_opponent_in_reg,
+        )
+
+    def ensure_all_models_are_fit(self):
+        for attribute in ["prob", "rank", "action", "raise"]:
+            for player_name in self.player_names:
+                if player_name == self.name:
+                    continue
+                self.ensure_model_is_fit(attribute, player_name)
 
     def get_to_know_each_other(self, players: list[Player]):
         self.player_names = [p.name for p in players]
@@ -161,14 +180,9 @@ class MaxEVPlayer(Player):
             )
         # Handle game over
         if state.is_terminal:
-            debug_print(print_indentation, "[terminal]")
             bet_in_simulation = state.bet_in_game[self.index] - bet_before_simulation
             if state.player_is_folded[self.index]:
                 # In this case, we lose everything we have bet since the beginning of the simulation
-                debug_print(
-                    print_indentation,
-                    f"END: we fold at {state.stage} after having betted {bet_in_simulation} extra (pot size: {state.pot}, value: {-bet_in_simulation})",
-                )
                 return -bet_in_simulation
             if sum(state.player_is_active) == 1:
                 # In this case, we win the pot.
@@ -177,34 +191,24 @@ class MaxEVPlayer(Player):
                 # and if we use it too often, the opponent will exploit it, thus we multiply the
                 # payoff by a fold discount factor.
                 fold_discount_factor = 0.7
-                debug_print(
-                    print_indentation,
-                    f"END: opponent has folded and we win pot {state.pot} (value: {(state.pot - bet_in_simulation)*fold_discount_factor})",
-                )
-                return state.pot - bet_in_simulation
+                return (state.pot - bet_in_simulation) * fold_discount_factor
             # In this case, we have a showdown
             winning_prob = combine_probabilities(player_probs, self.index)
             value_if_win = state.pot - bet_in_simulation
             value_if_loss = -bet_in_simulation
             ev = value_if_win * winning_prob + value_if_loss * (1 - winning_prob)
-            debug_print(
-                print_indentation,
-                f"END: showdown, winning prob: {winning_prob}, value if win: {value_if_win} ({state.pot} - {bet_in_simulation}), value if loss: {value_if_loss}, ev: {ev}",
-            )
             return ev
 
         # Handle table needs card
         if state.all_players_are_done:
-            debug_print(print_indentation, "[need cards]")
             n_cards = 3 if state.stage == "preflop" else 1
-            debug_print(print_indentation, f"Adding {n_cards} card(s)")
             return (
                 self.simulate_ev(
                     # Add a card to progress the game although the card should not matter
                     add_cards(state, tuple(range(n_cards))),
                     bet_before_simulation,
-                    player_probs,
-                    predicted_ranks,
+                    [*player_probs],
+                    [*predicted_ranks],
                     print_indentation + 1,
                     observer,
                     discount_factor,
@@ -214,7 +218,6 @@ class MaxEVPlayer(Player):
 
         # Handle own turn
         if state.current_player_i == self.index:
-            debug_print(print_indentation, "[our turn]")
             bet, ev = self._play(
                 state,
                 player_probs,
@@ -227,7 +230,6 @@ class MaxEVPlayer(Player):
             return ev
 
         # Handle opponent turn
-        debug_print(print_indentation, "[opponent turn]")
         player_i = state.current_player_i
         player_name = self.player_names[player_i]
         observer.observe_state(
@@ -304,24 +306,18 @@ class MaxEVPlayer(Player):
             else:
                 raise ValueError(f"Unknown action: {action}")
         for bet in mapped_actions:
-            observer.retrofill_action(
-                state,
-                bet,
-            )
-            predicted_ranks = [*predicted_ranks]
-            player_probs = [*player_probs]
+            observer.retrofill_action(state, bet)
             updated_df_row = observer.get_processed_df_row(state.id)
             player_probs[player_i] = self.predict("prob", updated_df_row, player_name)
             predicted_ranks[player_i] = self.predict(
                 "rank", updated_df_row, player_name
             )
-            debug_print(print_indentation, f"Op. bet {bet} at", state.stage)
             evs.append(
                 self.simulate_ev(
                     place_bet(state, bet),
                     bet_before_simulation,
-                    player_probs,
-                    predicted_ranks,
+                    [*player_probs],
+                    [*predicted_ranks],
                     print_indentation + 1,
                     observer,
                     discount_factor,
@@ -384,19 +380,31 @@ class MaxEVPlayer(Player):
             # If there is only one thing to do, and we are not in a simulation, do it
             return possibilities.pop(), None
 
-        evs = {}
-        for bet in possibilities:
-            if bet not in evs:
-                if not in_simulation:
-                    debug_print(indentation, "@@@@ Evaluating bet", bet, "@@@@")
-                evs[bet] = self.simulate_ev(
-                    place_bet(state, bet),
-                    bet_before_simulation,
-                    player_probs,
-                    predicted_ranks,
-                    indentation + 1,
-                    observer,
-                )
+        get_common_args = lambda: (
+            bet_before_simulation,
+            [*player_probs],
+            [*predicted_ranks],
+            indentation + 1,
+            observer,
+        )
+        if in_simulation:
+            evs = {
+                bet: self.simulate_ev(place_bet(state, bet), *get_common_args())
+                for bet in possibilities
+            }
+        else:
+            with ThreadPoolExecutor() as executor:
+                self.ensure_all_models_are_fit()
+
+                futures = {
+                    executor.submit(
+                        self.simulate_ev, place_bet(state, bet), *get_common_args()
+                    ): bet
+                    for bet in possibilities
+                }
+
+                # Gather results
+                evs = {bet: future.result() for future, bet in futures.items()}
 
         if not in_simulation:
             debug_print(indentation, "EVs:", evs)
@@ -406,7 +414,7 @@ class MaxEVPlayer(Player):
             ev = x[1]
             if ev < 0:
                 return ev
-            denominator = int((bet + 2 * state.big_blind) * 0.5)
+            denominator = int((bet + 4 * state.big_blind) * 0.5)
             if denominator < 1:
                 denominator = 1
             return ev / denominator

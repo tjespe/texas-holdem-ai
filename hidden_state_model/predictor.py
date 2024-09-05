@@ -27,19 +27,12 @@ class Predictor:
     def __init__(self, observer: "Observer"):
         self.observer = observer
 
-    def clear_model_cache(self):
-        # Don't think we need this anymore?
-        # for attribute in self._models:
-        #     for player_name in self._models[attribute]:
-        #         self._models[attribute][player_name]["needs_refit"] = True
-        pass
-
     def clone(self, observer: "Observer"):
         c = Predictor(observer)
         c._models = copy.deepcopy(self._models)
         return c
 
-    def _predict(
+    def predict(
         self,
         attribute: Literal["action", "raise", "prob", "rank"],
         state_id: str,
@@ -94,3 +87,23 @@ class Predictor:
             )
             print("dtypes:\n", X_pred.dtypes)
             raise e
+
+    def ensure_model_is_fit(
+        self,
+        attribute: Literal["action", "raise", "prob", "rank"],
+        player_name: Union[str, None],
+        relative_weight_player=1,
+        opponent_name: Union[str, None] = None,
+        relative_weight_opponent=1,
+    ):
+        model = self._models[attribute].get(player_name)
+        if model is None:
+            model = self.model_classes[attribute]()
+            self._models[attribute][player_name] = model
+        model.fit(
+            self.observer.get_processed_df(),
+            player_name,
+            relative_weight_player,
+            opponent_name,
+            relative_weight_opponent,
+        )

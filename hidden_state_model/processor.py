@@ -28,7 +28,6 @@ class Processor:
         self.df = df
         self.processed = {}
         self.fully_processed = set()
-        self.df_updated = False
         self.processed_df = None
 
     dtypes = {
@@ -151,19 +150,16 @@ class Processor:
         """
         Allows updating the dataframe while keeping the processed states
         """
-        self.df_updated = True
         self.df = df
 
     def get_processed_df(self) -> pd.DataFrame:
         if self.df is None:
             raise ValueError("No dataframe to process")
-        if self.processed_df is not None and not self.df_updated:
+        queue = list(set(self.df.index.to_list()) - self.fully_processed)
+        if not queue:
             return self.processed_df
-        queue = self.df.index.to_list()
         while queue:
             state_id = queue.pop(0)
-            if state_id in self.fully_processed:
-                continue
             row = self.df.loc[state_id]
             if state_id in self.processed:
                 # Check if new info is available
@@ -193,9 +189,6 @@ class Processor:
         self.processed_df = pd.DataFrame.from_dict(
             self.processed, orient="index", columns=self.dtypes.keys()
         )
-        for key, dtype in self.dtypes.items():
-            self.processed_df[key] = self.processed_df[key].astype(dtype)
-        self.df_updated = False
         return self.processed_df
 
     def get_df_row(self, state_id: str) -> pd.Series:
