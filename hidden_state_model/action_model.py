@@ -4,18 +4,23 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
-# Identify categorical columns (excluding 'game_id')
+
 categorical_cols = ["excess_rank", "stage", "player_name"]
 
-# Preprocessing pipeline: OneHotEncoding for categorical and scaling for numerical
 preprocessor = ColumnTransformer(
     transformers=[
-        ("cat", OneHotEncoder(drop="first", handle_unknown="ignore"), categorical_cols)
+        (
+            "cat",
+            OneHotEncoder(
+                drop="first",
+                handle_unknown="infrequent_if_exist",
+                min_frequency=0.05,
+            ),
+            categorical_cols,
+        )
     ],
     remainder="passthrough",
 )
-
-# Create the full pipeline with logistic regression
 
 
 def fit_model(

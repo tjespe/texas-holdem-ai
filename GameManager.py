@@ -49,7 +49,6 @@ class GameManager:
                 import time
 
                 time.sleep(sleep)
-            self.round += 1
             # Allow players to cheat
             for player in self.players:
                 player.cheat([player.hand for player in self.players])
@@ -100,6 +99,7 @@ class GameManager:
                     ],
                 )
         self.state = end_round(self.state, self.players, print_result=True)
+        self.round += 1
         for player in self.players:
             player.round_over(self.state)
         if sleep:

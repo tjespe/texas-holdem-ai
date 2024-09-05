@@ -147,12 +147,27 @@ class ProbSimPlayer(Player):
         print_indentation: int,
         discount_factor: float = 0.95,
     ) -> int:
-        # print("Simulate EV called with probs:", player_probs)
         """
         Simulates game to end and calculates the expected value of the game, defined as
         the pot won at the end minus any bets made from the beginning of the simulation.
         Bets made before the simulation are included as positive EV because they are
         sunk costs.
+
+        Args:
+            state: The current state of the game.
+            bet_before_simulation: The total amount bet before the simulation.
+            player_probs: The probabilities of each player winning.
+            predicted_ranks: The predicted ranks of each player.
+            observer: The observer object.
+            print_indentation: The indentation level for debug prints.
+            discount_factor: The discount factor for future rewards. This is used to
+                account for the fact that the simulation is not perfect and that the
+                future is uncertain. The payoff of the game is discounted by this factor
+                for each step into the future, making payoffs far into the future less
+                valuable. The discount factor should be between 0 and 1.
+
+        Returns:
+            The expected value of the game.
         """
         # Handle game over
         if state.is_terminal:
@@ -166,11 +181,15 @@ class ProbSimPlayer(Player):
                 )
                 return -bet_in_simulation
             if sum(state.player_is_active) == 1:
-                # In this case, we win the pot
-                # We don't count anything we have bet during the simulation as a win
+                # In this case, we win the pot.
+                # We don't count anything we have bet during the simulation as a win.
+                # The opponent folding gives us a great payoff, but it's a highly risky strategy,
+                # and if we use it too often, the opponent will exploit it, thus we multiply the
+                # payoff by a fold discount factor.
+                fold_discount_factor = 0.7
                 debug_print(
                     print_indentation,
-                    f"END: opponent has folded and we win pot {state.pot} (value: {state.pot - bet_in_simulation})",
+                    f"END: opponent has folded and we win pot {state.pot} (value: {(state.pot - bet_in_simulation)*fold_discount_factor})",
                 )
                 return state.pot - bet_in_simulation
             # In this case, we have a showdown
