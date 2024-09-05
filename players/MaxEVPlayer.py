@@ -324,7 +324,7 @@ class MaxEVPlayer(Player):
         result = np.dot(mapped_probs, evs) / sum(mapped_probs)
         debug_print(
             "Dotting evs:",
-            zip(mapped_actions, evs),
+            list(zip(mapped_actions, evs)),
             "with probs:",
             mapped_probs,
             "result:",
@@ -413,6 +413,11 @@ class MaxEVPlayer(Player):
             ev = x[1]
             if ev < 0:
                 return ev
+            # Value getting a high ROI, but mostly just getting a high EV
+            # Exact formula here could probably be improved
+            # Maybe calculate variance and use that instead?
+            # I think maybe subtracting the variance could be good, because some bets
+            # may give a positive EV but be very risky.
             denominator = int((bet + 8 * state.big_blind) * 0.2)
             if denominator < 1:
                 denominator = 1
