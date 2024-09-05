@@ -41,15 +41,3 @@ def fit_model(
     sample_weights = matching_player * relative_weight_player + (1 - matching_player)
     model.fit(X, y, regressor__sample_weight=sample_weights)
     return model
-
-
-def fit_and_predict(
-    df: pd.DataFrame,
-    state_id: str,
-    player_name: str = None,
-    relative_weight_player=1,
-):
-    mdoel = fit_model(df, player_name, relative_weight_player)
-    X_pred = df.loc[state_id].drop(["excess_rank", "game_id", "p", "relative_ev"])
-    X_pred = X_pred.to_frame().T
-    return mdoel.predict(X_pred)

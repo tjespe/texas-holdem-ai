@@ -1,9 +1,7 @@
 import numpy as np
 from PlayerABC import Player
 from State import State
-from hidden_state_model.action_model import fit_and_predict_proba
 from hidden_state_model.observer import Observer
-from hidden_state_model.raise_model import fit_and_predict_raise
 from hidden_state_model.helpers import get_observer_with_all_data
 from cpp_poker.cpp_poker import Oracle
 

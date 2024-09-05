@@ -42,16 +42,3 @@ def fit_model(
         )
     model.fit(X, y, regressor__sample_weight=sample_weights)
     return model
-
-
-def fit_and_predict_raise(
-    df: pd.DataFrame,
-    state_id: str,
-    player_name: str = None,
-    relative_weight_player=1,
-):
-    model = fit_model(df, player_name, relative_weight_player)
-    X_pred = df.loc[state_id].drop(["game_id", "action", "amount"])
-    # Correct the shape of the input
-    X_pred = X_pred.to_frame().T
-    return model.predict(X_pred)
