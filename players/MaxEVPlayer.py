@@ -13,9 +13,9 @@ from state_management import add_cards, place_bet
 log_file = open("stats/MaxEVPlayer.log", "a")
 
 
-def debug_print(indentation: int, *args, **kwargs):
+def debug_print(*args, **kwargs):
     print(" ", end="", flush=True)
-    print((indentation * "  ") + "- ", *args, **kwargs, file=log_file, flush=True)
+    print(*args, **kwargs, file=log_file, flush=True)
 
 
 class MaxEVPlayer(Player):
@@ -106,7 +106,7 @@ class MaxEVPlayer(Player):
             return
         player_name = self.player_names[player_i]
         player_type = self.player_types[player_i]
-        debug_print(0, "Observing bet from", player_name, "of", bet)
+        debug_print("Observing bet from", player_name, "of", bet)
         self.observer.observe_action(
             from_state,
             player_name,
@@ -119,7 +119,7 @@ class MaxEVPlayer(Player):
             ["excess_rank", "p", "relative_ev"]
         )
         self.player_probs[player_i] = self.predict("prob", df_row, player_name)
-        debug_print(0, "Predicted prob:", self.player_probs[player_i])
+        debug_print("Predicted prob:", self.player_probs[player_i])
         self.predicted_ranks[player_i] = self.predict("rank", df_row, player_name)
 
     def showdown(self, state: State, all_hands: list[Union[tuple[int, int], None]]):
@@ -142,7 +142,6 @@ class MaxEVPlayer(Player):
         bet_before_simulation: int,
         player_probs: list[float],
         predicted_ranks: list[int],
-        print_indentation: int,
         observer: Union[Observer, None] = None,
         discount_factor: float = 0.95,
     ) -> int:
@@ -158,7 +157,6 @@ class MaxEVPlayer(Player):
             player_probs: The probabilities of each player winning.
             predicted_ranks: The predicted ranks of each player.
             observer: The observer object.
-            print_indentation: The indentation level for debug prints.
             discount_factor: The discount factor for future rewards. This is used to
                 account for the fact that the simulation is not perfect and that the
                 future is uncertain. The payoff of the game is discounted by this factor
@@ -183,7 +181,9 @@ class MaxEVPlayer(Player):
             bet_in_simulation = state.bet_in_game[self.index] - bet_before_simulation
             if state.player_is_folded[self.index]:
                 # In this case, we lose everything we have bet since the beginning of the simulation
-                return -bet_in_simulation
+                ev = -bet_in_simulation
+                debug_print(f"End: we folded, EV:", ev)
+                return ev
             if sum(state.player_is_active) == 1:
                 # In this case, we win the pot.
                 # We don't count anything we have bet during the simulation as a win.
@@ -191,12 +191,17 @@ class MaxEVPlayer(Player):
                 # and if we use it too often, the opponent will exploit it, thus we multiply the
                 # payoff by a fold discount factor.
                 fold_discount_factor = 0.7
-                return (state.pot - bet_in_simulation) * fold_discount_factor
+                ev = (state.pot - bet_in_simulation) * fold_discount_factor
+                debug_print(f"End: opponent folded, EV: ", ev)
+                return ev
             # In this case, we have a showdown
             winning_prob = combine_probabilities(player_probs, self.index)
             value_if_win = state.pot - bet_in_simulation
             value_if_loss = -bet_in_simulation
             ev = value_if_win * winning_prob + value_if_loss * (1 - winning_prob)
+            debug_print(
+                f"End: showdown, winning prob: {winning_prob}, value if win: {value_if_win}, value if loss: {value_if_loss}, EV: {ev}",
+            )
             return ev
 
         # Handle table needs card
@@ -209,7 +214,6 @@ class MaxEVPlayer(Player):
                     bet_before_simulation,
                     [*player_probs],
                     [*predicted_ranks],
-                    print_indentation + 1,
                     observer,
                     discount_factor,
                 )
@@ -222,11 +226,11 @@ class MaxEVPlayer(Player):
                 state,
                 player_probs,
                 predicted_ranks,
-                print_indentation + 1,
                 True,
                 bet_before_simulation,
                 observer,
             )
+            debug_print("Choosing bet:", bet, "at stage", state.stage, "EV:", ev)
             return ev
 
         # Handle opponent turn
@@ -259,11 +263,11 @@ class MaxEVPlayer(Player):
         call_bet = max(state.bet_in_stage) - state.bet_in_stage[player_i]
         min_raise = call_bet + state.big_blind
         can_raise = call_bet < min_raise < max_allowed
-        prob_threshold = 0.6  # at preflop
+        prob_threshold = 0.4  # at preflop
         if state.stage == "flop":
-            prob_threshold = 0.5
+            prob_threshold = 0.3
         elif state.stage == "turn":
-            prob_threshold = 0.4
+            prob_threshold = 0.2
         elif state.stage == "river":
             prob_threshold = 0
         if prob_threshold > max(distrib):
@@ -318,19 +322,27 @@ class MaxEVPlayer(Player):
                     bet_before_simulation,
                     [*player_probs],
                     [*predicted_ranks],
-                    print_indentation + 1,
                     observer,
                     discount_factor,
                 )
+                * discount_factor
             )
-        return np.dot(mapped_probs, evs) / sum(mapped_probs)
+        result = np.dot(mapped_probs, evs) / sum(mapped_probs)
+        debug_print(
+            "Dotting evs:",
+            dict(zip(mapped_actions, evs)),
+            "with probs:",
+            mapped_probs,
+            "result:",
+            result,
+        )
+        return result
 
     def _play(
         self,
         state: State,
         player_probs: list[float],
         predicted_ranks: list[int],
-        indentation: int,
         in_simulation: bool,
         bet_before_simulation=None,
         observer: Union[Observer, None] = None,
@@ -348,7 +360,7 @@ class MaxEVPlayer(Player):
                 state.player_is_active.sum(),
             )
         if not in_simulation:
-            debug_print(indentation, "Own hand:", CardCollection(self.hand).str())
+            debug_print("Own hand:", CardCollection(self.hand).str())
 
         max_allowed_bet = Oracle.get_max_bet_allowed(
             state.player_has_played,
@@ -384,7 +396,6 @@ class MaxEVPlayer(Player):
             bet_before_simulation,
             [*player_probs],
             [*predicted_ranks],
-            indentation + 1,
             observer,
         )
         if in_simulation:
@@ -407,7 +418,8 @@ class MaxEVPlayer(Player):
                 evs = {bet: future.result() for future, bet in futures.items()}
 
         if not in_simulation:
-            debug_print(indentation, "EVs:", evs)
+            debug_print("Hand:", CardCollection(self.hand).str())
+            debug_print("EVs:", evs)
 
         def prio_opts(x):
             bet = x[0]
@@ -421,7 +433,6 @@ class MaxEVPlayer(Player):
 
         if not in_simulation:
             debug_print(
-                indentation,
                 "Prio values:",
                 {bet: prio_opts((bet, ev)) for bet, ev in evs.items()},
             )
@@ -434,7 +445,6 @@ class MaxEVPlayer(Player):
             state,
             self.player_probs,
             self.predicted_ranks,
-            0,
             False,
         )
         return bet
