@@ -2,10 +2,12 @@ import copy
 from typing import Literal, Union, TYPE_CHECKING
 import pandas as pd
 
-from hidden_state_model.action_model import fit_model as fit_action_model
-from hidden_state_model.raise_model import fit_model as fit_raise_model
-from hidden_state_model.prob_model import fit_model as fit_prob_model
-from hidden_state_model.rank_model import fit_model as fit_rank_model
+from hidden_state_model.models import (
+    fit_action_model,
+    fit_raise_model,
+    fit_prob_model,
+    fit_rank_model,
+)
 
 if TYPE_CHECKING:
     from hidden_state_model.observer import Observer
