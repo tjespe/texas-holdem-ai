@@ -8,47 +8,14 @@
 #include <map>
 #include "Hand.hpp"
 
-std::string CheatSheet::old_cache_file_path = "cheat-sheet.txt";
 std::string CheatSheet::cache_file_path = "cheat-sheet-v2.txt";
 bool CheatSheet::cache_loaded = false;
-
-uint64_t CheatSheet::convert_old_key_to_new(std::string old_key)
-{
-    // Convert key from old format, e.g. hand:5A12A_table:3B11A9B to new uint64_t format
-    std::map<char, int> arbitrary_suit_map = {{'A', 0}, {'B', 1}, {'C', 2}, {'D', 3}};
-    size_t current_pos = 5;
-    CardCollection hand;
-    while (old_key[current_pos] != '_')
-    {
-        std::string substr = old_key.substr(current_pos);
-        size_t rel_suit_pos = substr.find_first_of("ABCD");
-        std::string rank_str = substr.substr(0, rel_suit_pos);
-        char suit = substr[rel_suit_pos];
-        int rank = std::stoi(rank_str);
-        hand.add_card(Card(rank, arbitrary_suit_map[suit]));
-        current_pos += rel_suit_pos + 1;
-    }
-    current_pos += 7;
-    CardCollection table;
-    while (current_pos < old_key.size())
-    {
-        std::string substr = old_key.substr(current_pos);
-        size_t rel_suit_pos = substr.find_first_of("ABCD");
-        std::string rank_str = substr.substr(0, rel_suit_pos);
-        char suit = substr[rel_suit_pos];
-        int rank = std::stoi(rank_str);
-        table.add_card(Card(rank, arbitrary_suit_map[suit]));
-        current_pos += rel_suit_pos + 1;
-    }
-    return convert_cards_to_equiv_str(hand, table);
-}
 
 void CheatSheet::load_cache()
 {
     std::cout << "Setting up signal handlers" << std::endl;
     setup_signal_handlers();
     std::atexit(save_cache);
-    std::cout << "Reading new cache" << std::endl;
     std::ifstream file(cache_file_path);
     std::string line;
     while (getline(file, line))
@@ -67,26 +34,6 @@ void CheatSheet::load_cache()
         cache[key] = {probability, sims};
     }
     file.close();
-    std::cout << "Read new cache, reading old cache" << std::endl;
-    // Read old cache file as well to get old data
-    std::ifstream old_file(old_cache_file_path);
-    while (getline(old_file, line))
-    {
-        size_t first_space_pos = line.find(' ');
-        size_t last_space_pos = line.rfind(' ');
-        
-        // Parse the key on old format, e.g. hand:5A7A_table:3B6A9B
-        std::string old_key = line.substr(0, first_space_pos);
-        uint64_t key = convert_old_key_to_new(old_key);
-
-        // Parse the probability and simulations count
-        float probability = std::stof(line.substr(first_space_pos + 1, last_space_pos - first_space_pos - 1));
-        int sims = std::stoi(line.substr(last_space_pos + 1));
-
-        // Insert into cache
-        cache[key] = {probability, sims};
-    }
-    old_file.close();
 }
 
 
@@ -221,7 +168,6 @@ void CheatSheet::decode_and_print_cards(uint64_t encoded_value) {
 
 float CheatSheet::get_winning_probability(CardCollection &hand, CardCollection &table, int num_players, int num_simulations)
 {
-    std::cout << "Getting winning probability for hand: " << hand.str() << " and table: " << table.str() << std::endl;
     return find_or_simulate(hand, table, num_players, num_simulations).first;
 }
 
@@ -253,20 +199,14 @@ std::pair<float, int> CheatSheet::find_or_simulate(CardCollection &hand, CardCol
         load_cache();
         cache_loaded = true;
     }
-    std::cout << "Generating key" << std::endl;
     uint64_t key = convert_cards_to_equiv_str(hand, table);
-    std::cout << "Got key" << key << std::endl;
     auto it = cache.find(key);
     if (it != cache.end() && it->second.second >= num_simulations)
     {
-        std::cout << "Found in cache" << std::endl;
         return it->second;
     }
-    std::cout << "Not found in cache, simulating" << std::endl;
     float prob = get_winning_probability_n_simulations(hand, table, num_players, num_simulations);
-    std::cout << "Simulated, adding to cache" << std::endl;
     cache[key] = {prob, num_simulations};
-    std::cout << "Added to cache, returning" << std::endl;
     return {prob, num_simulations};
 }
 
