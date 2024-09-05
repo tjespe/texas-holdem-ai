@@ -5,15 +5,50 @@
 #include <csignal>
 #include <cstdlib>
 #include <algorithm>
+#include <map>
 #include "Hand.hpp"
 
+std::string CheatSheet::old_cache_file_path = "cheat-sheet.txt";
 std::string CheatSheet::cache_file_path = "cheat-sheet-v2.txt";
 bool CheatSheet::cache_loaded = false;
 
+uint64_t CheatSheet::convert_old_key_to_new(std::string old_key)
+{
+    // Convert key from old format, e.g. hand:5A12A_table:3B11A9B to new uint64_t format
+    std::map<char, int> arbitrary_suit_map = {{'A', 0}, {'B', 1}, {'C', 2}, {'D', 3}};
+    size_t current_pos = 5;
+    CardCollection hand;
+    while (old_key[current_pos] != '_')
+    {
+        std::string substr = old_key.substr(current_pos);
+        size_t rel_suit_pos = substr.find_first_of("ABCD");
+        std::string rank_str = substr.substr(0, rel_suit_pos);
+        char suit = substr[rel_suit_pos];
+        int rank = std::stoi(rank_str);
+        hand.add_card(Card(rank, arbitrary_suit_map[suit]));
+        current_pos += rel_suit_pos + 1;
+    }
+    current_pos += 7;
+    CardCollection table;
+    while (current_pos < old_key.size())
+    {
+        std::string substr = old_key.substr(current_pos);
+        size_t rel_suit_pos = substr.find_first_of("ABCD");
+        std::string rank_str = substr.substr(0, rel_suit_pos);
+        char suit = substr[rel_suit_pos];
+        int rank = std::stoi(rank_str);
+        table.add_card(Card(rank, arbitrary_suit_map[suit]));
+        current_pos += rel_suit_pos + 1;
+    }
+    return convert_cards_to_equiv_str(hand, table);
+}
+
 void CheatSheet::load_cache()
 {
+    std::cout << "Setting up signal handlers" << std::endl;
     setup_signal_handlers();
     std::atexit(save_cache);
+    std::cout << "Reading new cache" << std::endl;
     std::ifstream file(cache_file_path);
     std::string line;
     while (getline(file, line))
@@ -32,6 +67,26 @@ void CheatSheet::load_cache()
         cache[key] = {probability, sims};
     }
     file.close();
+    std::cout << "Read new cache, reading old cache" << std::endl;
+    // Read old cache file as well to get old data
+    std::ifstream old_file(old_cache_file_path);
+    while (getline(old_file, line))
+    {
+        size_t first_space_pos = line.find(' ');
+        size_t last_space_pos = line.rfind(' ');
+        
+        // Parse the key on old format, e.g. hand:5A7A_table:3B6A9B
+        std::string old_key = line.substr(0, first_space_pos);
+        uint64_t key = convert_old_key_to_new(old_key);
+
+        // Parse the probability and simulations count
+        float probability = std::stof(line.substr(first_space_pos + 1, last_space_pos - first_space_pos - 1));
+        int sims = std::stoi(line.substr(last_space_pos + 1));
+
+        // Insert into cache
+        cache[key] = {probability, sims};
+    }
+    old_file.close();
 }
 
 
@@ -61,21 +116,21 @@ void CheatSheet::setup_signal_handlers()
 }
 
 uint64_t CheatSheet::convert_cards_to_equiv_str(CardCollection &hand, CardCollection &table) {
-    // Combine and sort all cards (hand + table)
-    std::vector<Card> all_cards;
-    all_cards.reserve(hand.size() + table.size());
-    all_cards.insert(all_cards.end(), hand.begin(), hand.end());
-    all_cards.insert(all_cards.end(), table.begin(), table.end());
-    std::sort(all_cards.begin(), all_cards.end());
+    // Sort the hand and table separately to maintain a consistent order within each group
+    std::vector<Card> hand_cards = hand.to_vector();
+    std::vector<Card> table_cards = table.to_vector();
+    std::sort(hand_cards.begin(), hand_cards.end());
+    std::sort(table_cards.begin(), table_cards.end());
 
     // Suit re-encoding array, initialized to -1 to indicate unmapped suits
     char suits_reencoding[4] = { -1, -1, -1, -1 };
     char next_suit_code = 0;  // Start encoding suits with 0
 
     uint64_t result = 0;
-    int shift = 0;  // Bit position in the result
 
-    for (const Card &card : all_cards) {
+    // Encode the hand (first 12 bits: 6 bits for each card)
+    int shift = 0;
+    for (const Card &card : hand_cards) {
         // Re-encode the suit if it hasn't been encountered yet
         if (suits_reencoding[card.suit] == -1) {
             suits_reencoding[card.suit] = next_suit_code++;
@@ -88,12 +143,35 @@ uint64_t CheatSheet::convert_cards_to_equiv_str(CardCollection &hand, CardCollec
         result |= (card_encoding << shift);
 
         // Move the shift for the next card's encoding
-        shift += 6;
+        shift += 6;  // Hand cards occupy the first 12 bits (2 cards, 6 bits each)
+    }
+
+    // Explicitly set shift to 12, in case the number of cards on hand was not 2
+    shift = 12;
+
+    // Encode the table (remaining bits after the hand, starting at the 12th bit)
+    for (const Card &card : table_cards) {
+        // Re-encode the suit if it hasn't been encountered yet
+        if (suits_reencoding[card.suit] == -1) {
+            suits_reencoding[card.suit] = next_suit_code++;
+        }
+
+        // Encode the card: 4 bits for rank, 2 bits for suit
+        uint64_t card_encoding = (static_cast<uint64_t>(card.rank) << 2) | suits_reencoding[card.suit];
+
+        // Place the card encoding in the correct position within the result
+        result |= (card_encoding << shift);
+
+        // Move the shift for the next card's encoding
+        shift += 6;  // Each table card also takes up 6 bits
     }
 
     return result;
 }
 
+/**
+ * Just a debugging method for inspecting cache keys
+ */
 void CheatSheet::decode_and_print_cards(uint64_t encoded_value) {
     const int hand_size = 2;  // Hand size is fixed at 2
     const int total_bits = 64; // We are using a 64-bit integer to encode the cards
@@ -143,7 +221,7 @@ void CheatSheet::decode_and_print_cards(uint64_t encoded_value) {
 
 float CheatSheet::get_winning_probability(CardCollection &hand, CardCollection &table, int num_players, int num_simulations)
 {
-    uint64_t key = convert_cards_to_equiv_str(hand, table);
+    std::cout << "Getting winning probability for hand: " << hand.str() << " and table: " << table.str() << std::endl;
     return find_or_simulate(hand, table, num_players, num_simulations).first;
 }
 
@@ -171,17 +249,24 @@ std::pair<float, int> CheatSheet::find_or_simulate(CardCollection &hand, CardCol
 {
     if (!cache_loaded)
     {
+        std::cout << "Cache is not loaded, loading cache" << std::endl;
         load_cache();
         cache_loaded = true;
     }
+    std::cout << "Generating key" << std::endl;
     uint64_t key = convert_cards_to_equiv_str(hand, table);
+    std::cout << "Got key" << key << std::endl;
     auto it = cache.find(key);
     if (it != cache.end() && it->second.second >= num_simulations)
     {
+        std::cout << "Found in cache" << std::endl;
         return it->second;
     }
+    std::cout << "Not found in cache, simulating" << std::endl;
     float prob = get_winning_probability_n_simulations(hand, table, num_players, num_simulations);
+    std::cout << "Simulated, adding to cache" << std::endl;
     cache[key] = {prob, num_simulations};
+    std::cout << "Added to cache, returning" << std::endl;
     return {prob, num_simulations};
 }
 

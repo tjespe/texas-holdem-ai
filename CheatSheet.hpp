@@ -23,6 +23,7 @@ private:
     static inline std::unordered_map<uint64_t, std::pair<float, int>> cache = {};
     static bool cache_loaded;
     static std::string cache_file_path;
+    static std::string old_cache_file_path;
 
 
     class Cleaner {
@@ -40,6 +41,7 @@ private:
 
     static void load_cache();
     static uint64_t convert_cards_to_equiv_str(CardCollection &hand, CardCollection &table);
+    static uint64_t convert_old_key_to_new(std::string old_key);
     static void decode_and_print_cards(uint64_t encoded_value);
     static std::pair<float, int> find_or_simulate(CardCollection &hand, CardCollection &table, int num_players, int num_simulations);
     static float get_winning_probability_n_simulations(CardCollection &hand, CardCollection &table, int num_players, int num_simulations);

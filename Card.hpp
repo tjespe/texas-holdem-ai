@@ -23,6 +23,7 @@ public:
     static int get_rank(const std::string &rank);
     std::string str() const;
 
+    /** Comparators for sorting based on rank (cards with the same rank are arbitrarily distringuished based on suit) */
     bool operator<(const Card &other) const;
     bool operator>(const Card &other) const;
     bool operator==(const Card &other) const;
