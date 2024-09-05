@@ -3,14 +3,13 @@ import numpy as np
 from State import State
 from cpp_poker.cpp_poker import CardCollection, CheatSheet, Oracle
 from PlayerABC import Player
-from helpers import get_random_betting_distribution
 from hidden_state_model.helpers import get_observer_with_all_data
 from hidden_state_model.observer import Observer
 from players.CheatingPlayer import combine_probabilities
 from state_management import add_cards, place_bet
 
 
-log_file = open("stats/ProbSimPlayer.log", "a")
+log_file = open("stats/MaxEVPlayer.log", "a")
 
 
 def debug_print(indentation: int, *args, **kwargs):
@@ -18,25 +17,13 @@ def debug_print(indentation: int, *args, **kwargs):
     print((indentation * "  ") + "- ", *args, **kwargs, file=log_file, flush=True)
 
 
-class Simulator:
-    def __init__(self, players: list[Player]) -> None:
-        self.players = players
-
-    def simulate_game(self, state: State) -> int:
-        if state.all_players_are_done:
-            pass
-
-
-class ProbSimPlayer(Player):
+class MaxEVPlayer(Player):
     """
     Player that regresses the opponent's winning probability based on historical data.
     """
 
-    bluff_prob: float
     rel_weight_player_in_reg: float
     rel_weight_opponent_in_reg: float
-    called_bluff: bool
-    is_bluffing: bool
     observer: Observer
     player_names: Union[list[str], None]
     player_types: Union[list[str], None]
@@ -45,14 +32,12 @@ class ProbSimPlayer(Player):
 
     def __init__(
         self,
-        name: str = "Nina Caliente",
-        bluff_prob=0.08,
+        name: str = "Max Mekker",
         rel_weight_player_in_reg=2,
         rel_weight_opponent_in_reg=2,
     ):
         super().__init__()
         self.name = name
-        self.bluff_prob = bluff_prob
         self.called_bluff = False
         self.is_bluffing = False
         self.player_names = None
@@ -103,7 +88,7 @@ class ProbSimPlayer(Player):
             return
         player_name = self.player_names[player_i]
         player_type = self.player_types[player_i]
-        print("Observing bet from", player_name, "of", bet)
+        debug_print(0, "Observing bet from", player_name, "of", bet)
         self.observer.observe_action(
             from_state,
             player_name,
@@ -116,6 +101,7 @@ class ProbSimPlayer(Player):
             ["excess_rank", "p", "relative_ev"]
         )
         self.player_probs[player_i] = self.predict("prob", df_row, player_name)
+        debug_print(0, "Predicted prob:", self.player_probs[player_i])
         self.predicted_ranks[player_i] = self.predict("rank", df_row, player_name)
 
     def showdown(self, state: State, all_hands: list[Union[tuple[int, int], None]]):
@@ -220,28 +206,16 @@ class ProbSimPlayer(Player):
         # Handle own turn
         if state.current_player_i == self.index:
             debug_print(print_indentation, "[our turn]")
-            bet = self._play(
+            bet, ev = self._play(
                 state,
                 player_probs,
                 predicted_ranks,
                 observer,
                 print_indentation + 1,
+                True,
                 bet_before_simulation,
-                in_simulation=True,
             )
-            debug_print(print_indentation, f"We bet {bet} at {state.stage}")
-            return (
-                self.simulate_ev(
-                    place_bet(state, bet),
-                    bet_before_simulation,
-                    [*player_probs],
-                    predicted_ranks,
-                    observer,
-                    print_indentation + 1,
-                    discount_factor,
-                )
-                * discount_factor
-            )
+            return ev
 
         # Handle opponent turn
         debug_print(print_indentation, "[opponent turn]")
@@ -258,11 +232,10 @@ class ProbSimPlayer(Player):
         df_row["p"] = player_probs[player_i]
         df_row["excess_rank"] = predicted_ranks[player_i]
         df_row["relative_ev"] = state.pot * player_probs[player_i] / state.game_size
-        actions, distrib = self.predict(
+        action = self.predict(
             "action",
             df_row,
             player_name,
-            probabilities=True,
         )
         max_allowed = Oracle.get_max_bet_allowed(
             state.player_has_played,
@@ -274,86 +247,31 @@ class ProbSimPlayer(Player):
         call_bet = max(state.bet_in_stage) - state.bet_in_stage[player_i]
         min_raise = call_bet + state.big_blind
         can_raise = call_bet < min_raise < max_allowed
+        amount = 0
+        if action == "call" or (action == "raise" and not can_raise):
+            amount = call_bet
+        elif action == "raise":
+            amount = int(self.predict("raise", df_row, player_name))
+            if amount < min_raise:
+                amount = min_raise
+            if amount > max_allowed:
+                amount = max_allowed
+        observer.retrofill_action(state, amount)
+        updated_df_row = observer.get_processed_df_row(state.id)
         player_probs = [*player_probs]
         predicted_ranks = [*predicted_ranks]
-        prob_threshold = 0.6  # at preflop
-        if state.stage == "flop":
-            prob_threshold = 0.5
-        elif state.stage == "turn":
-            prob_threshold = 0.4
-        elif state.stage == "river":
-            prob_threshold = 0
-        if prob_threshold > max(distrib):
-            prob_threshold = max(distrib)
-        mapped_actions = []
-        mapped_probs = []
-        evs = []
-        for action, prob in zip(actions, distrib):
-            if prob < prob_threshold:
-                # Skip actions with low probability
-                continue
-            if action == "fold" or action == "check":
-                bet = 0
-                if bet not in mapped_actions:
-                    mapped_actions.append(bet)
-                    mapped_probs.append(prob)
-                else:
-                    i = mapped_actions.index(bet)
-                    mapped_probs[i] += prob
-            elif action == "call" or (action == "raise" and not can_raise):
-                bet = call_bet
-                if bet not in mapped_actions:
-                    mapped_actions.append(bet)
-                    mapped_probs.append(prob)
-                else:
-                    i = mapped_actions.index(bet)
-                    mapped_probs[i] += prob
-            elif action == "raise":
-                amount = int(self.predict("raise", df_row, player_name))
-                if amount < min_raise:
-                    amount = min_raise
-                if amount > max_allowed:
-                    amount = max_allowed
-                if amount not in mapped_actions:
-                    mapped_actions.append(amount)
-                    mapped_probs.append(prob)
-                else:
-                    i = mapped_actions.index(amount)
-                    mapped_probs[i] += prob
-            else:
-                raise ValueError(f"Unknown action: {action}")
-        for bet in mapped_actions:
-            observer.retrofill_action(
-                state,
-                bet,
-            )
-            player_probs = [*player_probs]
-            updated_df_row = observer.get_processed_df_row(state.id)
-            player_probs[player_i] = self.predict("prob", updated_df_row, player_name)
-            predicted_ranks[player_i] = self.predict(
-                "rank", updated_df_row, player_name
-            )
-            debug_print(print_indentation, f"Op. bet {bet} at", state.stage)
-            evs.append(
-                self.simulate_ev(
-                    place_bet(state, bet),
-                    bet_before_simulation,
-                    player_probs,
-                    predicted_ranks,
-                    observer,
-                    print_indentation + 1,
-                    discount_factor,
-                )
-            )
-        result = np.dot(mapped_probs, evs) / sum(mapped_probs)
-        if np.isnan(result):
-            print("NaN result in simulate_ev")
-            print("mapped_probs:", mapped_probs)
-            print("evs:", evs)
-            print("dot:", np.dot(mapped_probs, evs))
-            print("prob sum:", sum(mapped_probs))
-            print("prob threshold:", prob_threshold)
-        return result
+        player_probs[player_i] = self.predict("prob", updated_df_row, player_name)
+        predicted_ranks[player_i] = self.predict("rank", updated_df_row, player_name)
+        debug_print(print_indentation, f"Op. bet {amount} at", state.stage)
+        return self.simulate_ev(
+            place_bet(state, amount),
+            bet_before_simulation,
+            player_probs,
+            predicted_ranks,
+            observer,
+            print_indentation + 1,
+            discount_factor,
+        )
 
     def _play(
         self,
@@ -362,11 +280,13 @@ class ProbSimPlayer(Player):
         predicted_ranks: list[int],
         observer: Observer,
         indentation: int,
-        bet_before_simulation: int,
         in_simulation: bool,
+        bet_before_simulation=None,
     ) -> int:
         if state.player_is_folded[self.index]:
             return 0
+        if bet_before_simulation is None:
+            bet_before_simulation = state.bet_in_game[self.index]
         current_bet = state.bet_in_stage[self.index]
         call_bet = max(state.bet_in_stage) - current_bet
         if not in_simulation:
@@ -377,53 +297,6 @@ class ProbSimPlayer(Player):
             )
         if not in_simulation:
             debug_print(indentation, "Own hand:", CardCollection(self.hand).str())
-        winning_prob = combine_probabilities(player_probs, self.index)
-        if not in_simulation:
-            debug_print(indentation, "Combined winning prob:", winning_prob)
-        is_bluffing = self.is_bluffing
-        continue_ev = self.simulate_ev(
-            place_bet(state, call_bet),
-            bet_before_simulation,
-            player_probs,
-            predicted_ranks,
-            observer.clone(),
-            indentation + 1,
-        )
-        if not in_simulation:
-            debug_print(indentation, "EV of continuing:", continue_ev)
-        # Reset is_bluffing to what it was before the simulation in case it was changed
-        self.is_bluffing = is_bluffing
-        can_bluff = not place_bet(state, call_bet).is_terminal
-        if can_bluff and (is_bluffing or np.random.rand() < self.bluff_prob):
-            continue_ev *= 2
-            self.is_bluffing = True
-            if not in_simulation:
-                debug_print(indentation, "Bluffing, so increasing ev to:", continue_ev)
-        rational_max = continue_ev
-        if not in_simulation:
-            debug_print(indentation, "Rational max:", rational_max)
-
-        if self.called_bluff and winning_prob > 0.4:
-            debug_print(indentation, "Assuming continued bluff and calling")
-            return call_bet
-
-        if call_bet > rational_max:
-            # If the other player was irrational, join based on winning chance
-            pot_before_bet = state.pot - call_bet
-            if call_bet > pot_before_bet:
-                if not in_simulation:
-                    debug_print(
-                        indentation,
-                        "Call bet is higher than pot before bet, evaluating whether to call",
-                    )
-                if np.random.rand() < winning_prob:
-                    self.called_bluff = True
-                    if not in_simulation:
-                        debug_print(indentation, "Calling")
-                    return call_bet
-            if not in_simulation:
-                debug_print(indentation, "Folding")
-            return 0
 
         max_allowed_bet = Oracle.get_max_bet_allowed(
             state.player_has_played,
@@ -432,41 +305,42 @@ class ProbSimPlayer(Player):
             state.player_piles,
             state.player_is_active,
         )
-        max_bet = min(int(rational_max), max_allowed_bet)
-        if not in_simulation:
-            debug_print(indentation, "Max allowed bet:", max_allowed_bet)
-            debug_print(indentation, "Max bet:", max_bet)
 
-        # Return random int between call_bet and rational_max
-        likelihood_decay = 0.5 - 0.3 * len(state.public_cards) / 5
-        if winning_prob > 0.65 and state.stage == "river":
-            # If we have a good hand, try to get more in the pot
-            likelihood_decay = 0.05
-        distribution = get_random_betting_distribution(
-            call_bet,
-            max_bet,
-            state.big_blind,
-            always_add_fold_chance=False,
-            likelihood_decay=likelihood_decay,
-        )
-        if not in_simulation:
-            for i, d in enumerate(distribution):
-                debug_print(indentation, f"Bet: {i}, prob: {d}")
-        return np.random.choice(len(distribution), p=distribution)
+        possibilities = {0, call_bet}
+        for pot_frac in [0.4, 0.8]:
+            bet = int(pot_frac * state.pot)
+            if bet > call_bet + state.big_blind and bet < max_allowed_bet:
+                possibilities.add(bet)
+
+        if len(possibilities) == 1 and not in_simulation:
+            # If there is only one thing to do, and we are not in a simulation, do it
+            return possibilities.pop(), None
+
+        evs = {}
+        for bet in possibilities:
+            if bet not in evs:
+                evs[bet] = self.simulate_ev(
+                    place_bet(state, bet),
+                    bet_before_simulation,
+                    player_probs,
+                    predicted_ranks,
+                    observer.clone(),
+                    indentation + 1,
+                )
+
+        bet, ev = max(evs.items(), key=lambda x: x[1])
+        return bet, ev
 
     def play(self, state: State) -> int:
-        current_bet = state.bet_in_stage[self.index]
-        call_bet = max(state.bet_in_stage) - current_bet
-        bet_before_simulation = state.bet_in_game[self.index] + call_bet
-        return self._play(
+        bet, _ev = self._play(
             state,
             self.player_probs,
             self.predicted_ranks,
             self.observer,
             0,
-            bet_before_simulation,
-            in_simulation=False,
+            False,
         )
+        return bet
 
 
 if __name__ == "__main__":

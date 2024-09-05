@@ -1,8 +1,10 @@
 import os
+import inquirer
 import numpy as np
 from Deck import Deck
 from PlayerABC import Player
 from State import State
+from players.HumanPlayer import HumanPlayer
 from state_management import (
     BettingRuleViolation,
     add_cards,
@@ -120,5 +122,18 @@ class GameManager:
                 winner_list = []
             winner_list.append(winner.name)
             set_value("winners", winner_list)
+            if any(isinstance(player, HumanPlayer) for player in self.players):
+                replay = inquirer.prompt(
+                    [
+                        inquirer.List(
+                            "play_again",
+                            message="Play again?",
+                            choices=["Yes", "No"],
+                        )
+                    ]
+                )
+                if replay["play_again"] == "Yes":
+                    self.__init__(self.players)
+                    self.play_round(print_state=print_state, sleep=sleep)
         else:
             self.play_round(print_state=print_state, sleep=sleep)

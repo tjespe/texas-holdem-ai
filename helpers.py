@@ -1,3 +1,4 @@
+from typing import Union
 import numpy as np
 from PlayerABC import Player
 from State import State
@@ -63,3 +64,22 @@ def get_random_betting_distribution_for_state(state: State):
 def get_random_bet_for_state(state: State):
     distribution = get_random_betting_distribution_for_state(state)
     return np.random.choice(len(distribution), p=distribution)
+
+
+def combine_probabilities(probs: list[float], player_i: int) -> float:
+    """
+    Combine probabilities of winning for all players except player_i.
+    """
+    # Ensure all probs are between 0 and 1
+    probs = [max(0.001, min(0.999, p)) for p in probs]
+    # Map each probability into the probability that they win and no opponents
+    # win, then sum them up
+    mapped_probs = [
+        # Probability of player i winning
+        probs[i]
+        # Probability of no other player winning
+        * np.prod(1 - np.array([p for j, p in enumerate(probs) if i != j]))
+        for i in range(len(probs))
+    ]
+    mapped_probs = np.array(mapped_probs) / np.sum(mapped_probs)
+    return mapped_probs[player_i]
