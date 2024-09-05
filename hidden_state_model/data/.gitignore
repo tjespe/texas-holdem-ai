@@ -1,2 +1,2 @@
-*.parquet
-*.csv
+*
+!.gitignore

@@ -104,13 +104,13 @@ bool HandRank::operator>(const HandRank &other) const
 
 int HandRank::beats(const HandRank &other) const
 {
-    if (*this > other)
-    {
-        return 1;
-    }
     if (*this == other)
     {
         return 0;
+    }
+    if (*this > other)
+    {
+        return 1;
     }
     return -1;
 }

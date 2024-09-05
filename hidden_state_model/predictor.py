@@ -23,9 +23,11 @@ class Predictor:
         "rank": RankModel,
     }
     observer: "Observer"
+    disable_fitting: bool
 
     def __init__(self, observer: "Observer"):
         self.observer = observer
+        self.disable_fitting = False
 
     def clone(self, observer: "Observer"):
         c = Predictor(observer)
@@ -63,13 +65,14 @@ class Predictor:
         if model is None:
             model = self.model_classes[attribute]()
             self._models[attribute][player_name] = model
-        model.fit(
-            self.observer.get_processed_df(),
-            player_name,
-            relative_weight_player,
-            opponent_name,
-            relative_weight_opponent,
-        )
+        if not self.disable_fitting:
+            model.fit(
+                self.observer.get_processed_df(),
+                player_name,
+                relative_weight_player,
+                opponent_name,
+                relative_weight_opponent,
+            )
         X_pred = row.to_frame().T
         try:
             if probabilities:

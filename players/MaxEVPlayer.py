@@ -190,7 +190,7 @@ class MaxEVPlayer(Player):
                 # The opponent folding gives us a great payoff, but it's a highly risky strategy,
                 # and if we use it too often, the opponent will exploit it, thus we multiply the
                 # payoff by a fold discount factor.
-                fold_discount_factor = 0.7
+                fold_discount_factor = 0.4
                 ev = (state.pot - bet_in_simulation) * fold_discount_factor
                 debug_print(f"End: opponent folded, EV: ", ev)
                 return ev
@@ -263,15 +263,9 @@ class MaxEVPlayer(Player):
         call_bet = max(state.bet_in_stage) - state.bet_in_stage[player_i]
         min_raise = call_bet + state.big_blind
         can_raise = call_bet < min_raise < max_allowed
-        prob_threshold = 0.4  # at preflop
-        if state.stage == "flop":
-            prob_threshold = 0.3
-        elif state.stage == "turn":
-            prob_threshold = 0.2
-        elif state.stage == "river":
+        prob_threshold = 0.1
+        if state.stage == "river":
             prob_threshold = 0
-        if prob_threshold > max(distrib):
-            prob_threshold = max(distrib)
         mapped_actions = []
         mapped_probs = []
         evs = []
@@ -330,7 +324,7 @@ class MaxEVPlayer(Player):
         result = np.dot(mapped_probs, evs) / sum(mapped_probs)
         debug_print(
             "Dotting evs:",
-            dict(zip(mapped_actions, evs)),
+            zip(mapped_actions, evs),
             "with probs:",
             mapped_probs,
             "result:",
@@ -354,13 +348,8 @@ class MaxEVPlayer(Player):
         current_bet = state.bet_in_stage[self.index]
         call_bet = max(state.bet_in_stage) - current_bet
         if not in_simulation:
-            player_probs[self.index] = CheatSheet.get_winning_probability(
-                CardCollection(self.hand),
-                CardCollection(state.public_cards),
-                state.player_is_active.sum(),
-            )
-        if not in_simulation:
             debug_print("Own hand:", CardCollection(self.hand).str())
+            debug_print("Card based prob:", player_probs[self.index])
 
         max_allowed_bet = Oracle.get_max_bet_allowed(
             state.player_has_played,
@@ -405,8 +394,6 @@ class MaxEVPlayer(Player):
             }
         else:
             with ThreadPoolExecutor() as executor:
-                self.ensure_all_models_are_fit()
-
                 futures = {
                     executor.submit(
                         self.simulate_ev, place_bet(state, bet), *get_common_args()
@@ -426,7 +413,7 @@ class MaxEVPlayer(Player):
             ev = x[1]
             if ev < 0:
                 return ev
-            denominator = int((bet + 4 * state.big_blind) * 0.5)
+            denominator = int((bet + 8 * state.big_blind) * 0.2)
             if denominator < 1:
                 denominator = 1
             return ev / denominator
@@ -441,12 +428,24 @@ class MaxEVPlayer(Player):
         return bet, ev
 
     def play(self, state: State) -> int:
+        debug_print("\n\n")
+        self.ensure_all_models_are_fit()
+        # Disable any df processing and fitting while we calculate the bet, because
+        # we are not observing anything new anyway and it's just a waste of time.
+        self.predictor.disable_fitting = True
+        self.player_probs[self.index] = CheatSheet.get_winning_probability(
+            CardCollection(self.hand),
+            CardCollection(state.public_cards),
+            state.player_is_active.sum(),
+        )
         bet, _ev = self._play(
             state,
             self.player_probs,
             self.predicted_ranks,
             False,
         )
+        # Re-enable fitting
+        self.predictor.disable_fitting = False
         return bet
 
 
