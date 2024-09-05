@@ -21,7 +21,7 @@ class HumanMocker(Player):
         self.observer = Observer()
 
     def _play(self, state: State) -> int:
-        state_row = self.observer.processor.get_df_row(state.id)
+        state_row = self.observer.get_processed_df_row(state.id)
         actions, distrib = self.predictor.predict_for_row(
             "action", state_row, self.mock, self.rel_weight_player, probabilities=True
         )

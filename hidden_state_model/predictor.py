@@ -2,29 +2,25 @@ import copy
 from typing import Literal, Union, TYPE_CHECKING
 import pandas as pd
 
-from hidden_state_model.models import (
-    fit_action_model,
-    fit_raise_model,
-    fit_prob_model,
-    fit_rank_model,
-)
+from hidden_state_model.interface import HiddenStateModel
+from hidden_state_model.models import ActionModel, RaiseModel, ProbModel, RankModel
 
 if TYPE_CHECKING:
     from hidden_state_model.observer import Observer
 
 
 class Predictor:
-    _models = {
+    _models: dict[dict[str, HiddenStateModel]] = {
         "action": {},
         "raise": {},
         "prob": {},
         "rank": {},
     }
-    fitters = {
-        "action": fit_action_model,
-        "raise": fit_raise_model,
-        "prob": fit_prob_model,
-        "rank": fit_rank_model,
+    model_classes: dict[str, type[HiddenStateModel]] = {
+        "action": ActionModel,
+        "raise": RaiseModel,
+        "prob": ProbModel,
+        "rank": RankModel,
     }
     observer: "Observer"
 
@@ -32,16 +28,18 @@ class Predictor:
         self.observer = observer
 
     def clear_model_cache(self):
-        for attribute in self._models:
-            for player_name in self._models[attribute]:
-                self._models[attribute][player_name]["needs_refit"] = True
+        # Don't think we need this anymore?
+        # for attribute in self._models:
+        #     for player_name in self._models[attribute]:
+        #         self._models[attribute][player_name]["needs_refit"] = True
+        pass
 
     def clone(self, observer: "Observer"):
         c = Predictor(observer)
         c._models = copy.deepcopy(self._models)
         return c
 
-    def predict(
+    def _predict(
         self,
         attribute: Literal["action", "raise", "prob", "rank"],
         state_id: str,
@@ -64,32 +62,35 @@ class Predictor:
         row: pd.Series,
         player_name: Union[str, None],
         relative_weight_player=1,
+        opponent_name: Union[str, None] = None,
+        relative_weight_opponent=1,
         probabilities=False,
     ):
-        entry = self._models[attribute].get(player_name, {})
-        model = entry.get("model")
-        stored_rel_weight = entry.get("relative_weight_player")
-        if (
-            model is None
-            or stored_rel_weight != relative_weight_player
-            or entry.get("needs_refit")
-        ):
-            fit_fn = self.fitters[attribute]
-            print(f"@@@@@ Fitting {attribute} model for {player_name} @@@@@")
-            model = fit_fn(
-                self.observer.get_processed_df(),
-                player_name,
-                relative_weight_player,
-                model,
-            )
-            self._models[attribute][player_name] = {
-                "model": model,
-                "relative_weight_player": relative_weight_player,
-            }
+        model = self._models[attribute].get(player_name)
+        if model is None:
+            model = self.model_classes[attribute]()
+            self._models[attribute][player_name] = model
+        model.fit(
+            self.observer.get_processed_df(),
+            player_name,
+            relative_weight_player,
+            opponent_name,
+            relative_weight_opponent,
+        )
         X_pred = row.to_frame().T
-        if probabilities:
-            return (
-                model.classes_,
-                model.predict_proba(X_pred)[0],
+        try:
+            if probabilities:
+                return (
+                    model.get_classes(),
+                    model.predict_proba(X_pred)[0],
+                )
+            return model.predict(X_pred)[0]
+        except Exception as e:
+            print(f"Failed to predict {attribute} for {player_name}: {e}")
+            print(X_pred)
+            print(
+                f"Cells with NaN values ({X_pred.isna().sum().sum()}):\n",
+                X_pred[X_pred.columns[X_pred.isna().any()]],
             )
-        return model.predict(X_pred)[0]
+            print("dtypes:\n", X_pred.dtypes)
+            raise e

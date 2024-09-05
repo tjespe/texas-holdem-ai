@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Literal, Union
 import numpy as np
 from State import State
 from cpp_poker.cpp_poker import CardCollection, CheatSheet, Oracle
@@ -58,6 +58,7 @@ class ProbSimPlayer(Player):
 
     bluff_prob: float
     rel_weight_player_in_reg: float
+    rel_weight_opponent_in_reg: float
     called_bluff: bool
     is_bluffing: bool
     observer: Observer
@@ -67,7 +68,11 @@ class ProbSimPlayer(Player):
     predicted_ranks: Union[np.ndarray, None]
 
     def __init__(
-        self, name: str = "Regine", bluff_prob=0.08, rel_weight_player_in_reg=2
+        self,
+        name: str = "Nina Caliente",
+        bluff_prob=0.08,
+        rel_weight_player_in_reg=2,
+        rel_weight_opponent_in_reg=2,
     ):
         super().__init__()
         self.name = name
@@ -79,10 +84,28 @@ class ProbSimPlayer(Player):
         self.player_probs = None
         self.predicted_ranks = None
         self.rel_weight_player_in_reg = rel_weight_player_in_reg
+        self.rel_weight_opponent_in_reg = rel_weight_opponent_in_reg
 
     @property
     def predictor(self):
         return self.observer.predictor
+
+    def predict(
+        self,
+        attribute: Literal["prob", "rank", "action", "raise"],
+        df_row,
+        player_name,
+        probabilities=False,
+    ):
+        return self.predictor.predict_for_row(
+            attribute,
+            df_row,
+            player_name,
+            self.rel_weight_player_in_reg,
+            self.name,
+            self.rel_weight_opponent_in_reg,
+            probabilities=probabilities,
+        )
 
     def get_to_know_each_other(self, players: list[Player]):
         self.player_names = [p.name for p in players]
@@ -116,12 +139,8 @@ class ProbSimPlayer(Player):
         df_row = self.observer.get_processed_df_row(from_state.id).drop(
             ["excess_rank", "p", "relative_ev"]
         )
-        self.player_probs[player_i] = self.observer.predictor.predict_for_row(
-            "prob", df_row, player_name, self.rel_weight_player_in_reg
-        )
-        self.predicted_ranks[player_i] = self.observer.predictor.predict_for_row(
-            "rank", df_row, player_name, self.rel_weight_player_in_reg
-        )
+        self.player_probs[player_i] = self.predict("prob", df_row, player_name)
+        self.predicted_ranks[player_i] = self.predict("rank", df_row, player_name)
 
     def showdown(self, state: State, all_hands: list[Union[tuple[int, int], None]]):
         for i, hand in enumerate(all_hands):
@@ -261,15 +280,14 @@ class ProbSimPlayer(Player):
             [name for i, name in enumerate(self.player_names) if i != player_i],
             None,
         )
-        df_row = observer.get_processed_df_row(state.id)
+        df_row = observer.get_processed_df_row(state.id).copy()
         df_row["p"] = player_probs[player_i]
         df_row["excess_rank"] = predicted_ranks[player_i]
         df_row["relative_ev"] = state.pot * player_probs[player_i] / state.game_size
-        actions, distrib = self.predictor.predict_for_row(
+        actions, distrib = self.predict(
             "action",
             df_row,
             player_name,
-            self.rel_weight_player_in_reg,
             probabilities=True,
         )
         max_allowed = Oracle.get_max_bet_allowed(
@@ -317,14 +335,7 @@ class ProbSimPlayer(Player):
                     i = mapped_actions.index(bet)
                     mapped_probs[i] += prob
             elif action == "raise":
-                amount = int(
-                    self.observer.predictor.predict_for_row(
-                        "raise",
-                        df_row,
-                        player_name,
-                        self.rel_weight_player_in_reg,
-                    )
-                )
+                amount = int(self.predict("raise", df_row, player_name))
                 if amount < min_raise:
                     amount = min_raise
                 if amount > max_allowed:
@@ -343,15 +354,10 @@ class ProbSimPlayer(Player):
                 bet,
             )
             player_probs = [*player_probs]
-            updated_df_row = observer.processor.get_df_row(state.id)
-            player_probs[player_i] = self.predictor.predict_for_row(
-                "prob", updated_df_row, player_name, self.rel_weight_player_in_reg
-            )
-            predicted_ranks[player_i] = self.predictor.predict_for_row(
-                "rank",
-                updated_df_row,
-                player_name,
-                self.rel_weight_player_in_reg,
+            updated_df_row = observer.get_processed_df_row(state.id)
+            player_probs[player_i] = self.predict("prob", updated_df_row, player_name)
+            predicted_ranks[player_i] = self.predict(
+                "rank", updated_df_row, player_name
             )
             debug_print(print_indentation, f"Op. bet {bet} at", state.stage)
             evs.append(

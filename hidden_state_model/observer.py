@@ -31,6 +31,7 @@ class Observer:
         "big_blind": "int64",
         "player_name": "object",
         "player_type": "object",
+        "opponent_names": "object",
         "action": "object",
         "amount": "Int64",
         "p": "float64",
@@ -63,7 +64,11 @@ class Observer:
 
     def _ensure_dtypes(self):
         for col, dtype in self.DF_HEADERS_AND_DTYPES.items():
-            self.df[col] = self.df[col].astype(dtype)
+            series = self.df.get(col)
+            if series is None:
+                self.df[col] = pd.Series(dtype=dtype)
+            else:
+                self.df[col] = series.astype(dtype)
 
     def _classify_action(self, state: State, bet: int):
         call_bet = max(state.bet_in_game) - state.bet_in_game[state.current_player_i]

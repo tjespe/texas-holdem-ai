@@ -8,8 +8,8 @@ from state_management import generate_root_state
 class ObserverTestCase(unittest.TestCase):
     def test_can_process_historical_data(self):
         observer = get_observer_with_all_data()
-        # df = observer.get_processed_df()
-        # assert df.shape[0] > 0
+        df = observer.get_processed_df()
+        assert df.shape[0] > 0
 
     def test_can_process_in_game_data(self):
         # Test is empty initially

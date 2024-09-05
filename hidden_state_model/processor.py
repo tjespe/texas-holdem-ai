@@ -1,5 +1,5 @@
+from typing import Iterable
 import uuid
-import numpy as np
 import pandas as pd
 
 from State import State
@@ -28,6 +28,22 @@ class Processor:
         self.df = df
         self.processed = {}
         self.fully_processed = set()
+        self.df_updated = False
+        self.processed_df = None
+
+    dtypes = {
+        **({key: int for key in feature_skeleton}),
+        "game_id": str,
+        "action": str,
+        "amount": "Int64",
+        "excess_rank": "Int64",
+        "p": "float64",
+        "relative_ev": "float64",
+        "stage": str,
+        "player_name": str,
+        "opponent_name": str,
+        "n_players": int,
+    }
 
     def _process_state(self, row: pd.Series, parent_id: str) -> dict:
         state = State(
@@ -43,6 +59,7 @@ class Processor:
         )
         table_rank = CardCollection(list(state.public_cards)).rank_hand().get_rank()
         parent_result = self.processed.get(parent_id)
+
         result = {
             "game_id": str(uuid.uuid4()),
             **(parent_result or feature_skeleton),
@@ -53,6 +70,11 @@ class Processor:
             "relative_ev": row["relative_ev"],
             "stage": state.stage,
             "player_name": row["player_name"],
+            "opponent_name": (
+                (",".join(sorted(ops)))
+                if isinstance(ops := row["opponent_names"], Iterable)
+                else ""
+            ),
             "n_players": sum(state.player_is_active),
         }
         if parent_result:
@@ -129,11 +151,14 @@ class Processor:
         """
         Allows updating the dataframe while keeping the processed states
         """
+        self.df_updated = True
         self.df = df
 
     def get_processed_df(self) -> pd.DataFrame:
         if self.df is None:
             raise ValueError("No dataframe to process")
+        if self.processed_df is not None and not self.df_updated:
+            return self.processed_df
         queue = self.df.index.to_list()
         while queue:
             state_id = queue.pop(0)
@@ -165,7 +190,13 @@ class Processor:
                     and not pd.isna(result["excess_rank"])
                 ):
                     self.fully_processed.add(state_id)
-        return pd.DataFrame.from_dict(self.processed, orient="index")
+        self.processed_df = pd.DataFrame.from_dict(
+            self.processed, orient="index", columns=self.dtypes.keys()
+        )
+        for key, dtype in self.dtypes.items():
+            self.processed_df[key] = self.processed_df[key].astype(dtype)
+        self.df_updated = False
+        return self.processed_df
 
     def get_df_row(self, state_id: str) -> pd.Series:
         df = self.get_processed_df()
