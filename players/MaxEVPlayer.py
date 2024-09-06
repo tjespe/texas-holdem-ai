@@ -190,7 +190,7 @@ class MaxEVPlayer(Player):
                 # The opponent folding gives us a great payoff, but it's a highly risky strategy,
                 # and if we use it too often, the opponent will exploit it, thus we multiply the
                 # payoff by a fold discount factor.
-                fold_discount_factor = 0.4
+                fold_discount_factor = 0.3
                 ev = (state.pot - bet_in_simulation) * fold_discount_factor
                 debug_print(f"End: opponent folded, EV: ", ev)
                 return ev
@@ -266,6 +266,8 @@ class MaxEVPlayer(Player):
         prob_threshold = 0.1
         if state.stage == "river":
             prob_threshold = 0
+        if state.stage == "preflop" or state.stage == "flop":
+            prob_threshold = 0.2
         mapped_actions = []
         mapped_probs = []
         evs = []
