@@ -200,7 +200,7 @@ std::optional<HandRank> CardCollection::check_for_four_of_a_kind() const
     {
         std::array<int, 5> tiebreakers{};
         // Primary tie breaker: rank of the four of a kind
-        for (int i = 0; i < 13; ++i)
+        for (int i = 12; i >= 0; --i)
         {
             if (mask.test(i))
             {
@@ -272,7 +272,8 @@ std::optional<HandRank> CardCollection::check_for_straight() const
         ranks_in_hand |= suit_bits;
     }
     // Check if the ranks_in_hand contain a straight
-    for (int i = 0; i <= 8; ++i)
+    // Iterate downwards to get the highest straight
+    for (int i = 8; i >= 0; --i)
     {
         std::bitset<13> straight_bits(0b11111 << i);
         if ((ranks_in_hand & straight_bits) == straight_bits)
@@ -304,7 +305,8 @@ std::optional<HandRank> CardCollection::check_for_three_of_a_kind() const
     {
         std::array<int, 5> tiebreakers{};
         // Primary tie breaker: rank of the three of a kind
-        for (int i = 0; i < 13; ++i)
+        // Iterate downwards to get the highest three of a kind
+        for (int i = 12; i >= 0; --i)
         {
             if (triplets.test(i))
             {
@@ -360,7 +362,8 @@ std::optional<HandRank> CardCollection::check_for_one_pair() const
     {
         std::array<int, 5> tiebreakers{};
         // Primary tie breaker: rank of the pair
-        for (int i = 0; i < 13; ++i)
+        // Iterate downwards to get the highest pair
+        for (int i = 12; i >= 0; --i)
         {
             if (pairs.test(i))
             {
