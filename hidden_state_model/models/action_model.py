@@ -1,8 +1,10 @@
 import pandas as pd
+from sklearn.calibration import LabelEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
+from xgboost import XGBClassifier
 
 from hidden_state_model.weigthing import get_sample_weights
 from hidden_state_model.interface import HiddenStateModel
@@ -23,13 +25,21 @@ class ActionModel(HiddenStateModel):
             remainder="passthrough",
         )
 
+        self.label_encoder = LabelEncoder()
+
+        # Modify the classifier to XGBClassifier
         self.model = Pipeline(
             [
                 ("preprocess", preprocessor),
                 (
                     "classifier",
-                    LogisticRegression(
-                        multi_class="multinomial", solver="lbfgs", max_iter=10_000
+                    XGBClassifier(
+                        objective="multi:softprob",  # for multiclass classification with probability
+                        eval_metric="mlogloss",
+                        n_estimators=100,
+                        max_depth=6,
+                        learning_rate=0.1,
+                        verbosity=1,
                     ),
                 ),
             ]
@@ -48,16 +58,18 @@ class ActionModel(HiddenStateModel):
     ):
         X = train_df.drop(["game_id", "action", "amount"], axis=1)
         y = train_df["action"]
+        y_encoded = self.label_encoder.fit_transform(y)
         sample_weights = get_sample_weights(
             train_df, player_name, rel_weight_player_match, op_name, rel_weight_op_match
         )
-        self.model.fit(X, y, classifier__sample_weight=sample_weights)
+        self.model.fit(X, y_encoded, classifier__sample_weight=sample_weights)
 
     def _predict(self, X: pd.DataFrame):
-        return self.model.predict(X)
+        y_encoded = self.model.predict(X)
+        return self.label_encoder.inverse_transform(y_encoded)
 
     def _predict_proba(self, X: pd.DataFrame):
         return self.model.predict_proba(X)
 
     def get_classes(self) -> list[str]:
-        return self.model.classes_
+        return self.label_encoder.inverse_transform(self.model.classes_)
