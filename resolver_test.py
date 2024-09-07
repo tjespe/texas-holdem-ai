@@ -51,7 +51,8 @@ class UpdateStrategyTest(unittest.TestCase):
             state=example_non_terminal_state,
             end_stage="river",
             max_depth=3,
-            max_successors=3,
+            max_successors_at_action_nodes=3,
+            max_successors_at_chance_nodes=3,
         )
         np.random.seed(0)
         self.example_node.strategy = np.random.rand(
@@ -107,7 +108,8 @@ class FullResolverTest(unittest.TestCase):
             ranges,
             end_stage="terminal",
             end_depth=100,
-            max_successors=1,
+            max_successors_at_action_nodes=1,
+            max_successors_at_chance_nodes=1,
         )
         print("Action", action)
         print("Child state", child_state)
@@ -124,7 +126,8 @@ class UtilityMatrixTest(unittest.TestCase):
             state=example_terminal_state,
             end_stage="river",
             max_depth=3,
-            max_successors=3,
+            max_successors_at_action_nodes=3,
+            max_successors_at_chance_nodes=3,
         )
         self.example_node._utility_matrix = None
 

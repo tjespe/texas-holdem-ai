@@ -355,6 +355,42 @@ class HandRankTestCase(unittest.TestCase):
         )
         self.assertEqual(winner, {0, 1})
 
+    def test_table_based_tie(self):
+        table = CardCollection(
+            {
+                Card("J", "♥"),
+                Card("Q", "♣"),
+                Card("Q", "♥"),
+                Card("K", "♦"),
+                Card("K", "♥"),
+            }
+        )
+        player1_hand = CardCollection(
+            {
+                Card("4", "♣"),
+                Card("J", "♣"),
+            }
+        )
+        player2_hand = CardCollection(
+            {
+                Card("10", "♥"),
+                Card("7", "♦"),
+            }
+        )
+        # Since only 5 cards should count, only cards from the table should be considered
+        # and it should be a tie
+        p1_rank = (player1_hand + table).rank_hand()
+        p2_rank = (player2_hand + table).rank_hand()
+        self.assertEqual(p1_rank, p2_rank)
+        self.assertEqual(
+            Oracle.find_winner(
+                table,
+                [player1_hand, player2_hand],
+                (True, True),
+            ),
+            {0, 1},
+        )
+
 
 class OracleTestCase(unittest.TestCase):
     def test_folded_player_can_not_win(self):

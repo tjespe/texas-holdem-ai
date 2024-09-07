@@ -36,7 +36,8 @@ class StateNodeTestCase(unittest.TestCase):
             state=generate_root_state(n_players=2),
             end_stage="river",
             max_depth=1,
-            max_successors=10,
+            max_successors_at_action_nodes=10,
+            max_successors_at_chance_nodes=10,
         )
         self.assertIsInstance(state_node.children[0][1], StateNode)
 
@@ -53,7 +54,11 @@ class StateNodeTestCase(unittest.TestCase):
             big_blind=2,
         )
         state_node = StateNode(
-            state=turn_state, end_stage="terminal", max_depth=100, max_successors=10
+            state=turn_state,
+            end_stage="terminal",
+            max_depth=100,
+            max_successors_at_action_nodes=10,
+            max_successors_at_chance_nodes=10,
         )
         while state_node.children:
             state_node = state_node.children[0][1]
@@ -64,7 +69,8 @@ class StateNodeTestCase(unittest.TestCase):
             state=generate_root_state(n_players=2),
             end_stage="terminal",
             max_depth=100,
-            max_successors=3,
+            max_successors_atactione_nodes=3,
+            max_successors_at_chance_nodes=3,
         )
         while state_node.children:
             state_node = state_node.children[0][1]
