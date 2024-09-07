@@ -143,7 +143,7 @@ class MaxEVPlayer(Player):
         player_probs: list[float],
         predicted_ranks: list[int],
         observer: Union[Observer, None] = None,
-        discount_factor: float = 0.95,
+        print_prefix: str = "",
     ) -> int:
         """
         Simulates game to end and calculates the expected value of the game, defined as
@@ -157,15 +157,19 @@ class MaxEVPlayer(Player):
             player_probs: The probabilities of each player winning.
             predicted_ranks: The predicted ranks of each player.
             observer: The observer object.
-            discount_factor: The discount factor for future rewards. This is used to
-                account for the fact that the simulation is not perfect and that the
-                future is uncertain. The payoff of the game is discounted by this factor
-                for each step into the future, making payoffs far into the future less
-                valuable. The discount factor should be between 0 and 1.
+            discount_factor:
 
         Returns:
             The expected value of the game.
         """
+
+        # The discount factor for future rewards. This is used to
+        # account for the fact that the simulation is not perfect and that the
+        # future is uncertain. The payoff of the game is discounted by this factor
+        # for each step into the future, making payoffs far into the future less
+        # valuable. The discount factor should be between 0 and 1.
+        discount_factor: float = 0.95
+
         if observer is None:
             # Generate an observer with only the necessary data
             relevant_states = []
@@ -182,7 +186,7 @@ class MaxEVPlayer(Player):
             if state.player_is_folded[self.index]:
                 # In this case, we lose everything we have bet since the beginning of the simulation
                 ev = -bet_in_simulation
-                debug_print(f"End: we folded, EV:", ev)
+                debug_print(print_prefix, f"End: we folded, EV:", ev)
                 return ev
             if sum(state.player_is_active) == 1:
                 # In this case, we win the pot.
@@ -192,7 +196,7 @@ class MaxEVPlayer(Player):
                 # payoff by a fold discount factor.
                 fold_discount_factor = 0.3
                 ev = (state.pot - bet_in_simulation) * fold_discount_factor
-                debug_print(f"End: opponent folded, EV: ", ev)
+                debug_print(print_prefix, f"End: opponent folded, EV: ", ev)
                 return ev
             # In this case, we have a showdown
             winning_prob = combine_probabilities(player_probs, self.index)
@@ -200,6 +204,7 @@ class MaxEVPlayer(Player):
             value_if_loss = -bet_in_simulation
             ev = value_if_win * winning_prob + value_if_loss * (1 - winning_prob)
             debug_print(
+                print_prefix,
                 f"End: showdown, winning prob: {winning_prob}, value if win: {value_if_win}, value if loss: {value_if_loss}, EV: {ev}",
             )
             return ev
@@ -215,7 +220,7 @@ class MaxEVPlayer(Player):
                     [*player_probs],
                     [*predicted_ranks],
                     observer,
-                    discount_factor,
+                    print_prefix,
                 )
                 * discount_factor
             )
@@ -229,8 +234,11 @@ class MaxEVPlayer(Player):
                 True,
                 bet_before_simulation,
                 observer,
+                print_prefix,
             )
-            debug_print("Choosing bet:", bet, "at stage", state.stage, "EV:", ev)
+            debug_print(
+                print_prefix, "Choosing bet:", bet, "at stage", state.stage, "EV:", ev
+            )
             return ev
 
         # Handle opponent turn
@@ -319,12 +327,13 @@ class MaxEVPlayer(Player):
                     [*player_probs],
                     [*predicted_ranks],
                     observer,
-                    discount_factor,
+                    print_prefix + f">[o{bet}]",
                 )
                 * discount_factor
             )
         result = np.dot(mapped_probs, evs) / sum(mapped_probs)
         debug_print(
+            print_prefix,
             "Dotting evs:",
             list(zip(mapped_actions, evs)),
             "with probs:",
@@ -342,6 +351,7 @@ class MaxEVPlayer(Player):
         in_simulation: bool,
         bet_before_simulation=None,
         observer: Union[Observer, None] = None,
+        print_prefix=None,
     ) -> int:
         if state.player_is_folded[self.index]:
             return 0
@@ -391,20 +401,30 @@ class MaxEVPlayer(Player):
         )
         if in_simulation:
             evs = {
-                bet: self.simulate_ev(place_bet(state, bet), *get_common_args())
+                bet: self.simulate_ev(
+                    place_bet(state, bet),
+                    *get_common_args(),
+                    print_prefix + f">[b{bet}]",
+                )
                 for bet in possibilities
             }
         else:
             with ThreadPoolExecutor() as executor:
+                bcolors = ("\033[95m", "\033[94m", "\033[92m", "\033[93m", "\033[91m")
                 futures = {
                     executor.submit(
-                        self.simulate_ev, place_bet(state, bet), *get_common_args()
+                        self.simulate_ev,
+                        place_bet(state, bet),
+                        *get_common_args(),
+                        bcolors[i % len(bcolors)] + f"[T{i}] [b{bet}]",
                     ): bet
-                    for bet in possibilities
+                    for i, bet in enumerate(possibilities)
                 }
 
                 # Gather results
                 evs = {bet: future.result() for future, bet in futures.items()}
+                # Reset terminal color
+                debug_print("\033[0m", end="")
 
         if not in_simulation:
             debug_print("Hand:", CardCollection(self.hand).str())
@@ -420,7 +440,9 @@ class MaxEVPlayer(Player):
             # Maybe calculate variance and use that instead?
             # I think maybe subtracting the variance could be good, because some bets
             # may give a positive EV but be very risky.
-            denominator = int((bet + 8 * state.big_blind) * 0.2)
+            # Increasing the factor for the big blind here makes the player more aggressive,
+            # because it makes denominators more equal.
+            denominator = int((bet + 12 * state.big_blind) * 0.2)
             if denominator < 1:
                 denominator = 1
             return ev / denominator
