@@ -39,7 +39,7 @@ private:
     static Cleaner cleaner;  // Static instance to save cache on program exit
 
     static void load_cache();
-    static uint64_t convert_cards_to_equiv_str(CardCollection &hand, CardCollection &table);
+    static uint64_t convert_cards_to_equiv_str(CardCollection &hand, CardCollection &table, int num_players);
     static void decode_and_print_cards(uint64_t encoded_value);
     static std::pair<float, int> find_or_simulate(CardCollection &hand, CardCollection &table, int num_players, int num_simulations);
     static float get_winning_probability_n_simulations(CardCollection &hand, CardCollection &table, int num_players, int num_simulations);

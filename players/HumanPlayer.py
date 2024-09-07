@@ -80,12 +80,38 @@ class HumanPlayer(Player):
                     if not x.isdigit():
                         return False
                     x = int(x)
+                    if x == call_bet:
+                        call_q = inquirer.prompt(
+                            [
+                                inquirer.Confirm(
+                                    "confirm",
+                                    message="So you want to call instead?",
+                                    default=False,
+                                )
+                            ]
+                        )
+                        if call_q["confirm"]:
+                            return True
+                        return False
+                    if x == 0:
+                        fold_q = inquirer.prompt(
+                            [
+                                inquirer.Confirm(
+                                    "confirm",
+                                    message="Are you sure you want to fold?",
+                                    default=False,
+                                )
+                            ]
+                        )
+                        if fold_q["confirm"]:
+                            return True
+                        return False
                     return min_raise <= x <= max_bet
 
                 questions = [
                     inquirer.Text(
                         "amount",
-                        message=f"How much do you want to bet? Minimum is {min_raise} and maximum is {max_bet} (Press Ctrl+C if you don't want to raise)",
+                        message=f"How much do you want to bet? Minimum is {min_raise} and maximum is {max_bet}",
                         validate=validate,
                     ),
                 ]

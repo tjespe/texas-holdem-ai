@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
-from typing import Literal, Union
+from typing import Iterable, Literal, Union
 import numpy as np
+import pandas as pd
 from State import State
 from cpp_poker.cpp_poker import CardCollection, CheatSheet, Oracle
 from PlayerABC import Player
@@ -22,10 +23,10 @@ class RandomResult:
     probs: np.ndarray
     values: np.ndarray
 
-    def __init__(self, outcomes: dict[float, Union[float, "RandomResult"]]):
+    def __init__(self, outcomes: Iterable[tuple[float, Union[float, "RandomResult"]]]):
         probs = []
         values = []
-        for prob, value in outcomes.items():
+        for prob, value in outcomes:
             if isinstance(value, RandomResult):
                 probs.extend(value.probs * prob)
                 values.extend(value.values)
@@ -36,24 +37,71 @@ class RandomResult:
         self.values = np.array(values)
         assert len(self.probs) == len(self.values)
         assert np.all(self.probs >= 0)
-        assert np.isclose(np.sum(self.probs), 1)
+        assert np.isclose(
+            np.sum(self.probs), 1
+        ), f"Sum of probabilities: {np.sum(self.probs)}"
 
     @property
     def ev(self):
         return np.dot(self.probs, self.values)
 
     @property
+    def variance(self):
+        return np.dot(self.probs, (self.values - self.ev) ** 2)
+
+    @property
     def std(self):
-        return np.sqrt(np.dot(self.probs, (self.values - self.ev) ** 2))
+        return np.sqrt(self.variance)
+
+    @property
+    def semi_variance(self):
+        """Calculates the semi-variance (downside risk) as the variance of outcomes below the mean."""
+        mean = self.ev
+        downside_values = self.values[self.values < mean]
+        downside_probs = self.probs[self.values < mean]
+        if len(downside_values) == 0:
+            return 0  # No downside outcomes
+        semi_variance = np.dot(downside_probs, (downside_values - mean) ** 2)
+        return semi_variance
+
+    @property
+    def semi_std(self):
+        """Calculates the semi-standard deviation (downside risk) as the square root of the semi-variance."""
+        return np.sqrt(self.semi_variance)
+
+    @property
+    def VaR_95(self):
+        """
+        Calculates Value at Risk (VaR) at 95% confidence level, meaning the value
+        at the 5th percentile of the distribution, counting from the lowest value.
+        A negative value means that there is a 5% chance of losing at least that much.
+        A positive value means that there is a 95% chance of winning at least that much.
+        """
+        sorted_indices = np.argsort(self.values)
+        sorted_values = self.values[sorted_indices]
+        sorted_probs = self.probs[sorted_indices]
+        cumulative_probs = np.cumsum(sorted_probs)
+        var_index = np.searchsorted(cumulative_probs, 0.20)
+        return sorted_values[var_index]
+
+    @property
+    def CVaR_95(self):
+        """
+        Calculates Conditional Value at Risk (CVaR) at 95% confidence level (expected shortfall).
+        """
+        var = self.VaR_95
+        losses = self.values[self.values <= var]
+        losses_probs = self.probs[self.values <= var]
+        return np.dot(losses_probs, losses) / np.sum(losses_probs)
 
     def __repr__(self) -> str:
         return f"RandomResult({dict(zip(self.probs, self.values))})"
 
     def __str__(self) -> str:
-        return f"{self.ev} ± {self.std}"
+        return f"{self.ev:.2f} ± {self.std:.2f}"
 
     def __mul__(self, other: float):
-        return RandomResult({p: v * other for p, v in zip(self.probs, self.values)})
+        return RandomResult((p, v * other) for p, v in zip(self.probs, self.values))
 
 
 class MaxEVPlayer(Player):
@@ -75,7 +123,7 @@ class MaxEVPlayer(Player):
         name: str = "Max Mekker",
         rel_weight_player_in_reg=2,
         rel_weight_opponent_in_reg=2,
-        risk_aversion=0.5,
+        risk_aversion=1,
     ):
         super().__init__()
         self.name = name
@@ -160,7 +208,10 @@ class MaxEVPlayer(Player):
             ["excess_rank", "p", "relative_ev"]
         )
         self.player_probs[player_i] = self.predict("prob", df_row, player_name)
-        debug_print("Predicted prob:", self.player_probs[player_i])
+        debug_print(
+            f"Predicted prob for {self.player_names[player_i]}:",
+            self.player_probs[player_i],
+        )
         self.predicted_ranks[player_i] = self.predict("rank", df_row, player_name)
 
     def showdown(self, state: State, all_hands: list[Union[tuple[int, int], None]]):
@@ -198,19 +249,10 @@ class MaxEVPlayer(Player):
             player_probs: The probabilities of each player winning.
             predicted_ranks: The predicted ranks of each player.
             observer: The observer object.
-            discount_factor:
 
         Returns:
             RandomResult: Object representing all simulated outcomes and their probabilities.
         """
-
-        # The discount factor for future rewards. This is used to
-        # account for the fact that the simulation is not perfect and that the
-        # future is uncertain. The payoff of the game is discounted by this factor
-        # for each step into the future, making payoffs far into the future less
-        # valuable. The discount factor should be between 0 and 1.
-        discount_factor: float = 0.95
-
         if observer is None:
             # Generate an observer with only the necessary data
             relevant_states = []
@@ -228,26 +270,29 @@ class MaxEVPlayer(Player):
                 # In this case, we lose everything we have bet since the beginning of the simulation
                 value = -bet_in_simulation
                 debug_print(print_prefix, f"End: we folded, value:", value)
-                return RandomResult({1: value})
+                return RandomResult([(1, value)])
             if sum(state.player_is_active) == 1:
                 # In this case, we win the pot.
                 # We don't count anything we have bet during the simulation as a win.
                 # The opponent folding gives us a great payoff, but it's a highly risky strategy,
-                # and if we use it too often, the opponent will exploit it, thus we multiply the
-                # payoff by a fold discount factor.
-                fold_discount_factor = 0.3
-                value = (state.pot - bet_in_simulation) * fold_discount_factor
-                debug_print(print_prefix, f"End: opponent folded, EV: ", value)
-                return RandomResult({1: value})
+                # and if we use it too often, the opponent will exploit it, thus we make some
+                # adjustments here.
+                fold_discount = 0.8
+                value_if_win = (state.pot - bet_in_simulation) * fold_discount
+                result = RandomResult([(1, value_if_win)])
+                debug_print(
+                    print_prefix, f"End: opponent folded, using result: ", str(result)
+                )
+                return RandomResult([(1, value_if_win)])
             # In this case, we have a showdown
             winning_prob = combine_probabilities(player_probs, self.index)
             value_if_win = state.pot - bet_in_simulation
             value_if_loss = -bet_in_simulation
             result = RandomResult(
-                {
-                    winning_prob: value_if_win,
-                    1 - winning_prob: value_if_loss,
-                }
+                [
+                    (winning_prob, value_if_win),
+                    (1 - winning_prob, value_if_loss),
+                ]
             )
             debug_print(
                 print_prefix,
@@ -258,17 +303,14 @@ class MaxEVPlayer(Player):
         # Handle table needs card
         if state.all_players_are_done:
             n_cards = 3 if state.stage == "preflop" else 1
-            return (
-                self.simulate_ev(
-                    # Add a card to progress the game although the card should not matter
-                    add_cards(state, tuple(range(n_cards))),
-                    bet_before_simulation,
-                    [*player_probs],
-                    [*predicted_ranks],
-                    observer,
-                    print_prefix,
-                )
-                * discount_factor
+            return self.simulate_ev(
+                # Add a card to progress the game although the card should not matter
+                add_cards(state, tuple(range(n_cards))),
+                bet_before_simulation,
+                [*player_probs],
+                [*predicted_ranks],
+                observer,
+                print_prefix,
             )
 
         # Handle own turn
@@ -323,15 +365,60 @@ class MaxEVPlayer(Player):
         call_bet = max(state.bet_in_stage) - state.bet_in_stage[player_i]
         min_raise = call_bet + state.big_blind
         can_raise = call_bet < min_raise < max_allowed
-        prob_threshold = 0.1
+        can_check = call_bet == 0
+        can_call = call_bet <= max_allowed
+        possible_actions = ["fold", "check", "call", "raise"]
+        p_per_action = dict(zip(actions, distrib))
+        if not can_raise:
+            possible_actions.remove("raise")
+            raise_p = p_per_action.pop("raise")
+            p_per_action["call"] += raise_p
+        if not can_check:
+            possible_actions.remove("check")
+            check_p = p_per_action.pop("check")
+            p_per_action["fold"] += 0.5 * check_p
+            p_per_action["call"] += 0.5 * check_p
+        if not can_call:
+            possible_actions.remove("call")
+            call_p = p_per_action.pop("call")
+            p_per_action["check"] += call_p
+        # Always reduce fold chance to avoid relying on the opponent folding
+        # as that is a very risky strategy.
+        p_per_action["fold"] *= 0.5
+
+        # Set an appropriate threshold for which actions to consider to limit
+        # the branching factor of the simulation tree.
+        prob_threshold = 0.2
         if state.stage == "river":
             prob_threshold = 0
         if state.stage == "preflop" or state.stage == "flop":
-            prob_threshold = 0.2
+            prob_threshold = 0.3
+
+        # Ensure we get at least 1 non-fold action, because otherwise, we will simulate
+        # a fold with 100% probability and no variance, making the path unrealistically good.
+        min_prob_thresh = max(
+            p for action, p in p_per_action.items() if action != "fold"
+        )
+        debug_print(
+            print_prefix,
+            "Raw actions:",
+            actions,
+            "Raw distrib:",
+            distrib,
+            "Modified distrib:",
+            p_per_action,
+            "Prob threshold:",
+            prob_threshold,
+            "Min prob thresh:",
+            min_prob_thresh,
+        )
+        if prob_threshold > min_prob_thresh:
+            prob_threshold = min_prob_thresh
+        debug_print("Adjusted prob threshold:", prob_threshold)
         mapped_actions = []
         mapped_probs = []
         results: list[RandomResult] = []
-        for action, prob in zip(actions, distrib):
+        for action, prob in p_per_action.items():
             if prob < prob_threshold:
                 # Skip actions with low probability
                 continue
@@ -343,7 +430,7 @@ class MaxEVPlayer(Player):
                 else:
                     i = mapped_actions.index(bet)
                     mapped_probs[i] += prob
-            elif action == "call" or (action == "raise" and not can_raise):
+            elif action == "call":
                 bet = call_bet
                 if bet not in mapped_actions:
                     mapped_actions.append(bet)
@@ -383,9 +470,8 @@ class MaxEVPlayer(Player):
                     observer,
                     print_prefix + f">[o{bet}]",
                 )
-                * discount_factor
             )
-        result = RandomResult(dict(zip(mapped_probs, results)))
+        result = RandomResult(zip(mapped_probs, results))
         debug_print(
             print_prefix,
             "Combined results:",
@@ -432,7 +518,7 @@ class MaxEVPlayer(Player):
             raise_ops = 1
             if len(state.public_cards) > 3 and not in_simulation:
                 raise_ops = 2
-            pot_fractions = np.random.uniform(0.3, 1.2, raise_ops)
+            pot_fractions = np.random.normal(0.5, 0.1, raise_ops)
             for pot_frac in pot_fractions:
                 bet = int(pot_frac * state.pot)
                 if bet < call_bet:
@@ -441,23 +527,23 @@ class MaxEVPlayer(Player):
                     bet = min_raise
                 if bet > max_allowed_bet:
                     bet = max_allowed_bet
+                # If it's less than a big blind away from some other bet, don't add it
+                if any(abs(bet - b) < state.big_blind for b in possibilities):
+                    continue
                 possibilities.add(bet)
 
         if len(possibilities) == 1 and not in_simulation:
             # If there is only one thing to do, and we are not in a simulation, do it
             return possibilities.pop(), None
 
-        get_common_args = lambda: (
-            bet_before_simulation,
-            [*player_probs],
-            [*predicted_ranks],
-            observer,
-        )
         if in_simulation:
             results = {
                 bet: self.simulate_ev(
                     place_bet(state, bet),
-                    *get_common_args(),
+                    bet_before_simulation,
+                    [*player_probs],
+                    [*predicted_ranks],
+                    observer,
                     print_prefix + f">[b{bet}]",
                 )
                 for bet in possibilities
@@ -469,7 +555,10 @@ class MaxEVPlayer(Player):
                     executor.submit(
                         self.simulate_ev,
                         place_bet(state, bet),
-                        *get_common_args(),
+                        bet_before_simulation + bet,
+                        [*player_probs],
+                        [*predicted_ranks],
+                        observer,
                         bcolors[i % len(bcolors)] + f"[T{i}] [b{bet}]",
                     ): bet
                     for i, bet in enumerate(possibilities)
@@ -480,26 +569,45 @@ class MaxEVPlayer(Player):
                 # Reset terminal color
                 debug_print("\033[0m", end="")
 
+        def get_opt_prio(x):
+            bet_size: int = x[0]
+            result: RandomResult = x[1]
+            sd_sensitivity = self.risk_aversion / 2
+            bet_size_sensitivity = self.risk_aversion / 2
+            return (
+                result.ev
+                - sd_sensitivity * result.std
+                - bet_size_sensitivity * bet_size
+            )
+
         if not in_simulation:
             debug_print("Hand:", CardCollection(self.hand).str())
+            debug_print("Card based winning prob:", player_probs[self.index])
             debug_print(
-                "EVs per bet:", {bet: result.ev for bet, result in results.items()}
+                "Combined winning prob:",
+                combine_probabilities(player_probs, self.index),
             )
-            debug_print(
-                "STDs per bet:", {bet: result.std for bet, result in results.items()}
+            stats_df = (
+                pd.DataFrame(
+                    {
+                        "Bet": bet,
+                        "Semi SD": result.semi_std,
+                        "VaR": result.VaR_95,
+                        "CVaR": result.CVaR_95,
+                        "SD": result.std,
+                        "EV": result.ev,
+                        "SD penalty": -result.std * self.risk_aversion * 0.5,
+                        "Bet size penalty": -bet * self.risk_aversion * 0.5,
+                        "Prio": get_opt_prio((bet, result)),
+                    }
+                    for bet, result in results.items()
+                )
+                .set_index("Bet")
+                .sort_index()
             )
+            debug_print(stats_df)
 
-        def prio_opts(x):
-            result: RandomResult = x[1]
-            return result.ev - self.risk_aversion * result.std
-
-        if not in_simulation:
-            debug_print(
-                "Prio values:",
-                {bet: prio_opts((bet, result)) for bet, result in results.items()},
-            )
-
-        bet, result = max(results.items(), key=prio_opts)
+        bet, result = max(results.items(), key=get_opt_prio)
         return bet, result
 
     def play(self, state: State) -> int:

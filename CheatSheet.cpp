@@ -62,7 +62,7 @@ void CheatSheet::setup_signal_handlers()
     std::signal(SIGTERM, signal_handler);
 }
 
-uint64_t CheatSheet::convert_cards_to_equiv_str(CardCollection &hand, CardCollection &table) {
+uint64_t CheatSheet::convert_cards_to_equiv_str(CardCollection &hand, CardCollection &table, int num_players) {
     // Sort the hand and table separately to maintain a consistent order within each group
     std::vector<Card> hand_cards = hand.to_vector();
     std::vector<Card> table_cards = table.to_vector();
@@ -75,8 +75,11 @@ uint64_t CheatSheet::convert_cards_to_equiv_str(CardCollection &hand, CardCollec
 
     uint64_t result = 0;
 
+    // Encode the number of players (4 bits)
+    result |= (num_players & 0xF);
+
     // Encode the hand (first 12 bits: 6 bits for each card)
-    int shift = 0;
+    int shift = 4;
     for (const Card &card : hand_cards) {
         // Re-encode the suit if it hasn't been encountered yet
         if (suits_reencoding[card.suit] == -1) {
@@ -93,8 +96,8 @@ uint64_t CheatSheet::convert_cards_to_equiv_str(CardCollection &hand, CardCollec
         shift += 6;  // Hand cards occupy the first 12 bits (2 cards, 6 bits each)
     }
 
-    // Explicitly set shift to 12, in case the number of cards on hand was not 2
-    shift = 12;
+    // Explicitly set shift to 12 + 4, in case the number of cards on hand was not 2
+    shift = 12 + 4;
 
     // Encode the table (remaining bits after the hand, starting at the 12th bit)
     for (const Card &card : table_cards) {
@@ -124,10 +127,16 @@ void CheatSheet::decode_and_print_cards(uint64_t encoded_value) {
     const int total_bits = 64; // We are using a 64-bit integer to encode the cards
     const int bits_per_card = 6; // Each card is represented by 6 bits
 
+    int num_player_bits = 4;
+    int num_players = encoded_value & 0xF;
+    std::cout << "Number of players: " << num_players << std::endl;
+
     // Calculate the number of cards encoded in the binary value
     int total_cards = 0;
-    for (uint64_t temp = encoded_value; temp != 0; temp >>= bits_per_card) {
-        ++total_cards;
+    for (int i = num_player_bits; i < total_bits; i += bits_per_card) {
+        if ((encoded_value >> i) & 0x3F) {
+            total_cards++;
+        }
     }
 
     int table_size = total_cards - hand_size;
@@ -140,7 +149,7 @@ void CheatSheet::decode_and_print_cards(uint64_t encoded_value) {
 
     for (int i = 0; i < total_cards; ++i) {
         // Extract the 6 bits corresponding to the current card
-        uint64_t card_encoding = (encoded_value >> (i * bits_per_card)) & 0x3F; // 0x3F = 0b111111 to mask 6 bits
+        uint64_t card_encoding = (encoded_value >> ((i * bits_per_card)+num_player_bits)) & 0x3F; // 0x3F = 0b111111 to mask 6 bits
 
         // Decode rank and suit
         int rank = (card_encoding >> 2) & 0xF; // Top 4 bits are the rank (0-12)
@@ -199,7 +208,7 @@ std::pair<float, int> CheatSheet::find_or_simulate(CardCollection &hand, CardCol
         load_cache();
         cache_loaded = true;
     }
-    uint64_t key = convert_cards_to_equiv_str(hand, table);
+    uint64_t key = convert_cards_to_equiv_str(hand, table, num_players);
     auto it = cache.find(key);
     if (it != cache.end() && it->second.second >= num_simulations)
     {
