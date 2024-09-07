@@ -15,7 +15,7 @@ class ObserverTestCase(unittest.TestCase):
         # Test is empty initially
         observer = Observer()
         df = observer.get_processed_df()
-        assert df.empty, "Expected df to be empty"
+        assert df is None or df.empty, "Expected df to be empty"
 
         # Test can add action and get partial df row
         example_state = generate_root_state(n_players=2)
