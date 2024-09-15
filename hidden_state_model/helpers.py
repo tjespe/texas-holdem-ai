@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 
 import pandas as pd
@@ -23,6 +24,24 @@ for file in os.listdir(data_dir):
         dfs.append(df)
 
 combined_df = pd.concat(dfs)
+
+if len(dfs) > 10:
+    print("Compacintg dfs")
+
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    combined_df.to_parquet(os.path.join(data_dir, f"combined_{timestamp}.parquet"))
+
+    # Move files already in trash to trash within trash
+    trash = os.path.join(data_dir, "trash")
+    trash_in_trash = os.path.join(trash, f"trash_{timestamp}")
+    os.makedirs(trash_in_trash, exist_ok=True)
+    for f in os.listdir(trash):
+        if f.endswith(".parquet") or f.endswith(".csv"):
+            os.rename(os.path.join(trash, f), os.path.join(trash_in_trash, f))
+
+    # Move read files to trash and write combined df to dfs/combined_{timestamp}.parquet
+    for f in read:
+        os.rename(os.path.join(data_dir, f), os.path.join(trash, f))
 
 dfs = []  # Clear memory
 

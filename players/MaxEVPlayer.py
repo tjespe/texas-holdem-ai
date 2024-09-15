@@ -384,7 +384,7 @@ class MaxEVPlayer(Player):
             p_per_action["check"] += call_p
         # Always reduce fold chance to avoid relying on the opponent folding
         # as that is a very risky strategy.
-        p_per_action["fold"] *= 0.5
+        p_per_action["fold"] *= 0.3
 
         # Set an appropriate threshold for which actions to consider to limit
         # the branching factor of the simulation tree.
@@ -613,6 +613,8 @@ class MaxEVPlayer(Player):
     def play(self, state: State) -> int:
         debug_print("\n\n")
         self.ensure_all_models_are_fit()
+        self.risk_aversion = np.random.normal(1, 0.05)
+        debug_print("Using risk aversuon", self.risk_aversion)
         # Disable any df processing and fitting while we calculate the bet, because
         # we are not observing anything new anyway and it's just a waste of time.
         self.predictor.disable_fitting = True

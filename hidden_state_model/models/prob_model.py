@@ -3,6 +3,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
+from xgboost import XGBRegressor
 
 from hidden_state_model.interface import HiddenStateModel
 from hidden_state_model.weigthing import get_sample_weights
@@ -28,7 +29,16 @@ class ProbModel(HiddenStateModel):
         self.model = Pipeline(
             [
                 ("preprocess", preprocessor),
-                ("regressor", LinearRegression()),
+                (
+                    "regressor",
+                    XGBRegressor(
+                        colsample_bytree=0.6,
+                        learning_rate=0.1,
+                        max_depth=3,
+                        n_estimators=500,
+                        subsample=1.0,
+                    ),
+                ),
             ]
         )
 
