@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from typing import Iterable, Literal, Union
 import numpy as np
 import pandas as pd
@@ -12,6 +13,11 @@ from state_management import add_cards, generate_successor_states, place_bet
 
 
 log_file = open("stats/MaxEVPlayer.log", "a")
+
+time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+persistent_observer = Observer(
+    f"hidden_state_model/data/maxevplayer-{time_str}.parquet"
+)
 
 
 def debug_print(*args, **kwargs):
@@ -639,6 +645,14 @@ class MaxEVPlayer(Player):
         )
         # Re-enable fitting
         self.predictor.disable_fitting = False
+        persistent_observer.observe_action(
+            state,
+            self.name,
+            MaxEVPlayer.__name__,
+            bet,
+            [n for n in self.player_names if n != self.name],
+            self.hand,
+        )
         return bet
 
 

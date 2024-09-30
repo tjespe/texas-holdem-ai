@@ -8,7 +8,7 @@ from hidden_state_model.observer import Observer
 
 
 time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-observer = Observer(f"hidden_state_model/data/{time_str}.parquet")
+observer = Observer(f"hidden_state_model/data/human-{time_str}.parquet")
 
 
 class HumanPlayer(Player):
