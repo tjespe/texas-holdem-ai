@@ -8,7 +8,7 @@ from PlayerABC import Player
 from hidden_state_model.helpers import get_observer_with_all_data
 from hidden_state_model.observer import Observer
 from helpers import combine_probabilities
-from state_management import add_cards, place_bet
+from state_management import add_cards, generate_successor_states, place_bet
 
 
 log_file = open("stats/MaxEVPlayer.log", "a")
@@ -207,12 +207,15 @@ class MaxEVPlayer(Player):
         df_row = self.observer.get_processed_df_row(from_state.id).drop(
             ["excess_rank", "p", "relative_ev"]
         )
-        self.player_probs[player_i] = self.predict("prob", df_row, player_name)
-        debug_print(
-            f"Predicted prob for {self.player_names[player_i]}:",
-            self.player_probs[player_i],
-        )
-        self.predicted_ranks[player_i] = self.predict("rank", df_row, player_name)
+        if len(generate_successor_states(from_state)) > 1:
+            self.player_probs[player_i] = self.predict("prob", df_row, player_name)
+            debug_print(
+                f"Predicted prob for {self.player_names[player_i]}:",
+                self.player_probs[player_i],
+            )
+            self.predicted_ranks[player_i] = self.predict("rank", df_row, player_name)
+        else:
+            debug_print("There was only one possible action, so not updating beliefs")
 
     def showdown(self, state: State, all_hands: list[Union[tuple[int, int], None]]):
         for i, hand in enumerate(all_hands):
@@ -457,10 +460,15 @@ class MaxEVPlayer(Player):
         for bet in mapped_actions:
             observer.retrofill_action(state, bet)
             updated_df_row = observer.get_processed_df_row(state.id)
-            player_probs[player_i] = self.predict("prob", updated_df_row, player_name)
-            predicted_ranks[player_i] = self.predict(
-                "rank", updated_df_row, player_name
-            )
+            # If the player had a choice and chose this action, we need to update the
+            # probabilities and ranks for the player.
+            if len(mapped_actions) > 1:
+                player_probs[player_i] = self.predict(
+                    "prob", updated_df_row, player_name
+                )
+                predicted_ranks[player_i] = self.predict(
+                    "rank", updated_df_row, player_name
+                )
             results.append(
                 self.simulate_ev(
                     place_bet(state, bet),

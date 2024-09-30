@@ -42,6 +42,7 @@ class Processor:
         "player_name": str,
         "opponent_name": str,
         "n_players": int,
+        "is_all_in": bool,
     }
 
     def _process_state(self, row: pd.Series, parent_id: str) -> dict:
@@ -75,6 +76,11 @@ class Processor:
                 else ""
             ),
             "n_players": sum(state.player_is_active),
+            "is_all_in": any(
+                pile == 0
+                for i, pile in enumerate(state.player_piles)
+                if state.player_is_active[i]
+            ),
         }
         if parent_result:
             prev_stage = parent_result["stage"]

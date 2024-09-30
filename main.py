@@ -18,8 +18,8 @@ from players.MaxEVPlayer import MaxEVPlayer
 from players.HumanMocker import HumanMocker
 
 players = [
-    HumanPlayer(name=login()),
-    # AllInPlayer(name="Aladdin"),
+    # HumanPlayer(name=login()),
+    AllInPlayer(name="Aladdin"),
     # AwareRationalPlayer(name="Larnes"),
     # AwareRationalPlayer(name="William", randomness=0.2, aggression_sensitivity=0.5),
     # AwareRationalPlayer(
