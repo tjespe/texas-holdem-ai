@@ -33,10 +33,10 @@ class ProbModel(HiddenStateModel):
                     "regressor",
                     XGBRegressor(
                         colsample_bytree=0.6,
-                        learning_rate=0.1,
-                        max_depth=3,
+                        learning_rate=0.01,
+                        max_depth=7,
                         n_estimators=500,
-                        subsample=1.0,
+                        subsample=0.6,
                     ),
                 ),
             ]
@@ -53,7 +53,17 @@ class ProbModel(HiddenStateModel):
         op_name: str = None,
         rel_weight_op_match=1,
     ):
-        X = train_df.drop(["excess_rank", "game_id", "p", "relative_ev"], axis=1)
+        X = train_df.drop(
+            [
+                "excess_rank",
+                "game_id",
+                "p",
+                "relative_ev",
+                "hand_group",
+                "hand_suited",
+            ],
+            axis=1,
+        )
         y = train_df["p"]
         sample_weights = get_sample_weights(
             train_df, player_name, rel_weight_player_match, op_name, rel_weight_op_match

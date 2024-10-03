@@ -12,7 +12,13 @@ from hidden_state_model.interface import HiddenStateModel
 
 class ActionModel(HiddenStateModel):
     def initalize_model(self):
-        categorical_cols = ["excess_rank", "stage", "player_name", "opponent_name"]
+        categorical_cols = [
+            "stage",
+            "player_name",
+            "opponent_name",
+            "hand_group",
+            "hand_suited",
+        ]
 
         preprocessor = ColumnTransformer(
             transformers=[
@@ -46,7 +52,7 @@ class ActionModel(HiddenStateModel):
         )
 
     def get_train_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        return df[df["p"].notnull()]
+        return df[df["p"].notnull() & df["action"].notnull()]
 
     def _fit(
         self,
@@ -56,7 +62,15 @@ class ActionModel(HiddenStateModel):
         op_name: str = None,
         rel_weight_op_match=1,
     ):
-        X = train_df.drop(["game_id", "action", "amount"], axis=1)
+        X = train_df.drop(
+            [
+                "game_id",
+                "action",
+                "amount",
+                *(c for c in train_df.columns if c.startswith("n_")),
+            ],
+            axis=1,
+        )
         y = train_df["action"]
         y_encoded = self.label_encoder.fit_transform(y)
         sample_weights = get_sample_weights(

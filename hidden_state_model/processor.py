@@ -3,7 +3,7 @@ import uuid
 import pandas as pd
 
 from State import State
-from cpp_poker.cpp_poker import CardCollection
+from cpp_poker.cpp_poker import CardCollection, Hand, HandGroup, Card
 
 feature_skeleton = {
     f"{action}_{stage}": 0
@@ -14,6 +14,8 @@ feature_skeleton = {
 feature_skeleton = {
     **feature_skeleton,
     **{f"opponent_" + key: 0 for key in feature_skeleton.keys()},
+    **{f"n_{rank}_on_table": 0 for rank in Card.VALUES},
+    **{f"n_{suit}_on_table": 0 for suit in Card.SUITS},
 }
 
 
@@ -31,7 +33,7 @@ class Processor:
         self.processed_df = None
 
     dtypes = {
-        **({key: int for key in feature_skeleton}),
+        **({key: type(value) for key, value in feature_skeleton.items()}),
         "game_id": str,
         "action": str,
         "amount": "Int64",
@@ -40,9 +42,12 @@ class Processor:
         "relative_ev": "float64",
         "stage": str,
         "player_name": str,
+        "human": bool,
         "opponent_name": str,
         "n_players": int,
         "is_all_in": bool,
+        "hand_group": "Int64",
+        "hand_suited": "Bool",
     }
 
     def _process_state(self, row: pd.Series, parent_id: str) -> dict:
@@ -59,6 +64,16 @@ class Processor:
         )
         table_rank = CardCollection(list(state.public_cards)).rank_hand().get_rank()
         parent_result = self.processed.get(parent_id)
+        hand_index = row["hand_index"]
+        if not pd.isna(hand_index):
+            hand_index = int(hand_index)
+            hand = Hand(hand_index)
+            hand_group = HandGroup(hand.get_cards())
+            hand_group_index = hand_group.to_unsuited_index()
+            hand_suited = hand_group.is_suited()
+        else:
+            hand_group_index = None
+            hand_suited = None
 
         result = {
             "game_id": str(uuid.uuid4()),
@@ -70,6 +85,7 @@ class Processor:
             "relative_ev": row["relative_ev"],
             "stage": state.stage,
             "player_name": row["player_name"],
+            "human": row["player_type"] == "HumanPlayer",
             "opponent_name": (
                 (",".join(sorted(ops)))
                 if isinstance(ops := row["opponent_names"], Iterable)
@@ -81,7 +97,13 @@ class Processor:
                 for i, pile in enumerate(state.player_piles)
                 if state.player_is_active[i]
             ),
+            "hand_group": hand_group_index,
+            "hand_suited": hand_suited,
         }
+        for card_index in state.public_cards:
+            card = Card(card_index)
+            result[f"n_{Card.SUITS[card.suit]}_on_table"] += 1
+            result[f"n_{Card.VALUES[card.rank]}_on_table"] += 1
         if parent_result:
             prev_stage = parent_result["stage"]
             prev_action = parent_result["action"]
@@ -176,11 +198,7 @@ class Processor:
                 if not has_rank_info and not has_action_info:
                     continue
             parent_id = row["prev_entry"]
-            if (
-                parent_id
-                and parent_id not in self.processed
-                and parent_id in self.df.index
-            ):
+            if parent_id and parent_id in queue:
                 queue.append(state_id)
                 continue
             if result := self._process_state(row, parent_id):

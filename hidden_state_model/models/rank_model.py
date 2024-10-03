@@ -1,8 +1,8 @@
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
+from xgboost import XGBClassifier
 
 from hidden_state_model.interface import HiddenStateModel
 from hidden_state_model.weigthing import get_sample_weights
@@ -11,7 +11,14 @@ from hidden_state_model.weigthing import get_sample_weights
 class RankModel(HiddenStateModel):
     def initalize_model(self):
         # Identify categorical columns (excluding 'game_id')
-        categorical_cols = ["action", "stage", "player_name", "opponent_name"]
+        categorical_cols = [
+            "action",
+            "stage",
+            "player_name",
+            "opponent_name",
+            "hand_group",
+            "hand_suited",
+        ]
 
         # Preprocessing pipeline: OneHotEncoding for categorical and scaling for numerical
         preprocessor = ColumnTransformer(
@@ -30,8 +37,12 @@ class RankModel(HiddenStateModel):
                 ("preprocess", preprocessor),
                 (
                     "classifier",
-                    LogisticRegression(
-                        multi_class="multinomial", solver="lbfgs", max_iter=10_000
+                    XGBClassifier(
+                        colsample_bytree=0.6,
+                        learning_rate=0.01,
+                        max_depth=7,
+                        n_estimators=500,
+                        subsample=0.6,
                     ),
                 ),
             ]

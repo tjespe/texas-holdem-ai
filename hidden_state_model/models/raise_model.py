@@ -11,7 +11,14 @@ from hidden_state_model.weigthing import get_sample_weights
 class RaiseModel(HiddenStateModel):
     def initalize_model(self):
         # Identify categorical columns (excluding 'game_id')
-        categorical_cols = ["excess_rank", "stage", "player_name", "opponent_name"]
+        categorical_cols = [
+            "excess_rank",
+            "stage",
+            "player_name",
+            "opponent_name",
+            "hand_group",
+            "hand_suited",
+        ]
 
         # Preprocessing pipeline: OneHotEncoding for categorical and scaling for numerical
         preprocessor = ColumnTransformer(
@@ -44,7 +51,15 @@ class RaiseModel(HiddenStateModel):
         op_name: str = None,
         rel_weight_op_match=1,
     ):
-        X = train_df.drop(["game_id", "action", "amount"], axis=1)
+        X = train_df.drop(
+            [
+                "game_id",
+                "action",
+                "amount",
+                *(c for c in train_df.columns if c.startswith("n_")),
+            ],
+            axis=1,
+        )
         y = train_df["amount"]
         sample_weights = get_sample_weights(
             train_df, player_name, rel_weight_player_match, op_name, rel_weight_op_match

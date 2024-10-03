@@ -7,6 +7,7 @@
 #include "TerminalColors.hpp"
 #include "Hand.hpp"
 #include "CheatSheet.hpp"
+#include "HandGroup.hpp" // Add this line to include the HandGroup class
 
 namespace py = pybind11;
 
@@ -52,7 +53,9 @@ PYBIND11_MODULE(cpp_poker, m)
         .def("__gt__", [](const Card &a, const Card &b)
              { return a > b; })
         .def_readonly("rank", &Card::rank)
-        .def_readonly("suit", &Card::suit);
+        .def_readonly("suit", &Card::suit)
+        .def_readonly_static("SUITS", &Card::SUITS)
+        .def_readonly_static("VALUES", &Card::VALUES);
 
     py::class_<CardCollection::Iterator>(m, "Iterator")
         .def("__iter__", [](CardCollection::Iterator &it) -> CardCollection::Iterator &
@@ -176,6 +179,29 @@ PYBIND11_MODULE(cpp_poker, m)
                     ":param table: A list of integers representing the table cards\n"
                     ":param num_players: An integer representing the number of players\n"
                     ":return: A list of floats representing the winning probabilities");
+
+    py::class_<HandGroup>(m, "HandGroup")
+        // Constructors
+        .def(py::init<>())
+        .def(py::init<int>(), py::arg("index"))
+        .def(py::init<CardCollection>(), py::arg("cards"))
+        .def(py::init<int, int, bool>(), py::arg("high_rank"), py::arg("low_rank"), py::arg("suited"))
+        .def(py::init<Card, Card, bool>(), py::arg("card1"), py::arg("card2"), py::arg("suited"))
+
+        // Methods
+        .def("to_index", &HandGroup::to_index)
+        .def("to_unsuited_index", &HandGroup::to_unsuited_index)
+        .def("is_suited", &HandGroup::is_suited)
+        .def("str", &HandGroup::str)
+
+        // Operators
+        .def("__eq__", &HandGroup::operator==)
+        .def("__str__", &HandGroup::str)
+        .def("__repr__", &HandGroup::str)
+
+        // Static members
+        .def_readonly_static("UNSUITED_COMBINATIONS", &HandGroup::UNSUITED_COMBINATIONS)
+        .def_readonly_static("ALL_COMBINATIONS", &HandGroup::ALL_COMBINATIONS);
 
     py::class_<Oracle>(m, "Oracle")
         .def_static("find_winner", &Oracle::find_winner)
