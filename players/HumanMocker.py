@@ -1,9 +1,15 @@
+from datetime import datetime
 import numpy as np
 from PlayerABC import Player
 from State import State
 from hidden_state_model.observer import Observer
 from hidden_state_model.helpers import get_observer_with_all_data
 from cpp_poker.cpp_poker import Oracle
+
+time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+persistent_observer = Observer(
+    f"hidden_state_model/data/humanmocker-{time_str}.parquet"
+)
 
 
 class HumanMocker(Player):
@@ -19,6 +25,11 @@ class HumanMocker(Player):
 
         # Initialize an empty observer to use for processing states
         self.observer = Observer()
+
+        self.opponent_names = []
+
+    def get_to_know_each_other(self, players: list[Player]):
+        self.opponent_names = [p.name for p in players if p is not self]
 
     def _play(self, state: State) -> int:
         state_row = self.observer.get_processed_df_row(state.id)
@@ -86,4 +97,12 @@ class HumanMocker(Player):
         )
         amount = self._play(state)
         self.observer.retrofill_action(state, amount)
+        persistent_observer.observe_action(
+            state,
+            self.name,
+            HumanMocker.__name__,
+            amount,
+            self.opponent_names,
+            self.hand,
+        )
         return amount
