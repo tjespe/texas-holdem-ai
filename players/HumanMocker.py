@@ -92,7 +92,7 @@ class HumanMocker(Player):
             state,
             self.mock,
             HumanMocker.__name__,
-            None,
+            self.opponent_names,
             self.hand,
         )
         amount = self._play(state)
