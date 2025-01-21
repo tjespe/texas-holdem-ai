@@ -401,7 +401,7 @@ class MaxEVPlayer(Player):
         if state.stage == "river":
             prob_threshold = 0
         if state.stage == "preflop" or state.stage == "flop":
-            prob_threshold = 0.3
+            prob_threshold = 0.4
 
         # Ensure we get at least 1 non-fold action, because otherwise, we will simulate
         # a fold with 100% probability and no variance, making the path unrealistically good.
