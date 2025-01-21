@@ -2,14 +2,23 @@ import os
 import inquirer
 
 
-def login():
+def get_users_with_passwords():
     lines = (
         [l.strip() for l in open("./users.txt", "r").readlines()]
         if os.path.exists("./users.txt")
         else []
     )
-    users_with_passwords = [l.split(",") for l in lines if l]
-    usernames = [username for username, pwd in users_with_passwords]
+    return dict([l.split(",") for l in lines if l])
+
+
+def authenticate_user(username, password):
+    users_with_passwords = get_users_with_passwords()
+    return users_with_passwords.get(username) == password
+
+
+def cli_login():
+    users_with_passwords = get_users_with_passwords()
+    usernames = list(users_with_passwords.keys())
     options = usernames + ["Create new user"]
     questions = [
         inquirer.List(
@@ -35,14 +44,13 @@ def login():
         uname = answers["username"]
         if uname in usernames:
             print("User already exists")
-            return login()
+            return cli_login()
         with open("users.txt", "a") as f:
             pwd = answers["password"]
             f.write(f"\n{uname},{pwd}")
         return uname
     pwd = inquirer.password("Enter your password")
-    pwd_map = dict(users_with_passwords)
-    if pwd_map.get(answer) == pwd:
+    if authenticate_user(answer, pwd):
         return answer
     print("Incorrect password")
-    return login()
+    return cli_login()

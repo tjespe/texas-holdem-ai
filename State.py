@@ -231,3 +231,23 @@ Table:
 {player_status_string}{TerminalColors.DEFAULT}
 * = Current player
 """
+
+    def to_dict(self) -> dict:
+        """
+        Return a dictionary representation of this State suitable for JSON serialization.
+        """
+        return {
+            "public_cards": list(self.public_cards),
+            "player_piles": list(self.player_piles),
+            "current_player_i": self.current_player_i,
+            "bet_in_stage": list(self.bet_in_stage),
+            "bet_in_game": list(self.bet_in_game),
+            "player_has_played": list(self.player_has_played),
+            "player_is_folded": list(self.player_is_folded),
+            "big_blind": self.big_blind,
+            "pot": self.pot,
+            "stage": self.stage,
+            "sub_stage": self.sub_stage,
+            "is_terminal": self.is_terminal,
+            "all_players_are_done": self.all_players_are_done,
+        }

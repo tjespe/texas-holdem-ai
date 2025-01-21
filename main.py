@@ -1,6 +1,6 @@
 import inquirer
 from GameManager import GameManager
-from login import login
+from login import cli_login
 from players.AllInPlayer import AllInPlayer
 from players.AwareRationalPlayerWithRandomStyle import (
     AwareRationalPlayerWithRandomStyle,
@@ -18,7 +18,7 @@ from players.MaxEVPlayer import MaxEVPlayer
 from players.HumanMocker import HumanMocker
 
 players = [
-    HumanPlayer(name=login()),
+    HumanPlayer(name=cli_login()),
     # AllInPlayer(name="Aladdin"),
     # AwareRationalPlayer(name="Larnes"),
     # AwareRationalPlayer(name="William", randomness=0.2, aggression_sensitivity=0.5),
