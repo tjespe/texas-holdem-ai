@@ -2,6 +2,7 @@ import os
 from Deck import Deck
 from PlayerABC import Player
 from State import State
+from players.HumanPlayer import HumanPlayer
 from state_management import (
     BettingRuleViolation,
     add_cards,
@@ -82,7 +83,8 @@ class GameManager:
                         "\n@@@@@@@@@@@@@@@@@@@@@@@@\nBetting rules violation:\n@@@@@@@@@@@@@@@@@@@@@@@@\n",
                         e,
                     )
-                    input("Press enter to continue...")
+                    if isinstance(player, HumanPlayer):
+                        input("Press enter to continue...")
         if print_state:
             os.system("clear")
             print(self.state.get_cli_repr(self.player_names))

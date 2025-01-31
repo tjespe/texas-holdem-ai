@@ -6,7 +6,7 @@ from typing import Tuple
 import numpy as np
 from tabulate import tabulate
 
-from cpp_poker.cpp_poker import TerminalColors, Card
+from cpp_poker.cpp_poker import TerminalColors, Card, CardCollection
 
 
 class State:
@@ -198,9 +198,13 @@ class State:
     def small_blind(self):
         return self.big_blind // 2
 
-    def get_cli_repr(self, player_names: Tuple[str] = None):
+    def get_cli_repr(self, player_names: Tuple[str] = None, short=False):
         cards = (
-            Card.get_cli_repr_for_cards(self.public_cards)
+            (
+                CardCollection(self.public_cards).str()
+                if short
+                else Card.get_cli_repr_for_cards(self.public_cards)
+            )
             if self.public_cards
             else "No cards"
         )
