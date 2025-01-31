@@ -1,6 +1,7 @@
 import os
+from time import sleep
 
-from groq import Groq
+from groq import Groq, InternalServerError
 from datetime import datetime
 from cpp_poker.cpp_poker import Card, Oracle, CardCollection, CheatSheet, TerminalColors
 from PlayerABC import Player
@@ -75,19 +76,23 @@ class LLMPlayer(Player):
             + f"Your options now are:\n{', '.join(options)}"
         )
         log("Prompt:\n" + scenario + "\n\n")
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": f"Your name is {self.name} and you are playing Texas Hold-Em. When prompted with a game history and state, respond with two lines of text, on the first line, only include a single integer representing your bet. On the second line, provide a reasoning.",
-                },
-                {
-                    "role": "user",
-                    "content": scenario,
-                },
-            ],
-            model="llama-3.3-70b-versatile",
-        )
+        try:
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": f"Your name is {self.name} and you are playing Texas Hold-Em. When prompted with a game history and state, respond with two lines of text, on the first line, only include a single integer representing your bet. On the second line, provide a reasoning.",
+                    },
+                    {
+                        "role": "user",
+                        "content": scenario,
+                    },
+                ],
+                model="llama-3.3-70b-versatile",
+            )
+        except InternalServerError:
+            sleep(1)
+            return self.prompt(state)
 
         response = chat_completion.choices[0].message.content
         bet = response.split("\n")[0]
