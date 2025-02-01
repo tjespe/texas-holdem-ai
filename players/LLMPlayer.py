@@ -31,13 +31,20 @@ class LLMPlayer(Player):
     opponent_names: list[str]
     player_names: list[str]
 
-    def __init__(self, name="Lemuel", allow_hints=False):
+    def __init__(
+        self,
+        name="Lemuel",
+        allow_hints=False,
+        llm_model="llama-3.3-70b-versatile",
+        # llm_model="gemma2-9b-it",
+    ):
         super().__init__()
         self.name = name
         self.allow_hints = allow_hints
         self.opponent_names = []
         self.player_names = []
         self.betting_history = []
+        self.llm_model = llm_model
 
     def get_to_know_each_other(self, players: list[Player]):
         self.opponent_names = [p.name for p in players if p != self]
@@ -59,38 +66,60 @@ class LLMPlayer(Player):
             and max_bet > call_bet
             and min_raise <= max_bet
         )
+        if not can_raise and not call_bet:
+            # If the player can't raise and the call bet is 0, they can only check, and there
+            # is no need to prompt the LLM.
+            return 0
+        ranges = []
         options = []
         if call_bet:
-            options.append(f"Call (respond with {call_bet})")
-            options.append("Fold (respond with 0)")
+            options.append(f"- Call (respond with {call_bet})")
+            ranges.append(call_bet)
+            options.append("- Fold (respond with 0)")
+            ranges.append(0)
         else:
-            options.append("Check (respond with 0)")
+            options.append("- Check (respond with 0)")
+            ranges.append(0)
         if can_raise:
             options.append(
-                f"Raise (respond with a number in the range {min_raise}-{max_bet} representing how much to increase your bet, not what you raise to)"
+                f"- Raise (respond with a number in the range {min_raise}-{max_bet} representing how much to increase your bet, not what you raise to. You must raise by at least the big blind so the minimum raise is {min_raise})"
             )
+            ranges.append((min_raise, max_bet))
         scenario = (
-            "\n".join(self.betting_history)
+            "Betting history:\n"
+            + (
+                "\n".join(self.betting_history)
+                if self.betting_history
+                else "No players have bet yet."
+            )
             + f"\nYour cards are {CardCollection(self.hand).str()}.\n"
             + state.get_cli_repr(self.player_names, short=True)
-            + f"Your options now are:\n{', '.join(options)}"
+            + "Your options now are:\n"
+            + "\n".join(options)
+            + "\nTo be super clear, you must write a number within one of these ranges:\n"
+            + "\n".join(f"- {range}" for range in ranges)
         )
         log("Prompt:\n" + scenario + "\n\n")
+        system_prompt = f"Your name is {self.name} and you are playing Texas Hold-Em. When prompted with a game history and state, respond with two lines of text, on the first line, only include a single integer representing your bet. On the second line, provide a reasoning."
+        if state.stage == "preflop":
+            # It has a tendency to be overly aggressive on the preflop
+            system_prompt += "Don't be overly aggressive."
         try:
             chat_completion = client.chat.completions.create(
                 messages=[
                     {
                         "role": "system",
-                        "content": f"Your name is {self.name} and you are playing Texas Hold-Em. When prompted with a game history and state, respond with two lines of text, on the first line, only include a single integer representing your bet. On the second line, provide a reasoning.",
+                        "content": system_prompt,
                     },
                     {
                         "role": "user",
                         "content": scenario,
                     },
                 ],
-                model="llama-3.3-70b-versatile",
+                model=self.llm_model,
             )
         except InternalServerError:
+            print("Internal server error, retrying in 1s...")
             sleep(1)
             return self.prompt(state)
 

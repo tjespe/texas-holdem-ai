@@ -6,6 +6,7 @@ from players.AwareRationalPlayerWithRandomStyle import (
     AwareRationalPlayerWithRandomStyle,
 )
 from players.HumanPlayer import HumanPlayer
+from players.MaxEVandLLMPlayer import MaxEVandLLMPlayer
 from players.MixedPlayer import MixedPlayer
 from players.RationalPlayer import RationalPlayer
 from players.AwareRationalPlayer import AwareRationalPlayer
@@ -19,7 +20,7 @@ from players.HumanMocker import HumanMocker
 from players.LLMPlayer import LLMPlayer
 
 players = [
-    # HumanPlayer(name=cli_login()),
+    HumanPlayer(name=cli_login()),
     # AllInPlayer(name="Aladdin"),
     # AwareRationalPlayer(name="Larnes"),
     # AwareRationalPlayer(name="William", randomness=0.2, aggression_sensitivity=0.5),
@@ -33,8 +34,8 @@ players = [
     # CheatingPlayer(),
     # ProbRegPlayer(),
     # ProbSimPlayer(),
-    MaxEVPlayer(),
-    LLMPlayer(),
+    MaxEVandLLMPlayer(),
+    # LLMPlayer(),
     # MaxEVPlayer(name="Adrian"),
     # HumanMocker(mock="Arin"),
     # HumanMocker(mock="Arin Bavian"),
@@ -43,5 +44,6 @@ players = [
 game_manager = GameManager(players, big_blind=4)
 game_manager.play_round(
     print_state=True,
-    sleep=0.5 if any(isinstance(p, HumanPlayer) for p in players) else 0,
+    # sleep=0.5 if any(isinstance(p, HumanPlayer) for p in players) else 0,
+    sleep=0.5,
 )
