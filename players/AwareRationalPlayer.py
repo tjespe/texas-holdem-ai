@@ -52,7 +52,7 @@ class AwareRationalPlayer(Player):
         if self.actions_matrix is None:
             self.actions_matrix = np.zeros((1, n_players))
 
-    def round_over(self, state: State):
+    def round_over(self, state: State, prev_state: State):
         self.raises_per_player = None
         self.implied_winning_probs = None
         self._ensure_vars_initialized(state.n_players)
@@ -130,7 +130,9 @@ class AwareRationalPlayer(Player):
         debug_print(f"Bet: {bet}, pot: {state.pot}, coef: {coef}")
         return min(1.5, 0.5 + coef)
 
-    def observe_bet(self, from_state: State, bet: int):
+    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+        if was_blind:
+            return
         self._ensure_vars_initialized(from_state.n_players)
         player_i = from_state.current_player_i
         call_bet = max(from_state.bet_in_stage) - from_state.bet_in_stage[player_i]

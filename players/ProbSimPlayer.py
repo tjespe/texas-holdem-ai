@@ -89,7 +89,7 @@ class ProbSimPlayer(Player):
         self.player_probs = np.ones(len(self.player_names)) / len(self.player_names)
         self.predicted_ranks = np.zeros(len(self.player_names))
 
-    def round_over(self, state: State):
+    def round_over(self, state: State, prev_state: State):
         self.called_bluff = False
         self.is_bluffing = False
         self.player_probs = np.array(state.player_is_active) / np.sum(
@@ -97,7 +97,9 @@ class ProbSimPlayer(Player):
         )
         self.predicted_ranks = np.zeros(len(state.player_is_active))
 
-    def observe_bet(self, from_state: State, bet: int):
+    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+        if was_blind:
+            return
         player_i = from_state.current_player_i
         if player_i == self.index:
             return

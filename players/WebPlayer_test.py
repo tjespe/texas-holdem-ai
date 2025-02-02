@@ -59,7 +59,7 @@ class TestWebPlayer(unittest.TestCase):
 
     def test_round_over(self):
         mock_state = MockState("Final state")
-        self.player.round_over(mock_state)
+        self.player.round_over(mock_state, mock_state)
 
         msg = self.player._outbox.get(timeout=1)
         self.assertEqual(msg["type"], "ROUND_OVER")

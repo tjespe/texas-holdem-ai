@@ -20,7 +20,9 @@ class MaxEVandLLMPlayer(Player):
         super().__init__()
         self.name = name
         self.max_ev_player = MaxEVPlayer(name)
-        self.llm_player = LLMPlayer(name)
+        self.llm_player = LLMPlayer(
+            name, behavior_prompt="Don't be too agressive on the preflop. "
+        )
 
     def _update_hands(self):
         self.max_ev_player.hand = self.hand
@@ -32,13 +34,13 @@ class MaxEVandLLMPlayer(Player):
         self.max_ev_player.get_to_know_each_other(players)
         self.llm_player.get_to_know_each_other(players)
 
-    def observe_bet(self, from_state: State, bet: int):
-        self.max_ev_player.observe_bet(from_state, bet)
-        self.llm_player.observe_bet(from_state, bet)
+    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+        self.max_ev_player.observe_bet(from_state, bet, was_blind)
+        self.llm_player.observe_bet(from_state, bet, was_blind)
 
-    def round_over(self, state):
-        self.max_ev_player.round_over(state)
-        self.llm_player.round_over(state)
+    def round_over(self, state, prev_state):
+        self.max_ev_player.round_over(state, prev_state)
+        self.llm_player.round_over(state, prev_state)
 
     def showdown(self, state, all_hands):
         self.max_ev_player.showdown(state, all_hands)
@@ -46,7 +48,7 @@ class MaxEVandLLMPlayer(Player):
 
     def play(self, state) -> int:
         self._update_hands()
-        if len(state.public_cards) < 4:
+        if state.stage == "preflop":
             try:
                 return self.llm_player.play(state)
             except RateLimitError:

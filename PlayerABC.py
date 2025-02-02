@@ -18,7 +18,7 @@ class Player(ABC):
         0 is treated as check/call/fold depending on the context.
         """
 
-    def observe_bet(self, from_state: State, bet: int):
+    def observe_bet(self, from_state: State, bet: int, was_blind=False):
         """
         This method allows the player to observe what other players are doing.
         Every time the state changes, the game manager will call this method
@@ -27,7 +27,7 @@ class Player(ABC):
         # By default, do nothing
         pass
 
-    def round_over(self, state: State):
+    def round_over(self, new_state: State, prev_state: State):
         """
         This method is called when the round is over, in case the player wants
         to do something, e.g. clean up state variables.

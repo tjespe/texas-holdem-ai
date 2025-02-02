@@ -50,7 +50,7 @@ class WebPlayer(Player):
         """
         self._bet_queue.put(bet)
 
-    def observe_bet(self, from_state: State, bet: int):
+    def observe_bet(self, from_state: State, bet: int, was_blind=False):
         """
         Let the client know that someone has bet.
         """
@@ -59,10 +59,11 @@ class WebPlayer(Player):
             "player": self.name,
             "bet": bet,
             "state": from_state.to_dict(),
+            "was_blind": was_blind,
         }
         self._outbox.put(message)
 
-    def round_over(self, state: State):
+    def round_over(self, state: State, prev_state: State):
         message = {"type": "ROUND_OVER", "state": state.to_dict()}
         self._outbox.put(message)
 

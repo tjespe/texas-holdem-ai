@@ -59,10 +59,10 @@ class AwareRationalPlayerWithRandomStyle(Player):
         self.player.index = self.index
         return self.player.play(state)
 
-    def observe_bet(self, from_state: State, bet: int):
-        return self.player.observe_bet(from_state, bet)
+    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+        return self.player.observe_bet(from_state, bet, was_blind=was_blind)
 
-    def round_over(self, new_state: State):
+    def round_over(self, new_state: State, prev_state: State):
         new_rel_pile = new_state.player_piles[self.index] / new_state.big_blind
         rel_pile_change = new_rel_pile - self.rel_pile_at_round_start
         if rel_pile_change:
@@ -74,4 +74,4 @@ class AwareRationalPlayerWithRandomStyle(Player):
             )
         self.rel_pile_at_round_start = new_rel_pile
         self.rounds_played_since_switch += 1
-        return self.player.round_over(new_state)
+        return self.player.round_over(new_state, prev_state)

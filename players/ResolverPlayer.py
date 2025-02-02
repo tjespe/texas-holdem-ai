@@ -4,7 +4,12 @@ from State import State
 from StateNode import StateNode
 from cpp_poker.cpp_poker import Hand, CardCollection
 from PlayerABC import Player
-from resolver import DidNotConvergeError, bayesian_update, generate_uniform_ranges, resolve
+from resolver import (
+    DidNotConvergeError,
+    bayesian_update,
+    generate_uniform_ranges,
+    resolve,
+)
 from datetime import datetime
 
 
@@ -55,7 +60,9 @@ class ResolverPlayer(Player):
                     break
         return self._hand_index
 
-    def observe_bet(self, from_state: State, bet: int):
+    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+        if was_blind:
+            return
         if from_state.action_required:
             P = from_state.current_player_i
             if P == self.index:
@@ -72,20 +79,22 @@ class ResolverPlayer(Player):
                 if self.ranges is None:
                     self.ranges = generate_uniform_ranges(from_state)
                 try:
-                    _action, _child_state, _updated_ranges, strats_per_hand, _root = resolve(
-                        from_state,
-                        self.ranges,
-                        end_depth=self.max_depth,
-                        end_stage=None,
-                        max_successors_at_action_nodes=self.max_successors_at_action_nodes,
-                        max_successors_at_chance_nodes=self.max_successors_at_chance_nodes,
-                        max_simulations=self.simulations,
-                        hand_index=self.hand_index,
-                        must_include_action=bet,
-                        sliding_window=5, # Make it easier to converge
-                        # If it does not converge, we don't want to update the ranges,
-                        # because we don't know what the opponent's strategy should have been.
-                        raise_exception_on_non_convergence=True
+                    _action, _child_state, _updated_ranges, strats_per_hand, _root = (
+                        resolve(
+                            from_state,
+                            self.ranges,
+                            end_depth=self.max_depth,
+                            end_stage=None,
+                            max_successors_at_action_nodes=self.max_successors_at_action_nodes,
+                            max_successors_at_chance_nodes=self.max_successors_at_chance_nodes,
+                            max_simulations=self.simulations,
+                            hand_index=self.hand_index,
+                            must_include_action=bet,
+                            sliding_window=5,  # Make it easier to converge
+                            # If it does not converge, we don't want to update the ranges,
+                            # because we don't know what the opponent's strategy should have been.
+                            raise_exception_on_non_convergence=True,
+                        )
                     )
                 except DidNotConvergeError:
                     print("Did not converge")
@@ -99,7 +108,7 @@ class ResolverPlayer(Player):
                     action_i=0,
                 )
 
-    def round_over(self, state: State):
+    def round_over(self, state: State, prev_state: State):
         self.ranges = None
 
     def play(self, state) -> int:

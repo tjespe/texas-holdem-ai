@@ -70,7 +70,10 @@ class GameManager:
                 self.state = skip_current_player(self.state)
                 continue
             if blind_bet := get_blind_bet(self.state):
-                self.state = place_bet(self.state, blind_bet, is_blind=True)
+                from_state = self.state
+                self.state = place_bet(from_state, blind_bet, is_blind=True)
+                for player in self.players:
+                    player.observe_bet(from_state, blind_bet, was_blind=True)
             else:
                 bet = player.play(self.state)
                 try:
@@ -99,10 +102,11 @@ class GameManager:
                         for i, player in enumerate(self.players)
                     ],
                 )
-        self.state = end_round(self.state, self.players, print_result=True)
+        prev_state = self.state
+        self.state = end_round(prev_state, self.players, print_result=True)
         self.round += 1
         for player in self.players:
-            player.round_over(self.state)
+            player.round_over(self.state, prev_state)
         if sleep:
             input("Press enter to continue...")
         bust_players = set()
