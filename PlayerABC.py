@@ -7,9 +7,9 @@ from State import State
 
 
 class Player(ABC):
-    hand: Union[tuple[int, int], None]
+    hand: Union[tuple[int, int], None] = None
+    index: Union[int, None] = None
     name: str
-    index: int
 
     @abstractmethod
     def play(self, state: State) -> int:

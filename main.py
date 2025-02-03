@@ -21,7 +21,7 @@ from players.HumanMocker import HumanMocker
 from players.LLMPlayer import LLMPlayer
 
 players = [
-    # HumanPlayer(name=cli_login()),
+    HumanPlayer(name=cli_login()),
     # AllInPlayer(name="Aladdin"),
     # AwareRationalPlayer(name="Larnes"),
     # AwareRationalPlayer(name="William", randomness=0.2, aggression_sensitivity=0.5),
@@ -37,7 +37,7 @@ players = [
     # ProbSimPlayer(),
     # MaxEVandLLMPlayer(),
     MaxEVandHumanMocker(),
-    LLMPlayer(),
+    # LLMPlayer(),
     # MaxEVPlayer(name="Adrian"),
     # HumanMocker(mock="Arin"),
     # HumanMocker(mock="Arin Bavian"),

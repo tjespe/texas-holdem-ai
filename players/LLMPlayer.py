@@ -64,7 +64,7 @@ class LLMPlayer(Player):
         self.behavior_prompt = behavior_prompt
 
     def get_to_know_each_other(self, players: list[Player]):
-        self.opponent_names = [p.name for p in players if p != self]
+        self.opponent_names = [p.name for i, p in enumerate(players) if i != self.index]
         self.players = players
 
     @property
@@ -84,9 +84,9 @@ class LLMPlayer(Player):
         return (
             self._write_list(
                 [
-                    (f"{player.name} has" if player.name != self.name else "you have")
+                    (f"{player.name} has" if i != self.index else "you have")
                     + f" bet {bet}"
-                    for player, bet in zip(self.players, bets)
+                    for i, (player, bet) in enumerate(zip(self.players, bets))
                 ]
             )
             + f" in the {state.stage} stage.\n"
@@ -104,9 +104,11 @@ class LLMPlayer(Player):
             + self._capitalize(
                 self._write_list(
                     [
-                        (f"{player.name}'s" if player.name != self.name else "your")
+                        (f"{player.name}'s" if i != self.index else "your")
                         + f" stack is {stack}"
-                        for player, stack in zip(self.players, state.player_piles)
+                        for i, (player, stack) in enumerate(
+                            zip(self.players, state.player_piles)
+                        )
                     ]
                 )
             )
@@ -166,7 +168,7 @@ class LLMPlayer(Player):
 
     @property
     def base_prompt(self):
-        return f"Your name is {self.name} and you are playing Texas Hold-Em. {self.behavior_prompt}"
+        return f"Your name is {self.name} and you are playing Texas Hold-Em."
 
     def within_ranges(self, bet, ranges):
         for range in ranges:
@@ -235,6 +237,7 @@ class LLMPlayer(Player):
         )
         system_prompt = (
             self.base_prompt
+            + self.behavior_prompt
             + "When prompted with a game history and state, respond with two lines of"
             + "text, on the first line, only include a single integer representing your"
             + "bet. On the second line, provide a reasoning.\n"
@@ -243,7 +246,7 @@ class LLMPlayer(Player):
             system_prompt += (
                 " Previously, you have made the following reflections, so keep them in mind:\n"
                 + '"'
-                + self.reflections
+                + self.reflections.strip()
                 + '"'
                 + "\nMake sure to consider the betting history in this game and compare it to what you know about your opponents' playstyle when making your decision."
             )
@@ -334,7 +337,7 @@ class LLMPlayer(Player):
         if self.reflections:
             prompt += (
                 " Previously, you have made the following reflections, so keep them in mind:\n"
-                + self.reflections
+                + self.reflections.strip()
                 + "\nReflect both on this round and the game as a whole and keep it short."
             )
         return prompt
@@ -360,7 +363,7 @@ class LLMPlayer(Player):
             state.player_is_active,
         )
         for i, player in enumerate(self.players):
-            name = player.name if player != self else "You"
+            name = player.name if i != self.index else "You"
             if state.player_is_active[i]:
                 rank = (
                     TerminalColors.FOLDED

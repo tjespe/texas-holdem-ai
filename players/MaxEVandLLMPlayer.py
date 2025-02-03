@@ -31,18 +31,22 @@ class MaxEVandLLMPlayer(Player):
         self.llm_player.index = self.index
 
     def get_to_know_each_other(self, players):
+        self._update_hands()
         self.max_ev_player.get_to_know_each_other(players)
         self.llm_player.get_to_know_each_other(players)
 
     def observe_bet(self, from_state: State, bet: int, was_blind=False):
+        self._update_hands()
         self.max_ev_player.observe_bet(from_state, bet, was_blind)
         self.llm_player.observe_bet(from_state, bet, was_blind)
 
     def round_over(self, state, prev_state):
+        self._update_hands()
         self.max_ev_player.round_over(state, prev_state)
         self.llm_player.round_over(state, prev_state)
 
     def showdown(self, state, all_hands):
+        self._update_hands()
         self.max_ev_player.showdown(state, all_hands)
         self.llm_player.showdown(state, all_hands)
 
