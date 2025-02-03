@@ -51,3 +51,7 @@ complete_observer = Observer(df=combined_df)
 
 def get_observer_with_all_data() -> Observer:
     return complete_observer.clone()
+
+
+def get_observer_with_all_human_data() -> Observer:
+    return Observer(df=combined_df[combined_df["player_type"] == "HumanPlayer"])

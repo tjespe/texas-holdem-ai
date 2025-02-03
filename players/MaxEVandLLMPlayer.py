@@ -12,8 +12,7 @@ from state_management import place_bet
 
 class MaxEVandLLMPlayer(Player):
     """
-    This switches between RandomPlayer and RationalPlayer early in the game,
-    but uses ResolverPlayer's strategy from the turn onwards.
+    This players uses the LLMPlayer's strategy preflop and the MaxEVPlayer's strategy postflop.
     """
 
     def __init__(self, name: str = "Max-Lennart"):
@@ -21,7 +20,8 @@ class MaxEVandLLMPlayer(Player):
         self.name = name
         self.max_ev_player = MaxEVPlayer(name)
         self.llm_player = LLMPlayer(
-            name, behavior_prompt="Don't be too agressive on the preflop. "
+            name,
+            behavior_prompt="Don't be too agressive on the preflop: it's okay to raise, but if the other player has raised, prefer calling rather than raising again, and obviously fold instead of calling if the bet is too high and your hand is too weak. Normally, you should only raise if you have a strong hand.",
         )
 
     def _update_hands(self):

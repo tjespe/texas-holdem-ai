@@ -107,7 +107,7 @@ class GameManager:
         self.round += 1
         for player in self.players:
             player.round_over(self.state, prev_state)
-        if sleep:
+        if any(isinstance(player, HumanPlayer) for player in self.players):
             input("Press enter to continue...")
         bust_players = set()
         for i, player in enumerate(self.players):

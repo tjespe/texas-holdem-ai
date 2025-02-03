@@ -1,6 +1,7 @@
 import inquirer
 from GameManager import GameManager
 from login import cli_login
+from players.MaxEVandHumanMocker import MaxEVandHumanMocker
 from players.AllInPlayer import AllInPlayer
 from players.AwareRationalPlayerWithRandomStyle import (
     AwareRationalPlayerWithRandomStyle,
@@ -34,7 +35,8 @@ players = [
     # CheatingPlayer(),
     # ProbRegPlayer(),
     # ProbSimPlayer(),
-    MaxEVandLLMPlayer(),
+    # MaxEVandLLMPlayer(),
+    MaxEVandHumanMocker(),
     LLMPlayer(),
     # MaxEVPlayer(name="Adrian"),
     # HumanMocker(mock="Arin"),

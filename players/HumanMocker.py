@@ -3,13 +3,21 @@ import numpy as np
 from PlayerABC import Player
 from State import State
 from hidden_state_model.observer import Observer
-from hidden_state_model.helpers import get_observer_with_all_data
-from cpp_poker.cpp_poker import Oracle
+from hidden_state_model.helpers import get_observer_with_all_human_data
+from cpp_poker.cpp_poker import Oracle, CardCollection
 
 time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 persistent_observer = Observer(
     f"hidden_state_model/data/humanmocker-{time_str}.parquet"
 )
+
+log_file = open("stats/HumanMocker.log", "a")
+
+
+def log(*args, also_print=False, **kwargs):
+    print(*args, **kwargs, file=log_file, flush=True)
+    if also_print:
+        print(*args, **kwargs)
 
 
 class HumanMocker(Player):
@@ -21,7 +29,7 @@ class HumanMocker(Player):
 
         # Keep predictor separate from observer, because we don't want our predictor to
         # be updated with new data based on what this player does
-        self.predictor = get_observer_with_all_data().predictor
+        self.predictor = get_observer_with_all_human_data().predictor
 
         # Initialize an empty observer to use for processing states
         self.observer = Observer()
@@ -32,22 +40,25 @@ class HumanMocker(Player):
         self.opponent_names = [p.name for p in players if p is not self]
 
     def _play(self, state: State) -> int:
+        log("State:\n", state.get_cli_repr(self.opponent_names, short=True))
+        log("Hand:\n", CardCollection(self.hand).str())
         state_row = self.observer.get_processed_df_row(state.id)
+        log("Input to model:\n", state_row.to_dict())
         actions, distrib = self.predictor.predict_for_row(
             "action", state_row, self.mock, self.rel_weight_player, probabilities=True
         )
-        print("Got distribution: ", distrib, "for", actions, "from model")
+        log("Got distribution: ", distrib, "for", actions, "from model")
         # Sample random action from distribution
         action = np.random.choice(actions, p=distrib)
         call_amount = max(state.bet_in_game) - state.bet_in_game[self.index]
         if action == "fold":
-            print("Folding")
+            log("Folding")
             return 0
         elif action == "check":
-            print("Checking")
-            return 0
+            log("Checking")
+            return call_amount
         elif action == "call":
-            print("Calling")
+            log("Calling")
             return call_amount
         elif action == "raise":
             max_allowed = Oracle.get_max_bet_allowed(
@@ -60,7 +71,7 @@ class HumanMocker(Player):
             min_raise = call_amount + state.big_blind
             can_raise = call_amount < min_raise < max_allowed
             if not can_raise:
-                print(
+                log(
                     f"Cannot raise. Call amount: {call_amount}, min_raise: {min_raise}, max_allowed: {max_allowed}"
                 )
                 return call_amount
@@ -72,7 +83,7 @@ class HumanMocker(Player):
                     relative_weight_player=self.rel_weight_player,
                 )
             )
-            print(f"Got amount: {amount} from model")
+            log(f"Got amount: {amount} from model")
             # Ensure higher than call_amount
             amount = max(call_amount, amount)
             # If amount is higher than call_amount, ensure it is at least a big blind higher
@@ -80,7 +91,7 @@ class HumanMocker(Player):
                 amount = max(min_raise, amount)
             # Ensure lower than max_allowed
             amount = min(max_allowed, amount)
-            print(
+            log(
                 f"Amount adjusted for [call_amount, min_raise, max_allowed]: [{call_amount}, {min_raise}, {max_allowed}] range: {amount}"
             )
             return amount

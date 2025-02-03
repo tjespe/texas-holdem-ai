@@ -124,7 +124,7 @@ class HumanPlayer(Player):
                 winning_prob = CheatSheet.get_winning_probability(
                     CardCollection(self.hand),
                     CardCollection(state.public_cards),
-                    2,
+                    sum(state.player_is_active),
                     100000,
                 )
                 print(

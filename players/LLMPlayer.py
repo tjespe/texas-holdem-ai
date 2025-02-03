@@ -1,7 +1,8 @@
 import os
+import random
 from time import sleep
 
-from groq import Groq, InternalServerError
+from groq import Groq, InternalServerError, RateLimitError
 from datetime import datetime
 from cpp_poker.cpp_poker import Card, Oracle, CardCollection, CheatSheet, TerminalColors
 from PlayerABC import Player
@@ -23,16 +24,24 @@ log_file = open("stats/LLMPlayer.log", "a")
 
 
 def log(*args, also_print=False, **kwargs):
-    print(*args, kwargs, file=log_file, flush=True)
+    print(*args, **kwargs, file=log_file, flush=True)
     if also_print:
-        print(*args, kwargs)
+        print(*args, **kwargs)
+
+
+POSSIBLE_MODELS = [
+    "llama-3.3-70b-versatile",
+    "llama3-70b-8192",
+    "gemma2-9b-it",
+    "mixtral-8x7b-32768",
+]
 
 
 class LLMPlayer(Player):
     name: str
     allow_hints: bool
     opponent_names: list[str]
-    player_names: list[str]
+    players: list[Player]
     reflections: str
     behavior_prompt: str
 
@@ -42,13 +51,13 @@ class LLMPlayer(Player):
         allow_hints=False,
         llm_model="llama-3.3-70b-versatile",
         # llm_model="llama3-70b-8192",
-        behavior_prompt="",
+        behavior_prompt="Don't be too agressive on the preflop: it's okay to raise, but if the other player has raised, prefer calling rather than raising again, and obviously fold instead of calling if the bet is too high and your hand is too weak. Normally, you should only raise if you have a strong hand.",
     ):
         super().__init__()
         self.name = name
         self.allow_hints = allow_hints
         self.opponent_names = []
-        self.player_names = []
+        self.players = []
         self.betting_history = []
         self.llm_model = llm_model
         self.reflections = "I have a tendency to be overly aggressive on the preflop."
@@ -56,7 +65,32 @@ class LLMPlayer(Player):
 
     def get_to_know_each_other(self, players: list[Player]):
         self.opponent_names = [p.name for p in players if p != self]
-        self.player_names = [p.name for p in players]
+        self.players = players
+
+    @property
+    def player_names(self):
+        return [p.name for p in self.players]
+
+    def _write_list(self, list):
+        return ", ".join(list[:-1]) + " and " + list[-1]
+
+    def _capitalize(self, string):
+        return string[0].upper() + string[1:]
+
+    def _describe_bets_in_stage(self, state: State):
+        bets = state.bet_in_stage
+        if state.stage == "preflop":
+            bets = [max(b - state.big_blind, 0) for b in bets]
+        return (
+            self._write_list(
+                [
+                    (f"{player.name} has" if player.name != self.name else "you have")
+                    + f" bet {bet}"
+                    for player, bet in zip(self.players, bets)
+                ]
+            )
+            + f" in the {state.stage} stage.\n"
+        )
 
     def describe_state(self, state: State):
         return (
@@ -67,7 +101,27 @@ class LLMPlayer(Player):
                 else "No players have bet yet."
             )
             + f"\nYour cards are {CardCollection(self.hand).str()}.\n"
-            + state.get_cli_repr(self.player_names, short=True)
+            + self._capitalize(
+                self._write_list(
+                    [
+                        (f"{player.name}'s" if player.name != self.name else "your")
+                        + f" stack is {stack}"
+                        for player, stack in zip(self.players, state.player_piles)
+                    ]
+                )
+            )
+            + ".\n"
+            + f"The pot is {state.pot}.\n"
+            + self._describe_bets_in_stage(state)
+            + (
+                (
+                    "The cards on the table are "
+                    + CardCollection(state.public_cards).str()
+                    + ".\n"
+                )
+                if state.public_cards
+                else "There are no cards on the table yet.\n"
+            )
         )
 
     def describe_options(self, state: State):
@@ -114,12 +168,62 @@ class LLMPlayer(Player):
     def base_prompt(self):
         return f"Your name is {self.name} and you are playing Texas Hold-Em. {self.behavior_prompt}"
 
-    def prompt(self, state: State):
+    def within_ranges(self, bet, ranges):
+        for range in ranges:
+            if isinstance(range, int):
+                if bet == range:
+                    return True
+            else:
+                if range[0] <= bet <= range[1]:
+                    return True
+        return False
+
+    def prompt(self, system: str, user: str):
+        log("System prompt:\n" + system + "\n\n")
+        log("Prompt:\n" + user + "\n\n")
+        try:
+            chat_completion = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": system,
+                    },
+                    {
+                        "role": "user",
+                        "content": user,
+                    },
+                ],
+                model=self.llm_model,
+            )
+        except InternalServerError:
+            log("Internal server error, retrying in 1s...", also_print=True)
+            sleep(1)
+            return self.prompt(system, user)
+        except RateLimitError:
+            log("Rate limit error, switching model...", also_print=True)
+            self.llm_model = random.choice(
+                list(set(POSSIBLE_MODELS) - {self.llm_model})
+            )
+            return self.prompt(system, user)
+        response = chat_completion.choices[0].message.content
+        log("Response:\n" + response + "\n\n")
+        return response
+
+    def prompt_for_bet(self, state: State):
         options, ranges = self.describe_options(state)
         if not options:
             return "0"
+
+        equity = CheatSheet.get_winning_probability(
+            CardCollection(self.hand),
+            CardCollection(state.public_cards),
+            sum(state.player_is_active),
+            100000,
+        )
+        n_players = sum(state.player_is_active)
         scenario = (
             self.describe_state(state)
+            + f"Your equity (winning probability given cards and public cards) is {equity*100:.2f}% (compare to a baseline of {100/n_players:.2f}% when there are {n_players} players).\n"
             + "Your options now are:\n"
             + "\n".join(options)
             + "\nTo be super clear, you must write a number within one of these ranges:\n"
@@ -134,32 +238,23 @@ class LLMPlayer(Player):
         if self.reflections:
             system_prompt += (
                 " Previously, you have made the following reflections, so keep them in mind:\n"
+                + '"'
                 + self.reflections
+                + '"'
+                + "\nMake sure to consider the betting history in this game and compare it to what you know about your opponents' playstyle when making your decision."
             )
-        log("System prompt:\n" + system_prompt + "\n\n")
-        log("Prompt:\n" + scenario + "\n\n")
-        try:
-            chat_completion = client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": system_prompt,
-                    },
-                    {
-                        "role": "user",
-                        "content": scenario,
-                    },
-                ],
-                model=self.llm_model,
-            )
-        except InternalServerError:
-            log("Internal server error, retrying in 1s...", also_print=True)
-            sleep(1)
-            return self.prompt(state)
-
-        response = chat_completion.choices[0].message.content
-        bet = response.split("\n")[0]
-        log("Response:\n" + response + "\n\n")
+        response = self.prompt(system_prompt, scenario)
+        bet = int(response.split("\n")[0])
+        # Check if the bet is within the allowed ranges
+        if not self.within_ranges(bet, ranges):
+            # If it's not, try increasing the bet by the big blind
+            bet += state.big_blind
+        if not self.within_ranges(bet, ranges):
+            # If it's still not within the ranges, return the first option
+            opt = ranges[0]
+            if isinstance(opt, int):
+                return opt
+            return opt[0]
         return bet
 
     def observe_bet(self, from_state, bet, was_blind=False):
@@ -213,7 +308,7 @@ class LLMPlayer(Player):
 
     def _play(self, state: State) -> int:
         try:
-            return int(self.prompt(state))
+            return int(self.prompt_for_bet(state))
         except ValueError:
             return self._play(state)
 
@@ -250,62 +345,50 @@ class LLMPlayer(Player):
             else:
                 reflection_scenario += f"{self.player_names[i]} folded\n"
         reflection_scenario += "The bets were:\n" + "\n".join(self.betting_history)
-        reflection_scenario += "The final state was:\n" + state.get_cli_repr(
-            self.player_names, short=True
+        reflection_scenario += (
+            "\nThe final state was:\n"
+            + state.get_cli_repr(self.player_names, short=True)
+            + "\n."
         )
-        try:
-            log("Reflection system prompt:\n" + self.reflection_system_prompt + "\n\n")
-            log("Reflection scenario:\n" + reflection_scenario + "\n\n")
-            chat_completion = client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": self.reflection_system_prompt,
-                    },
-                    {
-                        "role": "user",
-                        "content": reflection_scenario,
-                    },
-                ],
-                model=self.llm_model,
-            )
-            self.reflections = chat_completion.choices[0].message.content
-            log("Reflection response:\n" + self.reflections + "\n\n")
-            self.betting_history = []
-        except InternalServerError:
-            log("Internal server error, retrying in 1s...", also_print=True)
-            sleep(1)
-            return self.showdown(state, all_hands)
+        winners = Oracle.find_winner(
+            CardCollection(state.public_cards),
+            [CardCollection(p.hand) for p in self.players],
+            state.player_is_active,
+        )
+        for i, player in enumerate(self.players):
+            name = player.name if player != self else "You"
+            if state.player_is_active[i]:
+                rank = (
+                    TerminalColors.FOLDED
+                    + (
+                        CardCollection(list(player.hand) + list(state.public_cards))
+                        .rank_hand()
+                        .get_rank_name()
+                    )
+                    + TerminalColors.DEFAULT
+                )
+                outcome = "won" if i in winners else "lost"
+                reflection_scenario += f"{name} {outcome} with {CardCollection(player.hand).str()} ({rank}).\n"
+        self.reflections = self.prompt(
+            self.reflection_system_prompt, reflection_scenario
+        )
+        self.betting_history = []
 
     def round_over(self, new_state: State, prev_state: State):
         if sum(prev_state.player_is_active) > 1:
             # This is a showdown, so we reflect in the showdown method instead so that
             # we can see all hands
             return
-        reflection_scenario = self.describe_state(prev_state)
-        try:
-            log("Reflection system prompt:\n" + self.reflection_system_prompt + "\n\n")
-            log("Reflection scenario:\n" + reflection_scenario + "\n\n")
-            chat_completion = client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": self.reflection_system_prompt,
-                    },
-                    {
-                        "role": "user",
-                        "content": reflection_scenario,
-                    },
-                ],
-                model=self.llm_model,
-            )
-            self.reflections = chat_completion.choices[0].message.content
-            log("Reflection response:\n" + self.reflections + "\n\n")
-            self.betting_history = []
-        except InternalServerError:
-            log("Internal server error, retrying in 1s...", also_print=True)
-            sleep(1)
-            return self.round_over(new_state, prev_state)
+        reflection_scenario = "The bets were:\n" + "\n".join(self.betting_history)
+        reflection_scenario += (
+            "\nThe final state was:\n"
+            + prev_state.get_cli_repr(self.player_names, short=True)
+            + "\n."
+        )
+        self.reflections = self.prompt(
+            self.reflection_system_prompt, reflection_scenario
+        )
+        self.betting_history = []
 
     def __repr__(self) -> str:
         return f"LLMPlayer('{self.name}')"
