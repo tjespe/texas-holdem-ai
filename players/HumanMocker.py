@@ -43,20 +43,32 @@ class HumanMocker(Player):
         log("State:\n", state.get_cli_repr(self.opponent_names, short=True))
         log("Hand:\n", CardCollection(self.hand).str())
         state_row = self.observer.get_processed_df_row(state.id)
-        log("Input to model:\n", state_row.to_dict())
+        # log("Input to model:\n", state_row.to_dict())
         actions, distrib = self.predictor.predict_for_row(
             "action", state_row, self.mock, self.rel_weight_player, probabilities=True
         )
         log("Got distribution: ", distrib, "for", actions, "from model")
+        processed_distrib = dict(zip(actions, distrib))
+        call_amount = max(state.bet_in_game) - state.bet_in_game[self.index]
+        if call_amount:
+            processed_distrib["check"] = 0
+        else:
+            processed_distrib["check"] += (
+                processed_distrib["call"] + processed_distrib["fold"]
+            )
+            processed_distrib["call"] = 0
+            processed_distrib["fold"] = 0
+        distrib = np.array([processed_distrib[action] for action in actions])
+        distrib /= distrib.sum()
+        log("Processed distribution: ", distrib, "for", actions)
         # Sample random action from distribution
         action = np.random.choice(actions, p=distrib)
-        call_amount = max(state.bet_in_game) - state.bet_in_game[self.index]
         if action == "fold":
             log("Folding")
             return 0
         elif action == "check":
             log("Checking")
-            return call_amount
+            return 0
         elif action == "call":
             log("Calling")
             return call_amount
