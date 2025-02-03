@@ -179,6 +179,7 @@ class LLMPlayer(Player):
         return False
 
     def prompt(self, system: str, user: str):
+        log("Using model: " + self.llm_model + "\n\n")
         log("System prompt:\n" + system + "\n\n")
         log("Prompt:\n" + user + "\n\n")
         try:
@@ -195,8 +196,11 @@ class LLMPlayer(Player):
                 ],
                 model=self.llm_model,
             )
-        except InternalServerError:
-            log("Internal server error, retrying in 1s...", also_print=True)
+        except InternalServerError as e:
+            log(
+                f"Internal server error ({e.status_code} {e.message}), retrying in 1s...",
+                also_print=True,
+            )
             sleep(1)
             return self.prompt(system, user)
         except RateLimitError:
