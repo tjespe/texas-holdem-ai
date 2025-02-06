@@ -253,5 +253,5 @@ Table:
             "stage": self.stage,
             "sub_stage": self.sub_stage,
             "is_terminal": self.is_terminal,
-            "all_players_are_done": self.all_players_are_done,
+            "all_players_are_done": bool(self.all_players_are_done),
         }

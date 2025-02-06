@@ -10,5 +10,11 @@ export const apiClient = async (url: string, options: RequestInit = {}) => {
   };
 
   // Call fetch with the updated headers
-  return fetch(API_BASE_URL + url, { ...options, headers });
+  return fetch(API_BASE_URL + url, { ...options, headers }).catch((err) => {
+    // Check if it's an authentication error
+    if (err.status === 401) {
+      localStorage.removeItem("token");
+    }
+    throw err;
+  });
 };

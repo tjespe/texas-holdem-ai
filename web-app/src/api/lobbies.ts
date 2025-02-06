@@ -52,11 +52,18 @@ export async function getLobbyDetail(lobbyId: string): Promise<Lobby> {
   return lobbySchema.parse(data);
 }
 
-export async function joinLobby(lobbyId: string, username: string) {
+export async function joinLobby(lobbyId: string) {
   const resp = await apiClient(`/lobbies/${lobbyId}/join`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username }),
+  });
+  return resp.json(); // might be { result: "ok", error?: string }
+}
+
+export async function leaveLobby(lobbyId: string) {
+  const resp = await apiClient(`/lobbies/${lobbyId}/leave`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
   });
   return resp.json(); // might be { result: "ok", error?: string }
 }

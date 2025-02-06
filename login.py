@@ -16,6 +16,15 @@ def authenticate_user(username, password):
     return users_with_passwords.get(username) == password
 
 
+def register_user(username, password):
+    users_with_passwords = get_users_with_passwords()
+    if username in users_with_passwords:
+        return False
+    with open("users.txt", "a") as f:
+        f.write(f"\n{username},{password}")
+    return True
+
+
 def cli_login():
     users_with_passwords = get_users_with_passwords()
     usernames = list(users_with_passwords.keys())

@@ -1,28 +1,30 @@
 import { Box, Button, Link, Stack, TextField, Typography } from "@mui/material";
 import React, { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
-import { loginUser } from "../api/auth";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { registerUser } from "../api/auth";
 
 interface Props {
-  onLoginSuccess: (username: string) => void;
+  onRegisterSuccess: (username: string) => void;
 }
 
-export function LoginForm({ onLoginSuccess }: Props) {
+export function RegisterForm({ onRegisterSuccess }: Props) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg("");
 
     try {
-      const resp = await loginUser(username, password);
+      const resp = await registerUser(username, password);
       if ("error" in resp) {
         setErrorMsg(resp.error);
       } else if (resp.result === "ok") {
-        onLoginSuccess(username);
+        onRegisterSuccess(username);
         localStorage.setItem("token", resp.token);
+        navigate("/");
       }
     } catch (err) {
       setErrorMsg("Something went wrong. Check console.");
@@ -40,7 +42,7 @@ export function LoginForm({ onLoginSuccess }: Props) {
             sx={{ width: 150, margin: "auto" }}
           />
         </Stack>
-        <Typography variant="h2">Log in</Typography>
+        <Typography variant="h2">Register new user</Typography>
         <TextField
           label="Username"
           value={username}
@@ -54,19 +56,16 @@ export function LoginForm({ onLoginSuccess }: Props) {
           onChange={(e) => setPassword(e.target.value)}
         />
         <Button variant="contained" type="submit">
-          Login
+          Register
         </Button>
         {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
         <Stack direction="row" justifyContent="space-between">
-          <Typography variant="subtitle1">No account?</Typography>
+          <Typography variant="subtitle1">Already have an account?</Typography>
           <Link
             component={RouterLink}
-            to={
-              "/register?" +
-              new URLSearchParams(window.location.search).toString()
-            }
+            to={"/?" + new URLSearchParams(window.location.search).toString()}
           >
-            Register new account
+            Log in instead
           </Link>
         </Stack>
       </Stack>

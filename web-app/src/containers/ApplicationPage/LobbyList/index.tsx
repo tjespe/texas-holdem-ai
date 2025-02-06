@@ -1,6 +1,5 @@
 // src/components/LobbyList.tsx
 
-import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -10,14 +9,16 @@ import {
   ListItemText,
   Typography,
 } from "@mui/material";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { listLobbies, createLobby, Lobby } from "../../api/lobbies";
+import {
+  createLobby,
+  joinLobby,
+  listLobbies,
+  Lobby,
+} from "../../../api/lobbies";
 
-interface LobbyListProps {
-  username: string; // e.g. "alice"
-}
-
-export function LobbyList({ username }: LobbyListProps) {
+export function LobbyList() {
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,10 +48,8 @@ export function LobbyList({ username }: LobbyListProps) {
     try {
       setLoading(true);
       const { lobby_id } = await createLobby();
-      // Option 1: Just add to local list
-      setLobbies([...lobbies, { lobby_id }]);
-      // Option 2 (common): navigate to the new lobby detail page
-      // navigate(`/lobbies/${lobby_id}`);
+      await joinLobby(lobby_id);
+      navigate(`/lobbies/${lobby_id}`);
     } catch (err) {
       setError("Failed to create a lobby.");
       console.error(err);
@@ -60,7 +59,9 @@ export function LobbyList({ username }: LobbyListProps) {
   }
 
   // (Optional) show a button to join or view a specific lobby
-  function handleLobbyClick(lobbyId: string) {
+  async function handleLobbyClick(lobbyId: string) {
+    setLoading(true);
+    await joinLobby(lobbyId);
     navigate(`/lobbies/${lobbyId}`);
   }
 

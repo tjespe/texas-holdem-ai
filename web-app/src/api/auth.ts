@@ -17,3 +17,19 @@ export async function loginUser(
   const parsed = loginResponseSchema.parse(data);
   return parsed;
 }
+
+export async function registerUser(
+  username: string,
+  password: string
+): Promise<LoginResponse> {
+  const resp = await apiClient("/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  const data = await resp.json();
+
+  // Validate against Zod
+  const parsed = loginResponseSchema.parse(data);
+  return parsed;
+}

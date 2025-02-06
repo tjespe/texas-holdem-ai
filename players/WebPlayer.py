@@ -35,6 +35,7 @@ class WebPlayer(Player):
             "type": "PLAY_REQUEST",
             "player": {"name": self.name, "index": self.index},
             "state": state.to_dict(),  # or however you serialize
+            "hand": list(self.hand),
         }
         self._outbox.put(message)
 
@@ -48,6 +49,7 @@ class WebPlayer(Player):
         (e.g. {"type": "USER_BET", "bet": 30}) from the WebSocket.
         This unblocks `play()`.
         """
+        print(f"Received bet from client: {bet}")
         self._bet_queue.put(bet)
 
     def observe_bet(self, from_state: State, bet: int, was_blind=False):
@@ -56,10 +58,10 @@ class WebPlayer(Player):
         """
         message = {
             "type": "OBSERVE_BET",
-            "player": self.name,
+            "player_index": from_state.current_player_i,
             "bet": bet,
             "state": from_state.to_dict(),
-            "was_blind": was_blind,
+            "was_blind": bool(was_blind),
         }
         self._outbox.put(message)
 

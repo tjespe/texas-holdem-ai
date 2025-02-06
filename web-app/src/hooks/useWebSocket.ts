@@ -13,10 +13,12 @@ export function useWebSocket(
     socketRef.current = ws;
 
     ws.onopen = () => {
-      console.log("WebSocket connected");
+      console.log("WebSocket connected to ", url);
     };
 
     ws.onmessage = (event) => {
+      console.log("WebSocket message received:", event.data);
+
       try {
         const data = JSON.parse(event.data);
         // Validate
@@ -34,7 +36,7 @@ export function useWebSocket(
     return () => {
       ws.close();
     };
-  }, [url, onMessage]);
+  }, [url]);
 
   function sendMessage(message: unknown) {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {

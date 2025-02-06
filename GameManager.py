@@ -87,7 +87,7 @@ class GameManager:
                         e,
                     )
                     if isinstance(player, HumanPlayer):
-                        input("Press enter to continue...")
+                        sleep(3)
         if print_state:
             os.system("clear")
             print(self.state.get_cli_repr(self.player_names))

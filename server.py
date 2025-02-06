@@ -1,3 +1,4 @@
+from collections import defaultdict
 from fastapi import (
     Depends,
     FastAPI,
@@ -16,10 +17,11 @@ import queue
 from pydantic import BaseModel
 
 
-from login import authenticate_user
+from login import authenticate_user, register_user
 from GameManager import GameManager
 from players.WebPlayer import WebPlayer
 from players.MaxEVPlayer import MaxEVPlayer
+from players.MaxEVandHumanMocker import MaxEVandHumanMocker
 from players.RandomPlayer import RandomPlayer
 
 app = FastAPI()
@@ -65,6 +67,15 @@ def login(creds: LoginRequest):
     return {"error": "Invalid credentials"}
 
 
+@app.post("/register")
+def register(creds: LoginRequest):
+    if register_user(creds.username, creds.password):
+        token = uuid4().hex
+        user_per_token[token] = creds.username
+        return {"result": "ok", "token": token}
+    return {"error": "Username already exists"}
+
+
 def get_current_user(authorization: str = Header(...)) -> str:
     """
     Extract and validate the token from the Authorization header.
@@ -99,9 +110,14 @@ def get_lobbies():
     return {"lobbies": result}
 
 
+create_lobby_id = lambda: str(uuid4().hex)[:4]
+
+
 @app.post("/lobbies")
 def create_lobby():
-    new_lobby_id = uuid4().hex
+    new_lobby_id = create_lobby_id()
+    while new_lobby_id in lobbies:
+        new_lobby_id = create_lobby_id()
     lobbies[new_lobby_id] = {"players": [], "started": False}
     web_players[new_lobby_id] = {}
     return {"lobby_id": new_lobby_id}
@@ -124,7 +140,18 @@ def join_lobby(lobby_id: str, user: str = Depends(get_current_user)):
     lobby = lobbies[lobby_id]
     if lobby["started"]:
         return {"error": "Game already started"}
+    if user in lobby["players"]:
+        return {"result": "ok", "players": lobby["players"], "details": "Already in"}
     lobby["players"].append(user)
+    return {"result": "ok", "players": lobby["players"]}
+
+
+@app.post("/lobbies/{lobby_id}/leave")
+def leave_lobby(lobby_id: str, user: str = Depends(get_current_user)):
+    lobby = lobbies[lobby_id]
+    if lobby["started"]:
+        return {"error": "Game already started"}
+    lobby["players"].remove(user)
     return {"result": "ok", "players": lobby["players"]}
 
 
@@ -157,10 +184,12 @@ def start_lobby(lobby_id: str):
             bot_type = entry["bot_type"]
             if bot_type == "max_ev":
                 bot = MaxEVPlayer(name="MaxEV_Bot")
+            if bot_type == "max_ev_and_mocker":
+                bot = MaxEVandHumanMocker(name="MaxEVandHuman_Bot")
             elif bot_type == "random":
                 bot = RandomPlayer(name="Random_Bot")
             else:
-                bot = RandomPlayer(name="Default_Bot")
+                bot = MaxEVandHumanMocker(name="Default_Bot")
             players.append(bot)
         else:
             # fallback
@@ -184,6 +213,9 @@ async def get_user_from_token(token: str):
     if token in user_per_token:
         return user_per_token[token]
     raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+
+sent_per_webplayer = defaultdict(list)
 
 
 @app.websocket("/ws/lobbies/{lobby_id}")
@@ -222,9 +254,15 @@ async def game_socket(
     # We'll block on the queue in a thread-safe way
     async def send_to_client():
         loop = asyncio.get_event_loop()
+        # Re-send any messages that were sent to the client before they connected
+        for message in sent_per_webplayer[web_player]:
+            print("Re-sending message to client:", message)
+            await websocket.send_text(json.dumps(message))
         while True:
             # readQueue is a small helper that waits for a .get() call in a thread
             message = await readQueue(web_player._outbox)
+            print("Sending message to client:", message)
+            sent_per_webplayer[web_player].append(message)
             await websocket.send_text(json.dumps(message))
 
     # Helper function to read from a standard queue in an async way
