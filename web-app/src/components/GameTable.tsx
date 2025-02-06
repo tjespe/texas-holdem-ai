@@ -1,6 +1,14 @@
-// src/components/GameTable.tsx
-import { Button, Stack, TextField } from "@mui/material";
-import React, { useState } from "react";
+import { useState } from "react";
+import {
+  Box,
+  Button,
+  Stack,
+  Typography,
+  Card,
+  CardContent,
+  Grid,
+  TextField,
+} from "@mui/material";
 import { useParams } from "react-router-dom";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { GameState, Player } from "../schemas/messages";
@@ -47,7 +55,6 @@ export const GameTable: React.FC = () => {
   const { sendMessage } = useWebSocket(wsUrl, (msg) => {
     switch (msg.type) {
       case "PLAY_REQUEST":
-        // Server says it's your turn
         setGameState(msg.state);
         setHand(msg.hand);
         setOurTurn(true);
@@ -68,98 +75,184 @@ export const GameTable: React.FC = () => {
         setOurTurn(false);
         break;
       case "GET_TO_KNOW_EACH_OTHER":
-        // Initial state
         setPlayers(msg.players);
         break;
-
       case "SHOWDOWN":
         setGameState(msg.state);
         setAllHands(msg.all_hands);
         break;
-
       default:
         console.log("Unknown message type:", msg);
     }
   });
 
-  const handleBet = () => {
-    const bet = parseInt(betInput, 10) || 0;
-    sendMessage({ type: "USER_BET", bet });
+  const handleBet = (betAmount: number) => {
+    sendMessage({ type: "USER_BET", bet: betAmount });
     setOurTurn(false);
     setBetInput("");
     setTurn((turn + 1) % players.length);
   };
 
-  console.log({ turn });
+  const highestBet = Math.max(...(gameState?.bet_in_game || [0]));
+  const ourBet = gameState?.bet_in_game[turn] || 0;
+  const callAmount = highestBet - ourBet;
+  const minRaise = highestBet + (gameState?.big_blind || 0);
 
   return (
     <Stack
       spacing={2}
-      sx={{ maxWidth: 600, margin: "auto", textAlign: "center" }}
+      sx={{ maxWidth: "800px", margin: "auto", textAlign: "center", py: 2 }}
     >
-      <h2>Game Table</h2>
-      <p>Stage: {gameState?.stage}</p>
-      <p>Pot: {gameState?.pot}</p>
-      <p>Players:</p>
-      <ul>
-        {players.map((player) => (
-          <li
-            key={player.index}
-            style={{ fontWeight: turn === player.index ? "bold" : "normal" }}
+      <Typography variant="h4">Poker Table</Typography>
+
+      {/* Players arranged in a table layout */}
+      <Grid container justifyContent="center" spacing={2}>
+        {players.map((player, index) => (
+          <Grid key={player.index} item xs={4}>
+            <Card
+              sx={{
+                backgroundColor: gameState?.player_is_folded[player.index]
+                  ? "#444"
+                  : "#222",
+                border:
+                  turn === player.index ? "2px solid gold" : "1px solid #666",
+                textAlign: "center",
+              }}
+            >
+              <CardContent>
+                <Typography fontWeight="bold">{player.name}</Typography>
+                <Typography variant="body2">
+                  Stack: {gameState?.player_piles[player.index]} chips
+                </Typography>
+                <Typography variant="body2">
+                  Bet: {gameState?.bet_in_game[player.index]}
+                </Typography>
+                {gameState?.player_is_folded[player.index] && (
+                  <Typography color="error">Folded</Typography>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Table cards */}
+      <Stack direction="row" justifyContent="center" spacing={1} sx={{ py: 2 }}>
+        {gameState?.public_cards.map((card, index) => (
+          <Box
+            key={index}
+            sx={{
+              width: 50,
+              height: 70,
+              backgroundColor: "#fff",
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "1.5rem",
+              color: ["♠", "♣"].includes(getSuit(card)) ? "black" : "red",
+            }}
           >
-            {player.name} ({gameState?.player_piles[player.index]} chips)
-          </li>
+            {getRank(card)}
+            {getSuit(card)}
+          </Box>
         ))}
-      </ul>
-      <p>Current bets:</p>
-      <ul>
-        {gameState?.bet_in_game.map((bet, idx) => (
-          <li key={idx}>
-            {players[idx].name}: {bet}
-          </li>
-        ))}
-      </ul>
-      {/* Display public cards, etc. */}
+      </Stack>
+
+      {/* Your hand */}
       {ourTurn && (
         <Stack>
-          <Stack>
-            <p>Your hand:</p>
-            <ul>
-              {hand.map((card) => (
-                <li key={card}>
-                  {getRank(card)}
-                  {getSuit(card)}
-                </li>
-              ))}
-            </ul>
+          <Typography variant="h6">Your Hand</Typography>
+          <Stack direction="row" justifyContent="center" spacing={1}>
+            {hand.map((card, index) => (
+              <Box
+                key={index}
+                sx={{
+                  width: 50,
+                  height: 70,
+                  backgroundColor: "#fff",
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1.5rem",
+                  color: ["♠", "♣"].includes(getSuit(card)) ? "black" : "red",
+                }}
+              >
+                {getRank(card)}
+                {getSuit(card)}
+              </Box>
+            ))}
           </Stack>
-          <Stack direction="row" spacing={1} justifyContent="center">
+        </Stack>
+      )}
+
+      {/* Betting Controls */}
+      {ourTurn && (
+        <Stack spacing={1}>
+          <Typography variant="h6">Your Move</Typography>
+          <Stack direction="row" justifyContent="center" spacing={2}>
+            {/* Check / Fold */}
+            <Button variant="outlined" onClick={() => handleBet(0)}>
+              {callAmount === 0 ? "Check" : "Fold"}
+            </Button>
+
+            {/* Call (if available) */}
+            {callAmount > 0 && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => handleBet(callAmount)}
+              >
+                Call ({callAmount})
+              </Button>
+            )}
+
+            {/* Raise */}
             <TextField
-              label="Bet Amount"
+              label="Raise"
               type="number"
               value={betInput}
               onChange={(e) => setBetInput(e.target.value)}
+              sx={{ width: "100px" }}
             />
-            <Button variant="contained" onClick={handleBet}>
-              Bet
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => handleBet(parseInt(betInput, 10))}
+              disabled={parseInt(betInput, 10) < minRaise}
+            >
+              Raise
             </Button>
           </Stack>
         </Stack>
       )}
+
+      {/* Showdown hands */}
       {allHands && (
         <Stack>
-          <p>Showdown!</p>
+          <Typography variant="h6">Showdown!</Typography>
           {allHands.map((hand, idx) => (
             <Stack key={idx}>
-              <p>{players[idx].name}'s hand:</p>
-              <ul>
-                {hand?.map((card) => (
-                  <li key={card}>
+              <Typography fontWeight="bold">
+                {players[idx].name}'s Hand:
+              </Typography>
+              <Stack direction="row" justifyContent="center" spacing={1}>
+                {hand?.map((card, i) => (
+                  <Box
+                    key={i}
+                    sx={{
+                      width: 50,
+                      height: 70,
+                      backgroundColor: "#fff",
+                      textAlign: "center",
+                    }}
+                  >
                     {getRank(card)}
                     {getSuit(card)}
-                  </li>
+                  </Box>
                 ))}
-              </ul>
+              </Stack>
             </Stack>
           ))}
         </Stack>
