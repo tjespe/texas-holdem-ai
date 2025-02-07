@@ -28,6 +28,13 @@ const stateSchema = z.object({
 
 export type GameState = z.infer<typeof stateSchema>;
 
+const showDownHandSchema = z.object({
+  cards: z.array(z.number()).length(2),
+  rank: z.string(),
+});
+
+export type ShowDownHand = z.infer<typeof showDownHandSchema>;
+
 export const serverMessageSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("PLAY_REQUEST"),
@@ -52,7 +59,15 @@ export const serverMessageSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("SHOWDOWN"),
     state: stateSchema,
-    all_hands: z.array(z.array(z.number()).length(2).nullable()),
+    all_hands: z.array(showDownHandSchema.nullable()),
+    winners: z.array(z.number()),
+  }),
+  z.object({
+    type: z.literal("BET_REJECTED"),
+    message: z.string(),
+    from_state: stateSchema,
+    bet: z.number(),
+    reason: z.string(),
   }),
 ]);
 
@@ -60,7 +75,7 @@ export type ServerMessage = z.infer<typeof serverMessageSchema>;
 
 const WS_BASE_URL = import.meta.env.VITE_WS_URL;
 
-export function useWebSocket(
+export function useGameWebSocket(
   onMessage: (msg: ReturnType<typeof serverMessageSchema.parse>) => void
 ) {
   const socketRef = useRef<WebSocket | null>(null);

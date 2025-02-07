@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from PlayerABC import Player
 from State import State
 
+from cpp_poker.cpp_poker import Oracle, CardCollection
+
 
 class WebPlayer(Player):
     """
@@ -66,6 +68,15 @@ class WebPlayer(Player):
         }
         self._outbox.put(message)
 
+    def bet_rejected(self, from_state, bet, reason):
+        message = {
+            "type": "BET_REJECTED",
+            "from_state": from_state.to_dict(),
+            "bet": bet,
+            "reason": reason,
+        }
+        self._outbox.put(message)
+
     def round_over(self, state: State, prev_state: State):
         message = {"type": "ROUND_OVER", "state": state.to_dict()}
         self._outbox.put(message)
@@ -79,5 +90,27 @@ class WebPlayer(Player):
         self._outbox.put(message)
 
     def showdown(self, state: State, all_hands: list[Union[tuple[int, int], None]]):
-        message = {"type": "SHOWDOWN", "state": state.to_dict(), "all_hands": all_hands}
+        winners = Oracle.find_winner(
+            CardCollection(state.public_cards),
+            [CardCollection(list(hand) if hand else []) for hand in all_hands],
+            state.player_is_active,
+        )
+        message = {
+            "type": "SHOWDOWN",
+            "state": state.to_dict(),
+            "all_hands": [
+                (
+                    {
+                        "cards": list(hand),
+                        "rank": CardCollection(list(hand) + list(state.public_cards))
+                        .rank_hand()
+                        .get_rank_name(),
+                    }
+                    if hand
+                    else None
+                )
+                for hand in all_hands
+            ],
+            "winners": list(winners),
+        }
         self._outbox.put(message)

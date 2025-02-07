@@ -72,6 +72,9 @@ class Predictor:
                 relative_weight_player,
                 opponent_name,
                 relative_weight_opponent,
+                # If we already have a model, we just use that for prediction, and then
+                # we can fit the new data in the background.
+                async_fit=model.is_fitted,
             )
         X_pred = row.to_frame().T
         try:
@@ -91,13 +94,14 @@ class Predictor:
             print("dtypes:\n", X_pred.dtypes)
             raise e
 
-    def ensure_model_is_fit(
+    def prefit_model(
         self,
         attribute: Literal["action", "raise", "prob", "rank"],
         player_name: Union[str, None],
         relative_weight_player=1,
         opponent_name: Union[str, None] = None,
         relative_weight_opponent=1,
+        async_fit=False,
     ):
         model = self._models[attribute].get(player_name)
         if model is None:
@@ -109,4 +113,5 @@ class Predictor:
             relative_weight_player,
             opponent_name,
             relative_weight_opponent,
+            async_fit=async_fit,
         )

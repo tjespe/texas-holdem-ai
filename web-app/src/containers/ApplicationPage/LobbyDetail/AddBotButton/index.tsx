@@ -16,7 +16,8 @@ interface Props {
 
 export function AddBotButton({ onAddBot }: Props) {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [defaultBotType, setDefaultBotType] = useState<BotType>("max_ev"); // Default bot type
+  const [defaultBotType, setDefaultBotType] =
+    useState<BotType>("max_ev_and_mocker"); // Default bot type
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMenuAnchor(event.currentTarget);

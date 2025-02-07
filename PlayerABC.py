@@ -27,6 +27,15 @@ class Player(ABC):
         # By default, do nothing
         pass
 
+    def bet_rejected(self, from_state: State, bet: int, reason: str):
+        """
+        This method is called if the player's bet is rejected by the game
+        manager. This can happen if they raise by less than the big blind, for
+        example.
+        """
+        # By default, do nothing
+        pass
+
     def round_over(self, new_state: State, prev_state: State):
         """
         This method is called when the round is over, in case the player wants

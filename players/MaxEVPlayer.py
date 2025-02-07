@@ -165,29 +165,34 @@ class MaxEVPlayer(Player):
         print("_", end="", flush=True)
         return res
 
-    def ensure_model_is_fit(
-        self, attribute: Literal["prob", "rank", "action", "raise"], player_name: str
+    def prefit_model(
+        self,
+        attribute: Literal["prob", "rank", "action", "raise"],
+        player_name: str,
+        fit_async=False,
     ):
-        self.predictor.ensure_model_is_fit(
+        self.predictor.prefit_model(
             attribute,
             player_name,
             self.rel_weight_player_in_reg,
             self.name,
             self.rel_weight_opponent_in_reg,
+            async_fit=fit_async,
         )
 
-    def ensure_all_models_are_fit(self):
+    def prefit_all_models(self, fit_async=False):
         for attribute in ["prob", "rank", "action", "raise"]:
             for player_name in self.player_names:
                 if player_name == self.name:
                     continue
-                self.ensure_model_is_fit(attribute, player_name)
+                self.prefit_model(attribute, player_name, fit_async)
 
     def get_to_know_each_other(self, players: list[Player]):
         self.player_names = [p.name for p in players]
         self.player_types = [p.__class__.__name__ for p in players]
         self.player_probs = np.ones(len(self.player_names)) / len(self.player_names)
         self.predicted_ranks = np.zeros(len(self.player_names))
+        self.prefit_all_models(fit_async=True)
 
     def round_over(self, state: State, prev_state: State):
         self.player_probs = np.array(state.player_is_active) / np.sum(
@@ -196,6 +201,9 @@ class MaxEVPlayer(Player):
         self.predicted_ranks = np.zeros(len(state.player_is_active))
 
     def observe_bet(self, from_state: State, bet: int, was_blind=False):
+        # Don't do anything if we have folded
+        if from_state.player_is_folded[self.index]:
+            return
         if was_blind:
             return
         player_i = from_state.current_player_i
@@ -628,7 +636,7 @@ class MaxEVPlayer(Player):
 
     def play(self, state: State) -> int:
         debug_print("\n\n")
-        self.ensure_all_models_are_fit()
+        self.prefit_all_models()
         self.risk_aversion = np.random.normal(1, 0.05)
         debug_print("Using risk aversuon", self.risk_aversion)
         # Disable any df processing and fitting while we calculate the bet, because

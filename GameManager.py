@@ -87,8 +87,9 @@ class GameManager:
                         "\n@@@@@@@@@@@@@@@@@@@@@@@@\nBetting rules violation:\n@@@@@@@@@@@@@@@@@@@@@@@@\n",
                         e,
                     )
+                    player.bet_rejected(from_state, bet, str(e))
                     if isinstance(player, HumanPlayer):
-                        sleep(3)
+                        input("Press enter to continue")
         if print_state:
             os.system("clear")
             print(self.state.get_cli_repr(self.player_names))

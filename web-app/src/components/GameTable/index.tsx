@@ -1,19 +1,18 @@
-import { useCallback, useState } from "react";
 import {
   Box,
   Button,
-  Stack,
-  Typography,
   Card,
   CardContent,
   Grid,
+  Stack,
   TextField,
+  Typography,
 } from "@mui/material";
-import { useParams } from "react-router-dom";
-import { useWebSocket } from "../hooks/useGameWebSocket";
-import { GameState, Player } from "../schemas/messages";
-import { useAuthContext } from "../contexts/AuthContext";
-import { PlayingCard } from "./PlayingCard";
+import { useCallback, useState } from "react";
+import { useAuthContext } from "../../contexts/AuthContext";
+import { ShowDownHand, useGameWebSocket } from "../../hooks/useGameWebSocket";
+import { GameState, Player } from "../../schemas/messages";
+import { PlayingCard } from "../PlayingCard";
 
 export const GameTable: React.FC = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -21,16 +20,17 @@ export const GameTable: React.FC = () => {
   const [ourTurn, setOurTurn] = useState(false);
   const [players, setPlayers] = useState<Player[]>([]);
   const [hand, setHand] = useState<number[]>([]);
-  const { lobbyId } = useParams();
   const [turn, setTurn] = useState(0);
-  const [allHands, setAllHands] = useState<
-    (number[] | null | undefined)[] | undefined
-  >(undefined);
+  const [allHands, setAllHands] = useState<(ShowDownHand | null)[] | undefined>(
+    undefined
+  );
+  const [winners, setWinners] = useState<number[] | undefined>([]);
   const { username } = useAuthContext();
   const ourIndex = players.findIndex((player) => player.name === username);
   const [terminalState, setTerminalState] = useState<GameState | null>();
+  const [error, setError] = useState<string | null>(null);
 
-  const { sendMessage } = useWebSocket(
+  const { sendMessage } = useGameWebSocket(
     useCallback((msg) => {
       switch (msg.type) {
         case "PLAY_REQUEST":
@@ -66,6 +66,12 @@ export const GameTable: React.FC = () => {
           setGameState(msg.state);
           setTerminalState(msg.state);
           setAllHands(msg.all_hands);
+          setWinners(msg.winners);
+          break;
+        case "BET_REJECTED":
+          setOurTurn(true);
+          setError(msg.message);
+          setGameState(msg.from_state);
           break;
         default:
           console.log("Unknown message type:", msg);
@@ -111,7 +117,7 @@ export const GameTable: React.FC = () => {
   const callAmount = highestBet - ourBet;
   const minRaise = highestBet + (gameState?.big_blind || 0);
 
-  const displayState = terminalState ?? gameState;
+  const displayState = terminalState?.is_terminal ? terminalState : gameState;
 
   console.log(turn);
 
@@ -123,12 +129,14 @@ export const GameTable: React.FC = () => {
       {displayState?.is_terminal && (
         <Typography variant="h4">Round Over!</Typography>
       )}
+      {error && <Typography color="error">{error}</Typography>}
       {/* Players positioned around the table */}
       <Grid container justifyContent="center" alignItems="center" spacing={2}>
         {players.map((player) => {
           const folded = displayState?.player_is_folded[player.index];
           const stack = displayState?.player_piles[player.index];
           const bet = displayState?.bet_in_stage[player.index];
+          const hand = allHands && allHands[player.index];
           return (
             <Grid key={player.index} item sx={{ position: "relative" }}>
               <Card
@@ -179,6 +187,23 @@ export const GameTable: React.FC = () => {
                   <Typography variant="body2">
                     Bet in {displayState?.stage}: {bet}
                   </Typography>
+                  {terminalState && hand && (
+                    <Stack direction="column" spacing={1}>
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        justifyContent="center"
+                      >
+                        {hand.cards?.map((card) => (
+                          <PlayingCard card={card} key={card} />
+                        ))}
+                      </Stack>
+                      <Typography variant="caption">{hand.rank}</Typography>
+                      <Typography variant="h6">
+                        {winners?.includes(player.index) ? "Winner!" : "Loser"}
+                      </Typography>
+                    </Stack>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -215,7 +240,7 @@ export const GameTable: React.FC = () => {
       </Stack>
 
       {/* Your hand */}
-      {ourTurn && !terminalState && (
+      {ourTurn && !displayState?.is_terminal && (
         <Stack>
           <Typography variant="h6">Your Hand</Typography>
           <Stack direction="row" justifyContent="center" spacing={1}>
@@ -227,7 +252,7 @@ export const GameTable: React.FC = () => {
       )}
 
       {/* Betting Controls */}
-      {ourTurn && (
+      {ourTurn && !displayState?.is_terminal && (
         <Stack spacing={1}>
           <Typography variant="h6">Your Move</Typography>
           <Stack direction="row" justifyContent="center" spacing={2}>
@@ -267,7 +292,7 @@ export const GameTable: React.FC = () => {
         </Stack>
       )}
 
-      {terminalState && (
+      {displayState?.is_terminal && (
         <Stack>
           <Stack direction="row" justifyContent="center" spacing={1}>
             <Button
