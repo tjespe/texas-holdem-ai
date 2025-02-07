@@ -96,7 +96,7 @@ export const GameTable: React.FC = () => {
       )}
       {/* Players positioned around the table */}
       <Grid container justifyContent="center" alignItems="center" spacing={2}>
-        {players.map((player, index) => {
+        {players.map((player) => {
           const folded = gameState?.player_is_folded[player.index];
           const stack = gameState?.player_piles[player.index];
           const bet = gameState?.bet_in_stage[player.index];
@@ -136,7 +136,9 @@ export const GameTable: React.FC = () => {
                       variant="h5"
                       color="error"
                     >
-                      Folded
+                      {stack !== undefined && stack < gameState.big_blind
+                        ? "Bust"
+                        : "Folded"}
                     </Typography>
                   </Box>
                 )}
