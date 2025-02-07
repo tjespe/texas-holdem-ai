@@ -201,7 +201,7 @@ def start_lobby(lobby_id: str):
     # so it doesn't block the main FastAPI event loop.
     def run_game():
         # This might do multiple rounds, etc.
-        gm.play_round(print_state=False, sleep=0)
+        gm.play_round(print_state=False, sleep=0.5)
 
     thread = threading.Thread(target=run_game, daemon=True)
     thread.start()

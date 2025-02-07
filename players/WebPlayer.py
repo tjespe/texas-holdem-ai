@@ -41,6 +41,7 @@ class WebPlayer(Player):
 
         # Now block until we get a bet from the client:
         bet = self._bet_queue.get()  # blocks this thread
+        print(f"Placing bet: {bet}")
         return bet
 
     def set_bet_from_client(self, bet: int):

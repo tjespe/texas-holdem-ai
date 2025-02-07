@@ -12,32 +12,10 @@ import {
 import { useParams } from "react-router-dom";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { GameState, Player } from "../schemas/messages";
+import { useAuthContext } from "../contexts/AuthContext";
+import { PlayingCard } from "./PlayingCard";
 
 const WS_BASE_URL = import.meta.env.VITE_WS_URL;
-
-const getSuit = (card: number) => {
-  const suits = ["♠", "♣", "♦", "♥"];
-  return suits[Math.floor(card / 13)];
-};
-
-const getRank = (card: number) => {
-  const ranks = [
-    "A",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "J",
-    "Q",
-    "K",
-  ];
-  return ranks[card % 13];
-};
 
 export const GameTable: React.FC = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -50,6 +28,8 @@ export const GameTable: React.FC = () => {
   const [allHands, setAllHands] = useState<
     (number[] | null | undefined)[] | undefined
   >(undefined);
+  const { username } = useAuthContext();
+  const ourIndex = players.findIndex((player) => player.name === username);
 
   const wsUrl = `${WS_BASE_URL}/lobbies/${lobbyId}?token=${localStorage.token}`;
   const { sendMessage } = useWebSocket(wsUrl, (msg) => {
@@ -87,14 +67,22 @@ export const GameTable: React.FC = () => {
   });
 
   const handleBet = (betAmount: number) => {
+    console.log("Betting", betAmount);
+
     sendMessage({ type: "USER_BET", bet: betAmount });
     setOurTurn(false);
     setBetInput("");
     setTurn((turn + 1) % players.length);
   };
 
-  const highestBet = Math.max(...(gameState?.bet_in_game || [0]));
-  const ourBet = gameState?.bet_in_game[turn] || 0;
+  const handleRaise = (raiseTo: number) => {
+    console.log("Raising to", raiseTo);
+    handleBet(raiseTo - callAmount);
+  };
+
+  const highestBet = Math.max(...(gameState?.bet_in_stage || [0]));
+  const ourBet = gameState?.bet_in_stage[ourIndex] || 0;
+
   const callAmount = highestBet - ourBet;
   const minRaise = highestBet + (gameState?.big_blind || 0);
 
@@ -103,60 +91,94 @@ export const GameTable: React.FC = () => {
       spacing={2}
       sx={{ maxWidth: "800px", margin: "auto", textAlign: "center", py: 2 }}
     >
-      <Typography variant="h4">Poker Table</Typography>
-
-      {/* Players arranged in a table layout */}
-      <Grid container justifyContent="center" spacing={2}>
-        {players.map((player, index) => (
-          <Grid key={player.index} item xs={4}>
-            <Card
-              sx={{
-                backgroundColor: gameState?.player_is_folded[player.index]
-                  ? "#444"
-                  : "#222",
-                border:
-                  turn === player.index ? "2px solid gold" : "1px solid #666",
-                textAlign: "center",
-              }}
-            >
-              <CardContent>
-                <Typography fontWeight="bold">{player.name}</Typography>
-                <Typography variant="body2">
-                  Stack: {gameState?.player_piles[player.index]} chips
-                </Typography>
-                <Typography variant="body2">
-                  Bet: {gameState?.bet_in_game[player.index]}
-                </Typography>
-                {gameState?.player_is_folded[player.index] && (
-                  <Typography color="error">Folded</Typography>
+      {gameState?.is_terminal && (
+        <Typography variant="h4">Round Over!</Typography>
+      )}
+      {/* Players positioned around the table */}
+      <Grid container justifyContent="center" alignItems="center" spacing={2}>
+        {players.map((player, index) => {
+          const folded = gameState?.player_is_folded[player.index];
+          const stack = gameState?.player_piles[player.index];
+          const bet = gameState?.bet_in_stage[player.index];
+          return (
+            <Grid key={player.index} item sx={{ position: "relative" }}>
+              <Card
+                sx={{
+                  backgroundColor: folded ? "#444" : "#222",
+                  border:
+                    turn === player.index ? "2px solid gold" : "1px solid #666",
+                  textAlign: "center",
+                  padding: "4px",
+                  position: "relative",
+                }}
+              >
+                {folded && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      backgroundColor: "rgba(0, 0, 0, 0.5)",
+                      color: "white",
+                      padding: "2px",
+                      borderRadius: "0 0 4px 0",
+                      width: "100%",
+                      height: "100%",
+                    }}
+                    justifyContent="center"
+                    alignContent="center"
+                  >
+                    <Typography
+                      sx={{
+                        transform: "rotate(-30deg)",
+                        textShadow: "1px 1px 2px black",
+                      }}
+                      variant="h5"
+                      color="error"
+                    >
+                      Folded
+                    </Typography>
+                  </Box>
                 )}
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+                <CardContent>
+                  <Typography fontWeight="bold">{player.name}</Typography>
+                  <Typography variant="body2">Stack: {stack} chips</Typography>
+                  <Typography variant="body2">
+                    Bet in {gameState?.stage}: {bet}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          );
+        })}
       </Grid>
 
-      {/* Table cards */}
-      <Stack direction="row" justifyContent="center" spacing={1} sx={{ py: 2 }}>
-        {gameState?.public_cards.map((card, index) => (
-          <Box
-            key={index}
-            sx={{
-              width: 50,
-              height: 70,
-              backgroundColor: "#fff",
-              borderRadius: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "1.5rem",
-              color: ["♠", "♣"].includes(getSuit(card)) ? "black" : "red",
-            }}
-          >
-            {getRank(card)}
-            {getSuit(card)}
-          </Box>
-        ))}
+      {/* Poker table with public cards and pot */}
+      <Stack direction="row" width="100%">
+        <Box
+          height={150}
+          maxWidth={500}
+          width="100%"
+          bgcolor="primary.main"
+          sx={{
+            borderRadius: "20px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
+            margin: "auto",
+          }}
+        >
+          <Typography variant="h6" color="white">
+            Pot: {gameState?.pot} chips
+          </Typography>
+          <Stack direction="row" spacing={1} sx={{ py: 1 }}>
+            {gameState?.public_cards.map((card) => (
+              <PlayingCard card={card} key={card} />
+            ))}
+          </Stack>
+        </Box>
       </Stack>
 
       {/* Your hand */}
@@ -164,24 +186,8 @@ export const GameTable: React.FC = () => {
         <Stack>
           <Typography variant="h6">Your Hand</Typography>
           <Stack direction="row" justifyContent="center" spacing={1}>
-            {hand.map((card, index) => (
-              <Box
-                key={index}
-                sx={{
-                  width: 50,
-                  height: 70,
-                  backgroundColor: "#fff",
-                  borderRadius: 2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "1.5rem",
-                  color: ["♠", "♣"].includes(getSuit(card)) ? "black" : "red",
-                }}
-              >
-                {getRank(card)}
-                {getSuit(card)}
-              </Box>
+            {hand.map((card) => (
+              <PlayingCard card={card} key={card} />
             ))}
           </Stack>
         </Stack>
@@ -219,42 +225,12 @@ export const GameTable: React.FC = () => {
             <Button
               variant="contained"
               color="secondary"
-              onClick={() => handleBet(parseInt(betInput, 10))}
-              disabled={parseInt(betInput, 10) < minRaise}
+              onClick={() => handleRaise(parseInt(betInput, 10))}
+              disabled={!betInput || parseInt(betInput, 10) < minRaise}
             >
               Raise
             </Button>
           </Stack>
-        </Stack>
-      )}
-
-      {/* Showdown hands */}
-      {allHands && (
-        <Stack>
-          <Typography variant="h6">Showdown!</Typography>
-          {allHands.map((hand, idx) => (
-            <Stack key={idx}>
-              <Typography fontWeight="bold">
-                {players[idx].name}'s Hand:
-              </Typography>
-              <Stack direction="row" justifyContent="center" spacing={1}>
-                {hand?.map((card, i) => (
-                  <Box
-                    key={i}
-                    sx={{
-                      width: 50,
-                      height: 70,
-                      backgroundColor: "#fff",
-                      textAlign: "center",
-                    }}
-                  >
-                    {getRank(card)}
-                    {getSuit(card)}
-                  </Box>
-                ))}
-              </Stack>
-            </Stack>
-          ))}
         </Stack>
       )}
     </Stack>

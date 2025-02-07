@@ -76,6 +76,7 @@ class GameManager:
                     player.observe_bet(from_state, blind_bet, was_blind=True)
             else:
                 bet = player.play(self.state)
+                print(f"{player.name} bets {bet}")
                 try:
                     from_state = self.state
                     self.state = place_bet(from_state, bet)
