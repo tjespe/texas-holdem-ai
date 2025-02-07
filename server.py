@@ -38,6 +38,9 @@ app.add_middleware(
 # { lobby_id: {"players": [Union[str, dict]], "started": bool} }
 lobbies = {}
 
+# Stores active WebSocket connections per lobby
+lobby_connections: Dict[str, List[WebSocket]] = defaultdict(list)
+
 # Holds references to WebPlayer objects:
 # { lobby_id: { username: WebPlayer(...) } }
 web_players: dict[str, dict[str, WebPlayer]] = {}
@@ -136,37 +139,46 @@ def get_lobby_details(lobby_id: str):
 
 
 @app.post("/lobbies/{lobby_id}/join")
-def join_lobby(lobby_id: str, user: str = Depends(get_current_user)):
+async def join_lobby(lobby_id: str, user: str = Depends(get_current_user)):
     lobby = lobbies[lobby_id]
     if lobby["started"]:
-        return {"error": "Game already started"}
-    if user in lobby["players"]:
-        return {"result": "ok", "players": lobby["players"], "details": "Already in"}
-    lobby["players"].append(user)
+        raise HTTPException(status_code=400, detail="Game already started")
+
+    if user not in lobby["players"]:
+        lobby["players"].append(user)
+        await broadcast_lobby_update(lobby_id)
+
     return {"result": "ok", "players": lobby["players"]}
 
 
 @app.post("/lobbies/{lobby_id}/leave")
-def leave_lobby(lobby_id: str, user: str = Depends(get_current_user)):
+async def leave_lobby(lobby_id: str, user: str = Depends(get_current_user)):
     lobby = lobbies[lobby_id]
     if lobby["started"]:
-        return {"error": "Game already started"}
-    lobby["players"].remove(user)
+        raise HTTPException(status_code=400, detail="Game already started")
+
+    if user in lobby["players"]:
+        lobby["players"].remove(user)
+        await broadcast_lobby_update(lobby_id)
+
     return {"result": "ok", "players": lobby["players"]}
 
 
 @app.post("/lobbies/{lobby_id}/add_bot")
-def add_bot(lobby_id: str, bot_type: str):
+async def add_bot(lobby_id: str, bot_type: str):
     lobby = lobbies[lobby_id]
     if lobby["started"]:
-        return {"error": "Game already started"}
-    # Mark as bot
-    lobby["players"].append({"type": "bot", "bot_type": bot_type})
+        raise HTTPException(status_code=400, detail="Game already started")
+
+    bot = {"type": "bot", "bot_type": bot_type}
+    lobby["players"].append(bot)
+    await broadcast_lobby_update(lobby_id)
+
     return {"result": "ok", "players": lobby["players"]}
 
 
 @app.post("/lobbies/{lobby_id}/start")
-def start_lobby(lobby_id: str):
+async def start_lobby(lobby_id: str):
     lobby = lobbies[lobby_id]
     lobby["started"] = True
 
@@ -206,6 +218,7 @@ def start_lobby(lobby_id: str):
     thread = threading.Thread(target=run_game, daemon=True)
     thread.start()
 
+    await broadcast_lobby_update(lobby_id)
     return {"result": "game_started"}
 
 
@@ -218,7 +231,7 @@ async def get_user_from_token(token: str):
 sent_per_webplayer = defaultdict(list)
 
 
-@app.websocket("/ws/lobbies/{lobby_id}")
+@app.websocket("/ws/games/{lobby_id}")
 async def game_socket(
     websocket: WebSocket, lobby_id: str, token: str = Depends(get_user_from_token)
 ):
@@ -291,3 +304,45 @@ async def game_socket(
         pass
     except Exception as e:
         print(f"WebSocket error: {e}")
+
+
+@app.websocket("/ws/lobbies/{lobby_id}")
+async def lobby_websocket(websocket: WebSocket, lobby_id: str):
+    """WebSocket for real-time lobby updates."""
+    await websocket.accept()
+
+    if lobby_id not in lobby_connections:
+        lobby_connections[lobby_id] = []
+    lobby_connections[lobby_id].append(websocket)
+
+    try:
+        while True:
+            # Keep connection open and listen for messages (even though we don't expect any)
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        # Remove the client from the lobby's connection list when they disconnect
+        lobby_connections[lobby_id].remove(websocket)
+
+
+async def broadcast_lobby_update(lobby_id: str):
+    """Send the latest lobby state to all connected clients in that lobby."""
+    if lobby_id not in lobby_connections or not lobby_connections[lobby_id]:
+        return
+
+    lobby = lobbies[lobby_id]
+    message = {
+        "type": "LOBBY_UPDATE",
+        "lobby_id": lobby_id,
+        "started": lobby["started"],
+        "players": lobby["players"],
+    }
+
+    # Send the message to all connected WebSockets asynchronously
+    for websocket in list(
+        lobby_connections[lobby_id]
+    ):  # Copy list to avoid modifying it during iteration
+        try:
+            await websocket.send_text(json.dumps(message))
+        except Exception as e:
+            print(f"Failed to send WebSocket message: {e}")
+            lobby_connections[lobby_id].remove(websocket)  # Remove broken connections

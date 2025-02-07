@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Box,
   Button,
@@ -10,12 +10,10 @@ import {
   TextField,
 } from "@mui/material";
 import { useParams } from "react-router-dom";
-import { useWebSocket } from "../hooks/useWebSocket";
+import { useWebSocket } from "../hooks/useGameWebSocket";
 import { GameState, Player } from "../schemas/messages";
 import { useAuthContext } from "../contexts/AuthContext";
 import { PlayingCard } from "./PlayingCard";
-
-const WS_BASE_URL = import.meta.env.VITE_WS_URL;
 
 export const GameTable: React.FC = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -32,42 +30,48 @@ export const GameTable: React.FC = () => {
   const ourIndex = players.findIndex((player) => player.name === username);
   const [terminalState, setTerminalState] = useState<GameState | null>();
 
-  const wsUrl = `${WS_BASE_URL}/lobbies/${lobbyId}?token=${localStorage.token}`;
-  const { sendMessage } = useWebSocket(wsUrl, (msg) => {
-    switch (msg.type) {
-      case "PLAY_REQUEST":
-        setGameState(msg.state);
-        setHand(msg.hand);
-        setOurTurn(true);
-        break;
-      case "OBSERVE_BET":
-        setGameState(msg.state);
-        setOurTurn(false);
-        setTurn(() => {
-          let nextPlayer = (msg.player_index + 1) % players.length;
-          while (msg.state.player_is_folded[nextPlayer]) {
-            nextPlayer = (nextPlayer + 1) % players.length;
-          }
-          return nextPlayer;
-        });
-        break;
-      case "ROUND_OVER":
-        setGameState(msg.state);
-        setTerminalState(msg.state);
-        setOurTurn(false);
-        break;
-      case "GET_TO_KNOW_EACH_OTHER":
-        setPlayers(msg.players);
-        break;
-      case "SHOWDOWN":
-        setGameState(msg.state);
-        setTerminalState(msg.state);
-        setAllHands(msg.all_hands);
-        break;
-      default:
-        console.log("Unknown message type:", msg);
-    }
-  });
+  const { sendMessage } = useWebSocket(
+    useCallback((msg) => {
+      switch (msg.type) {
+        case "PLAY_REQUEST":
+          setGameState(msg.state);
+          setHand(msg.hand);
+          setOurTurn(true);
+          break;
+        case "OBSERVE_BET":
+          setGameState(msg.state);
+          setOurTurn(false);
+          setTurn((prev) => {
+            const numPlayers = msg.state.player_piles.length;
+            let nextPlayer = (msg.player_index + 1) % numPlayers;
+            while (msg.state.player_is_folded[nextPlayer]) {
+              nextPlayer = (nextPlayer + 1) % numPlayers;
+            }
+            if (Number.isNaN(nextPlayer)) {
+              console.error("Next player is NaN", msg);
+              return prev;
+            }
+            return nextPlayer;
+          });
+          break;
+        case "ROUND_OVER":
+          setGameState(msg.state);
+          setTerminalState(msg.state);
+          setOurTurn(false);
+          break;
+        case "GET_TO_KNOW_EACH_OTHER":
+          setPlayers(msg.players);
+          break;
+        case "SHOWDOWN":
+          setGameState(msg.state);
+          setTerminalState(msg.state);
+          setAllHands(msg.all_hands);
+          break;
+        default:
+          console.log("Unknown message type:", msg);
+      }
+    }, [])
+  );
 
   const handleBet = (betAmount: number) => {
     console.log("Betting", betAmount);
@@ -75,7 +79,10 @@ export const GameTable: React.FC = () => {
     sendMessage({ type: "USER_BET", bet: betAmount });
     setOurTurn(false);
     setBetInput("");
-    setTurn((turn + 1) % players.length);
+    const nextPlayer = (turn + 1) % players.length;
+    if (!Number.isNaN(nextPlayer)) {
+      setTurn(nextPlayer);
+    }
     setGameState(
       (prev) =>
         prev && {

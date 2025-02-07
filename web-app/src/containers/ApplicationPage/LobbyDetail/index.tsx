@@ -14,52 +14,24 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   addBot,
-  getLobbyDetail,
   joinLobby,
   leaveLobby,
-  Lobby,
   startLobby,
 } from "../../../api/lobbies";
-import { useAuthContext } from "../../../contexts/AuthContext";
-import { AddBotButton } from "./AddBotButton";
 import { GameTable } from "../../../components/GameTable";
+import { useAuthContext } from "../../../contexts/AuthContext";
+import { useLobbyState } from "../../../hooks/useLobbyState";
+import { AddBotButton } from "./AddBotButton";
 
 export function LobbyDetail() {
   const { username } = useAuthContext();
   const { lobbyId } = useParams<{ lobbyId: string }>();
   const navigate = useNavigate();
 
-  const [lobby, setLobby] = useState<Lobby | null>(null);
+  const lobbyState = useLobbyState();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
-
-  const fetchLobby = useCallback(
-    async function () {
-      if (!lobbyId) {
-        setError("No lobby ID provided");
-        return;
-      }
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getLobbyDetail(lobbyId);
-        setLobby(data);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load lobby details");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [lobbyId]
-  );
-
-  // Fetch lobby details on mount or whenever lobbyId changes
-  useEffect(() => {
-    fetchLobby();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lobbyId]);
 
   // Join the lobby as the current user (if not already in players)
   const handleJoin = useCallback(
@@ -77,9 +49,6 @@ export function LobbyDetail() {
         const resp = await joinLobby(lobbyId);
         if (resp.error) {
           setError(resp.error);
-        } else {
-          // Refresh
-          await fetchLobby();
         }
       } catch (err) {
         console.error(err);
@@ -88,7 +57,7 @@ export function LobbyDetail() {
         setLoading(false);
       }
     },
-    [fetchLobby, lobbyId, username]
+    [lobbyId, username]
   );
 
   useEffect(
@@ -162,9 +131,6 @@ export function LobbyDetail() {
       const resp = await addBot(lobbyId, botType);
       if (resp.error) {
         setError(resp.error);
-      } else {
-        // Refresh
-        await fetchLobby();
       }
     } catch (err) {
       console.error(err);
@@ -185,9 +151,6 @@ export function LobbyDetail() {
       const resp = await startLobby(lobbyId);
       if (resp.error) {
         setError(resp.error);
-      } else {
-        // Refresh
-        await fetchLobby();
       }
     } catch (err) {
       console.error(err);
@@ -205,16 +168,29 @@ export function LobbyDetail() {
       </Box>
     );
   }
-  if (error) {
+  if (lobbyState.error || error) {
     return (
       <Box sx={{ textAlign: "center", mt: 2 }}>
-        <Typography color="error">{error}</Typography>
+        <Typography color="error">{lobbyState.error || error}</Typography>
+      </Box>
+    );
+  }
+  if (lobbyState.loading) {
+    return (
+      <Box sx={{ textAlign: "center", mt: 2 }}>
+        <CircularProgress />
       </Box>
     );
   }
 
+  const { lobby } = lobbyState;
+
   if (!lobby) {
-    return null; // or some empty state
+    return (
+      <Typography color="error">
+        An unexpected error occurred. Try to refresh the page or log out.
+      </Typography>
+    );
   }
 
   // Check if user is in the list
