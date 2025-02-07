@@ -43,7 +43,7 @@ export const GameTable: React.FC = () => {
         setGameState(msg.state);
         setOurTurn(false);
         setTurn(() => {
-          let nextPlayer = msg.player_index + 1;
+          let nextPlayer = (msg.player_index + 1) % players.length;
           while (msg.state.player_is_folded[nextPlayer]) {
             nextPlayer = (nextPlayer + 1) % players.length;
           }
