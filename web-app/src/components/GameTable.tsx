@@ -30,6 +30,7 @@ export const GameTable: React.FC = () => {
   >(undefined);
   const { username } = useAuthContext();
   const ourIndex = players.findIndex((player) => player.name === username);
+  const [terminalState, setTerminalState] = useState<GameState | null>();
 
   const wsUrl = `${WS_BASE_URL}/lobbies/${lobbyId}?token=${localStorage.token}`;
   const { sendMessage } = useWebSocket(wsUrl, (msg) => {
@@ -52,6 +53,7 @@ export const GameTable: React.FC = () => {
         break;
       case "ROUND_OVER":
         setGameState(msg.state);
+        setTerminalState(msg.state);
         setOurTurn(false);
         break;
       case "GET_TO_KNOW_EACH_OTHER":
@@ -59,6 +61,7 @@ export const GameTable: React.FC = () => {
         break;
       case "SHOWDOWN":
         setGameState(msg.state);
+        setTerminalState(msg.state);
         setAllHands(msg.all_hands);
         break;
       default:
@@ -73,6 +76,21 @@ export const GameTable: React.FC = () => {
     setOurTurn(false);
     setBetInput("");
     setTurn((turn + 1) % players.length);
+    setGameState(
+      (prev) =>
+        prev && {
+          ...prev,
+          bet_in_stage: prev?.bet_in_stage.map((bet, i) =>
+            i === ourIndex ? bet + betAmount : bet
+          ),
+          bet_in_game: prev?.bet_in_game.map((bet, i) =>
+            i === ourIndex ? bet + betAmount : bet
+          ),
+          player_piles: prev?.player_piles.map((pile, i) =>
+            i === ourIndex ? pile - betAmount : pile
+          ),
+        }
+    );
   };
 
   const handleRaise = (raiseTo: number) => {
@@ -86,27 +104,33 @@ export const GameTable: React.FC = () => {
   const callAmount = highestBet - ourBet;
   const minRaise = highestBet + (gameState?.big_blind || 0);
 
+  const displayState = terminalState ?? gameState;
+
+  console.log(turn);
+
   return (
     <Stack
       spacing={2}
       sx={{ maxWidth: "800px", margin: "auto", textAlign: "center", py: 2 }}
     >
-      {gameState?.is_terminal && (
+      {displayState?.is_terminal && (
         <Typography variant="h4">Round Over!</Typography>
       )}
       {/* Players positioned around the table */}
       <Grid container justifyContent="center" alignItems="center" spacing={2}>
         {players.map((player) => {
-          const folded = gameState?.player_is_folded[player.index];
-          const stack = gameState?.player_piles[player.index];
-          const bet = gameState?.bet_in_stage[player.index];
+          const folded = displayState?.player_is_folded[player.index];
+          const stack = displayState?.player_piles[player.index];
+          const bet = displayState?.bet_in_stage[player.index];
           return (
             <Grid key={player.index} item sx={{ position: "relative" }}>
               <Card
                 sx={{
                   backgroundColor: folded ? "#444" : "#222",
                   border:
-                    turn === player.index ? "2px solid gold" : "1px solid #666",
+                    !terminalState && turn === player.index
+                      ? "2px solid gold"
+                      : "1px solid #666",
                   textAlign: "center",
                   padding: "4px",
                   position: "relative",
@@ -136,7 +160,7 @@ export const GameTable: React.FC = () => {
                       variant="h5"
                       color="error"
                     >
-                      {stack !== undefined && stack < gameState.big_blind
+                      {stack !== undefined && stack < displayState.big_blind
                         ? "Bust"
                         : "Folded"}
                     </Typography>
@@ -146,7 +170,7 @@ export const GameTable: React.FC = () => {
                   <Typography fontWeight="bold">{player.name}</Typography>
                   <Typography variant="body2">Stack: {stack} chips</Typography>
                   <Typography variant="body2">
-                    Bet in {gameState?.stage}: {bet}
+                    Bet in {displayState?.stage}: {bet}
                   </Typography>
                 </CardContent>
               </Card>
@@ -173,10 +197,10 @@ export const GameTable: React.FC = () => {
           }}
         >
           <Typography variant="h6" color="white">
-            Pot: {gameState?.pot} chips
+            Pot: {displayState?.pot} chips
           </Typography>
           <Stack direction="row" spacing={1} sx={{ py: 1 }}>
-            {gameState?.public_cards.map((card) => (
+            {displayState?.public_cards.map((card) => (
               <PlayingCard card={card} key={card} />
             ))}
           </Stack>
@@ -184,7 +208,7 @@ export const GameTable: React.FC = () => {
       </Stack>
 
       {/* Your hand */}
-      {ourTurn && (
+      {ourTurn && !terminalState && (
         <Stack>
           <Typography variant="h6">Your Hand</Typography>
           <Stack direction="row" justifyContent="center" spacing={1}>
@@ -231,6 +255,20 @@ export const GameTable: React.FC = () => {
               disabled={!betInput || parseInt(betInput, 10) < minRaise}
             >
               Raise
+            </Button>
+          </Stack>
+        </Stack>
+      )}
+
+      {terminalState && (
+        <Stack>
+          <Stack direction="row" justifyContent="center" spacing={1}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setTerminalState(null)}
+            >
+              Continue
             </Button>
           </Stack>
         </Stack>
