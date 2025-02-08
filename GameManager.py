@@ -14,6 +14,8 @@ from state_management import (
 )
 from db_interface import get_value, set_value
 
+from cpp_poker.cpp_poker import Oracle
+
 
 class GameManager:
     players: list[Player]
@@ -77,7 +79,17 @@ class GameManager:
                         from_state, blind_bet, self.state, was_blind=True
                     )
             else:
-                bet = player.play(self.state)
+                max_bet = Oracle.get_max_bet_allowed(
+                    self.state.player_has_played,
+                    self.state.current_player_i,
+                    self.state.bet_in_stage,
+                    self.state.player_piles,
+                    self.state.player_is_active,
+                )
+                if max_bet == 0:
+                    bet = 0
+                else:
+                    bet = player.play(self.state)
                 print(f"{player.name} bets {bet}")
                 try:
                     from_state = self.state
