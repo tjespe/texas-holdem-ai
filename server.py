@@ -1,4 +1,7 @@
 from collections import defaultdict
+from datetime import datetime, timedelta
+import os
+import jwt
 from fastapi import (
     Depends,
     FastAPI,
@@ -58,8 +61,6 @@ lobby_connections: Dict[str, List[WebSocket]] = defaultdict(list)
 # { lobby_id: { username: WebPlayer(...) } }
 web_players: dict[str, dict[str, WebPlayer]] = {}
 
-user_per_token = {}
-
 bots: list[type[Player]] = [
     MaxEVandHumanMocker,
     AwareRationalPlayerWithRandomStyle,
@@ -76,6 +77,12 @@ bots: list[type[Player]] = [
     RandomPlayer,
 ]
 
+SECRET_KEY = os.getenv("SECRET_POKER_AUTH_KEY")
+if not SECRET_KEY:
+    raise Exception("SECRET_POKER_AUTH_KEY environment variable not set")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 8  # 8 days
+
 
 def find_webplayer_object(lobby_id: str, username: str) -> WebPlayer:
     if lobby_id not in web_players:
@@ -90,11 +97,16 @@ class LoginRequest(BaseModel):
     password: str
 
 
+def create_access_token(username: str) -> str:
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode = {"sub": username, "exp": expire}
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
 @app.post("/login")
 def login(creds: LoginRequest):
     if authenticate_user(creds.username, creds.password):
-        token = uuid4().hex
-        user_per_token[token] = creds.username
+        token = create_access_token(creds.username)
         return {"result": "ok", "token": token}
     return {"error": "Invalid credentials"}
 
@@ -102,8 +114,7 @@ def login(creds: LoginRequest):
 @app.post("/register")
 def register(creds: LoginRequest):
     if register_user(creds.username, creds.password):
-        token = uuid4().hex
-        user_per_token[token] = creds.username
+        token = create_access_token(creds.username)
         return {"result": "ok", "token": token}
     return {"error": "Username already exists"}
 
@@ -114,12 +125,17 @@ def get_current_user(authorization: str = Header(...)) -> str:
     """
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid Authorization header")
-
     token = authorization.split(" ")[1]  # Extract token after "Bearer"
-    if token not in user_per_token:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-
-    return user_per_token[token]  # Return the username associated with the token
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if not username:
+            raise HTTPException(status_code=401, detail="Token missing username")
+        return username
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 @app.get("/users/me")
