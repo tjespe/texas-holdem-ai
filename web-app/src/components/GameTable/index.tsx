@@ -163,7 +163,7 @@ export const GameTable: React.FC = () => {
             raiseInputRef.current?.focus();
           }
         }
-        if (getReadyRequested && e.key === "Enter") {
+        if (getReadyRequested) {
           ready();
         }
       };
@@ -377,7 +377,7 @@ export const GameTable: React.FC = () => {
       {getReadyRequested && (
         <Stack>
           <Stack direction="row" justifyContent="center" spacing={1}>
-            <Tooltip title="Continue to next round (Enter)">
+            <Tooltip title="Press any key to continue">
               <Button
                 variant="contained"
                 color="primary"
