@@ -79,10 +79,9 @@ class Predictor:
         X_pred = row.to_frame().T
         try:
             if probabilities:
-                return (
-                    model.get_classes(),
-                    model.predict_proba(X_pred)[0],
-                )
+                probs = model.predict_proba(X_pred)[0]
+                class_names = model.get_classes()
+                return class_names, probs
             return model.predict(X_pred)[0]
         except Exception as e:
             print(f"Failed to predict {attribute} for {player_name}: {e}")

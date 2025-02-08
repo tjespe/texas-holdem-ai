@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 import numpy as np
 from PlayerABC import Player
 from State import State
@@ -40,6 +41,22 @@ class HumanMocker(Player):
 
     def get_to_know_each_other(self, players: list[Player]):
         self.opponent_names = [p.name for p in players if p is not self]
+        self.prefit_all_models()
+
+    def prefit_model(
+        self,
+        attribute: Literal["prob", "rank", "action", "raise"],
+    ):
+        self.predictor.prefit_model(
+            attribute,
+            self.mock,
+            self.rel_weight_player,
+            async_fit=True,
+        )
+
+    def prefit_all_models(self):
+        self.prefit_model("action")
+        self.prefit_model("raise")
 
     def _play(self, state: State) -> int:
         log("State:\n", state.get_cli_repr(self.opponent_names, short=True))
