@@ -119,13 +119,7 @@ def register(creds: LoginRequest):
     return {"error": "Username already exists"}
 
 
-def get_current_user(authorization: str = Header(...)) -> str:
-    """
-    Extract and validate the token from the Authorization header.
-    """
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Invalid Authorization header")
-    token = authorization.split(" ")[1]  # Extract token after "Bearer"
+def get_user_from_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -138,8 +132,19 @@ def get_current_user(authorization: str = Header(...)) -> str:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
+def get_current_user(authorization: str = Header(...)) -> str:
+    """
+    Extract and validate the token from the Authorization header.
+    """
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid Authorization header")
+    token = authorization.split(" ")[1]  # Extract token after "Bearer"
+    return get_user_from_token(token)
+
+
 @app.get("/users/me")
 def check_token(user: str = Depends(get_current_user)):
+    print("User is:", user)
     return {"user": user}
 
 
@@ -271,12 +276,6 @@ async def start_lobby(lobby_id: str):
 
     await broadcast_lobby_update(lobby_id)
     return {"result": "game_started"}
-
-
-async def get_user_from_token(token: str):
-    if token in user_per_token:
-        return user_per_token[token]
-    raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
 sent_per_webplayer = defaultdict(list)
