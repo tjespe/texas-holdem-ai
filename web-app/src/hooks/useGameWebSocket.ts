@@ -69,6 +69,14 @@ export const serverMessageSchema = z.discriminatedUnion("type", [
     bet: z.number(),
     reason: z.string(),
   }),
+  z.object({
+    type: z.literal("GAME_OVER"),
+    state: stateSchema,
+    winner: z.string(),
+  }),
+  z.object({
+    type: z.literal("GET_READY"),
+  }),
 ]);
 
 export type ServerMessage = z.infer<typeof serverMessageSchema>;

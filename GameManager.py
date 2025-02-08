@@ -109,8 +109,6 @@ class GameManager:
         self.round += 1
         for player in self.players:
             player.round_over(self.state, prev_state)
-        if any(isinstance(player, HumanPlayer) for player in self.players):
-            input("Press enter to continue...")
         bust_players = set()
         for i, player in enumerate(self.players):
             if self.state.player_piles[i] < self.state.big_blind:
@@ -127,5 +125,40 @@ class GameManager:
                 winner_list = []
             winner_list.append(winner.name)
             set_value("winners", winner_list)
-        else:
-            self.play_round(print_state=print_state, sleep=sleep)
+        if len(set(self.players) - bust_players) == 1:
+            # Only one player left, end the game
+            print("Game over!")
+            winner = list(set(self.players) - bust_players)[0]
+            print("Winner:", winner.name)
+            print("Final state:")
+            print(self.state.get_cli_repr(self.player_names))
+            winner_list = get_value("winners")
+            if winner_list is None:
+                winner_list = []
+            winner_list.append(winner.name)
+            set_value("winners", winner_list)
+            for player in self.players:
+                player.game_over(winner, self.state)
+            return
+        players_are_ready = {
+            player: False for player in self.players if player not in bust_players
+        }
+
+        def ready_callback(player: Player):
+            print(f"{player.name} is ready")
+            players_are_ready[player] = True
+            if all(players_are_ready.values()):
+                print("Starting next round")
+                self.play_round(print_state=print_state, sleep=sleep)
+            else:
+                print(
+                    "Still waiting for:",
+                    ", ".join(
+                        player.name
+                        for player, ready in players_are_ready.items()
+                        if not ready
+                    ),
+                )
+
+        for player in self.players:
+            player.get_ready(lambda: ready_callback(player))

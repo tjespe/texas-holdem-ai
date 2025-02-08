@@ -160,5 +160,9 @@ class HumanPlayer(Player):
         )
         return action
 
+    def get_ready(self, call_when_ready):
+        input("Press enter to continue...")
+        call_when_ready()
+
     def __repr__(self) -> str:
         return f"HumanPlayer('{self.name}')"

@@ -27,8 +27,8 @@ export const GameTable: React.FC = () => {
   const [winners, setWinners] = useState<number[] | undefined>([]);
   const { username } = useAuthContext();
   const ourIndex = players.findIndex((player) => player.name === username);
-  const [terminalState, setTerminalState] = useState<GameState | null>();
   const [error, setError] = useState<string | null>(null);
+  const [getReadyRequested, setGetReadyRequested] = useState(false);
 
   const { sendMessage } = useGameWebSocket(
     useCallback((msg) => {
@@ -57,7 +57,6 @@ export const GameTable: React.FC = () => {
           break;
         case "ROUND_OVER":
           setGameState(msg.state);
-          setTerminalState(msg.state);
           setOurTurn(false);
           break;
         case "GET_TO_KNOW_EACH_OTHER":
@@ -65,7 +64,6 @@ export const GameTable: React.FC = () => {
           break;
         case "SHOWDOWN":
           setGameState(msg.state);
-          setTerminalState(msg.state);
           setAllHands(msg.all_hands);
           setWinners(msg.winners);
           break;
@@ -73,6 +71,12 @@ export const GameTable: React.FC = () => {
           setOurTurn(true);
           setError(msg.message);
           setGameState(msg.from_state);
+          break;
+        case "GET_READY":
+          setGetReadyRequested(true);
+          break;
+        case "GAME_OVER":
+          console.log("Game over", msg);
           break;
         default:
           console.log("Unknown message type:", msg);
@@ -107,8 +111,12 @@ export const GameTable: React.FC = () => {
     );
   };
 
+  const ready = () => {
+    sendMessage({ type: "READY" });
+    setGetReadyRequested(false);
+  };
+
   const handleRaise = (raiseTo: number) => {
-    console.log("Raising to", raiseTo);
     handleBet(raiseTo - callAmount);
   };
 
@@ -118,32 +126,28 @@ export const GameTable: React.FC = () => {
   const callAmount = highestBet - ourBet;
   const minRaise = highestBet + (gameState?.big_blind || 0);
 
-  const displayState = terminalState?.is_terminal ? terminalState : gameState;
-
-  console.log(turn);
-
   return (
     <Stack
       spacing={2}
       sx={{ maxWidth: "800px", margin: "auto", textAlign: "center", py: 2 }}
     >
-      {displayState?.is_terminal && (
+      {gameState?.is_terminal && (
         <Typography variant="h4">Round Over!</Typography>
       )}
       {error && <Typography color="error">{error}</Typography>}
       {/* Players positioned around the table */}
       <Grid container justifyContent="center" alignItems="center" spacing={2}>
         {players.map((player) => {
-          const folded = displayState?.player_is_folded[player.index];
-          const stack = displayState?.player_piles[player.index];
-          const bet = displayState?.bet_in_stage[player.index];
+          const folded = gameState?.player_is_folded[player.index];
+          const stack = gameState?.player_piles[player.index];
+          const bet = gameState?.bet_in_stage[player.index];
           const hand = allHands && allHands[player.index];
           return (
             <Grid key={player.index} item sx={{ position: "relative" }}>
               <Card
                 sx={{
                   border:
-                    !terminalState && turn === player.index
+                    !gameState?.is_terminal && turn === player.index
                       ? "2px solid gold"
                       : "",
                   textAlign: "center",
@@ -175,7 +179,7 @@ export const GameTable: React.FC = () => {
                       variant="h5"
                       color="error"
                     >
-                      {stack !== undefined && stack < displayState.big_blind
+                      {stack !== undefined && stack < gameState.big_blind
                         ? "Bust"
                         : "Folded"}
                     </Typography>
@@ -185,9 +189,9 @@ export const GameTable: React.FC = () => {
                   <Typography fontWeight="bold">{player.name}</Typography>
                   <Typography variant="body2">Stack: {stack} chips</Typography>
                   <Typography variant="body2">
-                    Bet in {displayState?.stage}: {bet}
+                    Bet in {gameState?.stage}: {bet}
                   </Typography>
-                  {terminalState && hand && (
+                  {gameState?.is_terminal && hand && (
                     <Stack direction="column" spacing={1}>
                       <Stack
                         direction="row"
@@ -229,10 +233,10 @@ export const GameTable: React.FC = () => {
           }}
         >
           <Typography variant="h6" color="white">
-            Pot: {displayState?.pot} chips
+            Pot: {gameState?.pot} chips
           </Typography>
           <Stack direction="row" spacing={1} sx={{ py: 1 }}>
-            {displayState?.public_cards.map((card) => (
+            {gameState?.public_cards.map((card) => (
               <PlayingCard card={card} key={card} />
             ))}
           </Stack>
@@ -240,7 +244,7 @@ export const GameTable: React.FC = () => {
       </Stack>
 
       {/* Your hand */}
-      {ourTurn && !displayState?.is_terminal && (
+      {ourTurn && !gameState?.is_terminal && (
         <Stack>
           <Typography variant="h6">Your Hand</Typography>
           <Stack direction="row" justifyContent="center" spacing={1}>
@@ -252,7 +256,7 @@ export const GameTable: React.FC = () => {
       )}
 
       {/* Betting Controls */}
-      {ourTurn && !displayState?.is_terminal && (
+      {ourTurn && !gameState?.is_terminal && (
         <Stack spacing={1}>
           <Typography variant="h6">Your Move</Typography>
           <Stack direction="row" justifyContent="center" spacing={2}>
@@ -292,14 +296,10 @@ export const GameTable: React.FC = () => {
         </Stack>
       )}
 
-      {displayState?.is_terminal && (
+      {getReadyRequested && (
         <Stack>
           <Stack direction="row" justifyContent="center" spacing={1}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => setTerminalState(null)}
-            >
+            <Button variant="contained" color="primary" onClick={() => ready()}>
               Continue
             </Button>
           </Stack>

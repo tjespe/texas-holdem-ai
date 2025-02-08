@@ -22,6 +22,9 @@ class WebPlayer(Player):
         # Queue where we block waiting for the bet:
         self._bet_queue = queue.Queue()
 
+        # Queue for receiving ready signal from the client:
+        self._ready_queue = queue.Queue()
+
         # Queue for outgoing messages to the client:
         self._outbox = queue.Queue()
 
@@ -78,7 +81,10 @@ class WebPlayer(Player):
         self._outbox.put(message)
 
     def round_over(self, state: State, prev_state: State):
-        message = {"type": "ROUND_OVER", "state": state.to_dict()}
+        message = {
+            "type": "ROUND_OVER",
+            "state": prev_state.to_dict(),
+        }
         self._outbox.put(message)
 
     def get_to_know_each_other(self, players: list["Player"]):
@@ -112,5 +118,23 @@ class WebPlayer(Player):
                 for hand in all_hands
             ],
             "winners": list(winners),
+        }
+        self._outbox.put(message)
+
+    def get_ready(self, call_when_ready):
+        message = {"type": "GET_READY"}
+        self._outbox.put(message)
+        # Block until the client sends a "READY" message:
+        self._ready_queue.get()
+        call_when_ready()
+
+    def ready(self):
+        self._ready_queue.put("READY")
+
+    def game_over(self, winner: "Player", state: State):
+        message = {
+            "type": "GAME_OVER",
+            "winner": winner.name,
+            "state": state.to_dict(),
         }
         self._outbox.put(message)

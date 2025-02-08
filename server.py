@@ -255,18 +255,23 @@ async def game_socket(
         while True:
             data_str = await websocket.receive_text()
             data = json.loads(data_str)
-
-            if data.get("type") == "USER_BET":
+            print("Received message from client:", data)
+            msg_type = data.get("type")
+            if msg_type is None:
+                print("Invalid message:", data, "(missing 'type' key)")
+                continue
+            if msg_type == "USER_BET":
                 bet_amount = data.get("bet", 0)
                 # This unblocks web_player.play(...)
                 web_player.set_bet_from_client(bet_amount)
-
-            # You can handle other message types if needed
+            elif msg_type == "READY":
+                web_player.ready()
+            else:
+                print("Invalid message:", data, "(unknown 'type' value)")
 
     # Task 2: send messages from the player's outbox to the client
     # We'll block on the queue in a thread-safe way
     async def send_to_client():
-        loop = asyncio.get_event_loop()
         # Re-send any messages that were sent to the client before they connected
         for message in sent_per_webplayer[web_player]:
             print("Re-sending message to client:", message)

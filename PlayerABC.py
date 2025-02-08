@@ -66,3 +66,18 @@ class Player(ABC):
         """
         # By default, do nothing
         pass
+
+    def get_ready(self, call_when_ready: callable):
+        """
+        This method is called before a new rounds starts, so that the player
+        has time to look at the result of the previous round and prepare for
+        the next one.
+        """
+        # By default, call immediately
+        call_when_ready()
+
+    def game_over(self, winner: "Player", state: State):
+        """
+        This method is called when only one player is left in the game (the winner).
+        """
+        # By default, do nothing
