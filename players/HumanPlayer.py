@@ -1,4 +1,5 @@
 from datetime import datetime
+import threading
 from cpp_poker.cpp_poker import Card, Oracle, CardCollection, CheatSheet, TerminalColors
 from PlayerABC import Player
 from State import State
@@ -160,9 +161,15 @@ class HumanPlayer(Player):
         )
         return action
 
-    def get_ready(self, call_when_ready):
+    def get_ready(self):
+        if self._ready_event is None:
+            self._ready_event = threading.Event()
+        self._ready_event.clear()
         input("Press enter to continue...")
-        call_when_ready()
+        self._ready_event.set()
+
+    def wait_for_ready(self):
+        return self._ready_event
 
     def bet_rejected(self, from_state, bet, reason):
         print(
