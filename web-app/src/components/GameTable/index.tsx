@@ -332,7 +332,12 @@ export const GameTable: React.FC = () => {
                   color="primary"
                   onClick={() => handleBet(callAmount)}
                 >
-                  Call ({callAmount})
+                  Call {highestBet}
+                  {gameState && gameState.bet_in_stage[ourIndex] > 0 && (
+                    <Typography variant="body2" pl={1}>
+                      (+{callAmount})
+                    </Typography>
+                  )}
                 </Button>
               </Tooltip>
             )}
