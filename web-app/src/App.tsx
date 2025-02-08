@@ -1,5 +1,11 @@
-// src/App.tsx
-import { Box, Link, Stack, Typography } from "@mui/material";
+import {
+  Box,
+  Link,
+  Stack,
+  ThemeProvider,
+  Typography,
+  useMediaQuery,
+} from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes, Link as RouterLink } from "react-router-dom";
 import { apiClient } from "./api";
@@ -9,10 +15,12 @@ import { ApplicationPage } from "./containers/ApplicationPage";
 import { LobbyDetail } from "./containers/ApplicationPage/LobbyDetail";
 import { LobbyList } from "./containers/ApplicationPage/LobbyList";
 import { AuthContextProvider } from "./contexts/AuthContext";
+import { darkTheme, lightTheme } from "./theme";
 
 function App() {
   const [user, setUser] = useState<string | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
   const logOut = useCallback(() => {
     localStorage.removeItem("token");
@@ -76,67 +84,69 @@ function App() {
 
   return (
     <AuthContextProvider value={{ username: user, logIn: setUser, logOut }}>
-      <Routes>
-        {/* 
+      <ThemeProvider theme={prefersDarkMode ? darkTheme : lightTheme}>
+        <Routes>
+          {/* 
           1) If user is not logged in, show <LoginForm>, else go to "/lobbies".
           2) For clarity, we use path="/" for the login screen. 
         */}
-        <Route
-          path="/"
-          element={
-            user ? (
-              <Navigate to="/lobbies" replace />
-            ) : (
-              <LoginForm onLoginSuccess={handleLoginSuccess} />
-            )
-          }
-        />
-
-        <Route
-          path="/register"
-          element={<RegisterForm onRegisterSuccess={handleLoginSuccess} />}
-        />
-
-        <Route element={<ApplicationPage />}>
           <Route
-            path="/lobbies"
-            element={user ? <LobbyList /> : loginRedirectElement}
+            path="/"
+            element={
+              user ? (
+                <Navigate to="/lobbies" replace />
+              ) : (
+                <LoginForm onLoginSuccess={handleLoginSuccess} />
+              )
+            }
           />
-          <Route
-            path="/lobbies/:lobbyId"
-            element={user ? <LobbyDetail /> : loginRedirectElement}
-          />
-        </Route>
 
-        {/* Catch-all for any unknown paths */}
-        <Route
-          path="*"
-          element={
-            <Box
-              justifyContent="center"
-              alignItems="center"
-              width="100vh"
-              height="100vh"
-              alignContent="center"
-            >
-              <Stack
-                width="fit-content"
-                spacing={2}
-                margin="auto"
+          <Route
+            path="/register"
+            element={<RegisterForm onRegisterSuccess={handleLoginSuccess} />}
+          />
+
+          <Route element={<ApplicationPage />}>
+            <Route
+              path="/lobbies"
+              element={user ? <LobbyList /> : loginRedirectElement}
+            />
+            <Route
+              path="/lobbies/:lobbyId"
+              element={user ? <LobbyDetail /> : loginRedirectElement}
+            />
+          </Route>
+
+          {/* Catch-all for any unknown paths */}
+          <Route
+            path="*"
+            element={
+              <Box
                 justifyContent="center"
                 alignItems="center"
+                width="100vh"
+                height="100vh"
+                alignContent="center"
               >
-                <Typography variant="h3" textAlign="center">
-                  Nothing here!
-                </Typography>
-                <Link component={RouterLink} to="/">
-                  Go to main page
-                </Link>
-              </Stack>
-            </Box>
-          }
-        />
-      </Routes>
+                <Stack
+                  width="fit-content"
+                  spacing={2}
+                  margin="auto"
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <Typography variant="h3" textAlign="center">
+                    Nothing here!
+                  </Typography>
+                  <Link component={RouterLink} to="/">
+                    Go to main page
+                  </Link>
+                </Stack>
+              </Box>
+            }
+          />
+        </Routes>
+      </ThemeProvider>
     </AuthContextProvider>
   );
 }

@@ -7,10 +7,17 @@ import pandas as pd
 
 class HiddenStateModel(ABC):
     _fit_signature = None
+    _loop = None  # Store the main event loop
 
     def __init__(self) -> None:
         self.initalize_model()
         self._fit_task = None  # Track async fitting task
+        if HiddenStateModel._loop is None:
+            try:
+                HiddenStateModel._loop = asyncio.get_running_loop()
+            except RuntimeError:
+                HiddenStateModel._loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(HiddenStateModel._loop)
 
     @abstractmethod
     def initalize_model(self):

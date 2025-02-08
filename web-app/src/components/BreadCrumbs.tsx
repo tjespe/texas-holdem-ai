@@ -9,7 +9,7 @@ export function Breadcrumbs() {
   const pathnames = location.pathname.split("/").filter((x) => x);
 
   return (
-    <MuiBreadcrumbs aria-label="breadcrumb" sx={{ color: "white", mb: 2 }}>
+    <MuiBreadcrumbs aria-label="breadcrumb">
       <Link
         component={RouterLink}
         to="/"

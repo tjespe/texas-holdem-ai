@@ -37,6 +37,7 @@ export const GameTable: React.FC = () => {
           setGameState(msg.state);
           setHand(msg.hand);
           setOurTurn(true);
+          setTurn(msg.state.current_player_i);
           break;
         case "OBSERVE_BET":
           setGameState(msg.state);
@@ -141,11 +142,10 @@ export const GameTable: React.FC = () => {
             <Grid key={player.index} item sx={{ position: "relative" }}>
               <Card
                 sx={{
-                  backgroundColor: folded ? "#444" : "#222",
                   border:
                     !terminalState && turn === player.index
                       ? "2px solid gold"
-                      : "1px solid #666",
+                      : "",
                   textAlign: "center",
                   padding: "4px",
                   position: "relative",
