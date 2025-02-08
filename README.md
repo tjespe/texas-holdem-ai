@@ -36,3 +36,9 @@ The main components of this project are:
 - Neural networks used as heuristics to limit the search space. Defined in the files in the `nn` subdirectory.
 - A game manager that can run games between different players. Defined in `GameManager.py`.
 - A state manager that implements the rules of Texas Hold'em and how different actions lead to different states. Defined in `state_management.py`.
+
+## Running tests
+
+```bash
+python -m unittest discover
+```
