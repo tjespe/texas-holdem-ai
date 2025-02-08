@@ -127,7 +127,8 @@ export const GameTable: React.FC = () => {
   }, [sendMessage]);
 
   const handleRaise = (raiseTo: number) => {
-    handleBet(raiseTo - callAmount);
+    if (!gameState) return;
+    handleBet(raiseTo - gameState.bet_in_stage[ourIndex]);
   };
 
   const highestBet = Math.max(...(gameState?.bet_in_stage || [0]));

@@ -11,12 +11,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  createLobby,
-  joinLobby,
-  listLobbies,
-  Lobby,
-} from "../../../api/lobbies";
+import { createLobby, listLobbies, Lobby } from "../../../api/lobbies";
 
 export function LobbyList() {
   const [lobbies, setLobbies] = useState<Lobby[]>([]);
@@ -48,7 +43,6 @@ export function LobbyList() {
     try {
       setLoading(true);
       const { lobby_id } = await createLobby();
-      await joinLobby(lobby_id);
       navigate(`/lobbies/${lobby_id}`);
     } catch (err) {
       setError("Failed to create a lobby.");
@@ -61,7 +55,6 @@ export function LobbyList() {
   // (Optional) show a button to join or view a specific lobby
   async function handleLobbyClick(lobbyId: string) {
     setLoading(true);
-    await joinLobby(lobbyId);
     navigate(`/lobbies/${lobbyId}`);
   }
 

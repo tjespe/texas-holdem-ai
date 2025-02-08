@@ -18,6 +18,7 @@ export function PlayingCard({ card }: Props) {
         fontSize: "1.5rem",
         color: ["♠", "♣"].includes(getSuit(card)) ? "black" : "red",
         padding: 1,
+        backgroundColor: "white",
       }}
     >
       {getRank(card)}
