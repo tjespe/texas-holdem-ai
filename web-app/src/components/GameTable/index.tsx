@@ -41,6 +41,7 @@ export const GameTable: React.FC = () => {
           setOurTurn(true);
           setTurn(msg.state.current_player_i);
           setGetReadyRequested(false);
+          setAllHands(undefined);
           break;
         case "OBSERVE_BET":
           setGameState(msg.state);
@@ -59,6 +60,7 @@ export const GameTable: React.FC = () => {
             return nextPlayer;
           });
           setError(null);
+          setAllHands(undefined);
           break;
         case "ROUND_OVER":
           setGameState(msg.state);
