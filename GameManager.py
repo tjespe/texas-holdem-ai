@@ -88,8 +88,6 @@ class GameManager:
                         e,
                     )
                     player.bet_rejected(from_state, bet, str(e))
-                    if isinstance(player, HumanPlayer):
-                        input("Press enter to continue")
         if print_state:
             os.system("clear")
             print(self.state.get_cli_repr(self.player_names))

@@ -1,11 +1,10 @@
 export const getSuit = (card: number) => {
-  const suits = ["♠", "♣", "♦", "♥"];
+  const suits = ["♥", "♦", "♣", "♠"];
   return suits[Math.floor(card / 13)];
 };
 
 export const getRank = (card: number) => {
   const ranks = [
-    "A",
     "2",
     "3",
     "4",
@@ -18,6 +17,7 @@ export const getRank = (card: number) => {
     "J",
     "Q",
     "K",
+    "A",
   ];
   return ranks[card % 13];
 };

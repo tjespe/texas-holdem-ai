@@ -164,5 +164,12 @@ class HumanPlayer(Player):
         input("Press enter to continue...")
         call_when_ready()
 
+    def bet_rejected(self, from_state, bet, reason):
+        print(
+            "\n\nBetting rules violation:\n",
+            reason,
+        )
+        input("Press enter to continue")
+
     def __repr__(self) -> str:
         return f"HumanPlayer('{self.name}')"

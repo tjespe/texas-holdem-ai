@@ -64,7 +64,6 @@ export const serverMessageSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("BET_REJECTED"),
-    message: z.string(),
     from_state: stateSchema,
     bet: z.number(),
     reason: z.string(),

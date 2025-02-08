@@ -6,9 +6,10 @@ import {
   Grid,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { ShowDownHand, useGameWebSocket } from "../../hooks/useGameWebSocket";
 import { GameState, Player } from "../../schemas/messages";
@@ -29,6 +30,7 @@ export const GameTable: React.FC = () => {
   const ourIndex = players.findIndex((player) => player.name === username);
   const [error, setError] = useState<string | null>(null);
   const [getReadyRequested, setGetReadyRequested] = useState(false);
+  const raiseInputRef = useRef<HTMLInputElement>(null);
 
   const { sendMessage } = useGameWebSocket(
     useCallback((msg) => {
@@ -38,9 +40,11 @@ export const GameTable: React.FC = () => {
           setHand(msg.hand);
           setOurTurn(true);
           setTurn(msg.state.current_player_i);
+          setGetReadyRequested(false);
           break;
         case "OBSERVE_BET":
           setGameState(msg.state);
+          setGetReadyRequested(false);
           setOurTurn(false);
           setTurn((prev) => {
             const numPlayers = msg.state.player_piles.length;
@@ -54,10 +58,12 @@ export const GameTable: React.FC = () => {
             }
             return nextPlayer;
           });
+          setError(null);
           break;
         case "ROUND_OVER":
           setGameState(msg.state);
           setOurTurn(false);
+          setError(null);
           break;
         case "GET_TO_KNOW_EACH_OTHER":
           setPlayers(msg.players);
@@ -66,10 +72,11 @@ export const GameTable: React.FC = () => {
           setGameState(msg.state);
           setAllHands(msg.all_hands);
           setWinners(msg.winners);
+          setError(null);
           break;
         case "BET_REJECTED":
           setOurTurn(true);
-          setError(msg.message);
+          setError(msg.reason);
           setGameState(msg.from_state);
           break;
         case "GET_READY":
@@ -84,37 +91,40 @@ export const GameTable: React.FC = () => {
     }, [])
   );
 
-  const handleBet = (betAmount: number) => {
-    console.log("Betting", betAmount);
+  const handleBet = useCallback(
+    (betAmount: number) => {
+      console.log("Betting", betAmount);
 
-    sendMessage({ type: "USER_BET", bet: betAmount });
-    setOurTurn(false);
-    setBetInput("");
-    const nextPlayer = (turn + 1) % players.length;
-    if (!Number.isNaN(nextPlayer)) {
-      setTurn(nextPlayer);
-    }
-    setGameState(
-      (prev) =>
-        prev && {
-          ...prev,
-          bet_in_stage: prev?.bet_in_stage.map((bet, i) =>
-            i === ourIndex ? bet + betAmount : bet
-          ),
-          bet_in_game: prev?.bet_in_game.map((bet, i) =>
-            i === ourIndex ? bet + betAmount : bet
-          ),
-          player_piles: prev?.player_piles.map((pile, i) =>
-            i === ourIndex ? pile - betAmount : pile
-          ),
-        }
-    );
-  };
+      sendMessage({ type: "USER_BET", bet: betAmount });
+      setOurTurn(false);
+      setBetInput("");
+      const nextPlayer = (turn + 1) % players.length;
+      if (!Number.isNaN(nextPlayer)) {
+        setTurn(nextPlayer);
+      }
+      setGameState(
+        (prev) =>
+          prev && {
+            ...prev,
+            bet_in_stage: prev?.bet_in_stage.map((bet, i) =>
+              i === ourIndex ? bet + betAmount : bet
+            ),
+            bet_in_game: prev?.bet_in_game.map((bet, i) =>
+              i === ourIndex ? bet + betAmount : bet
+            ),
+            player_piles: prev?.player_piles.map((pile, i) =>
+              i === ourIndex ? pile - betAmount : pile
+            ),
+          }
+      );
+    },
+    [ourIndex, players.length, sendMessage, turn]
+  );
 
-  const ready = () => {
+  const ready = useCallback(() => {
     sendMessage({ type: "READY" });
     setGetReadyRequested(false);
-  };
+  }, [sendMessage]);
 
   const handleRaise = (raiseTo: number) => {
     handleBet(raiseTo - callAmount);
@@ -125,6 +135,40 @@ export const GameTable: React.FC = () => {
 
   const callAmount = highestBet - ourBet;
   const minRaise = highestBet + (gameState?.big_blind || 0);
+
+  useEffect(
+    function keyListener() {
+      const listener = (e: KeyboardEvent) => {
+        if (ourTurn) {
+          switch (e.key.toLowerCase()) {
+            case "c":
+              // This can be either a call or a check, depending on if callAmount is 0 or not
+              handleBet(callAmount);
+              break;
+            case "f":
+              // Fold (only possible if callAmount is > 0)
+              if (callAmount > 0) {
+                handleBet(0);
+              }
+              break;
+            default:
+              break;
+          }
+          // Check if a number key was pressed
+          if (e.key >= "0" && e.key <= "9") {
+            // Set focus on the input field
+            raiseInputRef.current?.focus();
+          }
+        }
+        if (getReadyRequested && e.key === "Enter") {
+          ready();
+        }
+      };
+      window.addEventListener("keypress", listener);
+      return () => window.removeEventListener("keypress", listener);
+    },
+    [ourTurn, callAmount, handleBet, getReadyRequested, ready]
+  );
 
   return (
     <Stack
@@ -260,38 +304,64 @@ export const GameTable: React.FC = () => {
         <Stack spacing={1}>
           <Typography variant="h6">Your Move</Typography>
           <Stack direction="row" justifyContent="center" spacing={2}>
-            {/* Check / Fold */}
-            <Button variant="outlined" onClick={() => handleBet(0)}>
-              {callAmount === 0 ? "Check" : "Fold"}
-            </Button>
+            {/* Check */}
+            {callAmount === 0 ? (
+              <Tooltip title="Check (C)">
+                <Button variant="contained" onClick={() => handleBet(0)}>
+                  Check
+                </Button>
+              </Tooltip>
+            ) : (
+              <Tooltip title="Fold (F)">
+                <Button
+                  variant="outlined"
+                  onClick={() => handleBet(0)}
+                  color="error"
+                >
+                  Fold
+                </Button>
+              </Tooltip>
+            )}
 
             {/* Call (if available) */}
             {callAmount > 0 && (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => handleBet(callAmount)}
-              >
-                Call ({callAmount})
-              </Button>
+              <Tooltip title="Call (C)">
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleBet(callAmount)}
+                >
+                  Call ({callAmount})
+                </Button>
+              </Tooltip>
             )}
 
             {/* Raise */}
-            <TextField
-              label="Raise"
-              type="number"
-              value={betInput}
-              onChange={(e) => setBetInput(e.target.value)}
-              sx={{ width: "100px" }}
-            />
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={() => handleRaise(parseInt(betInput, 10))}
-              disabled={!betInput || parseInt(betInput, 10) < minRaise}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+              }}
             >
-              Raise
-            </Button>
+              <Stack direction="row" justifyContent="center" spacing={2}>
+                <TextField
+                  label="Raise to"
+                  type="number"
+                  value={betInput}
+                  onChange={(e) => setBetInput(e.target.value)}
+                  sx={{ width: "100px" }}
+                  inputRef={raiseInputRef}
+                />
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => handleRaise(parseInt(betInput, 10))}
+                  disabled={!betInput || parseInt(betInput, 10) < minRaise}
+                  type="submit"
+                >
+                  Raise
+                </Button>
+              </Stack>
+            </form>
           </Stack>
         </Stack>
       )}
@@ -299,9 +369,15 @@ export const GameTable: React.FC = () => {
       {getReadyRequested && (
         <Stack>
           <Stack direction="row" justifyContent="center" spacing={1}>
-            <Button variant="contained" color="primary" onClick={() => ready()}>
-              Continue
-            </Button>
+            <Tooltip title="Continue to next round (Enter)">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => ready()}
+              >
+                Continue
+              </Button>
+            </Tooltip>
           </Stack>
         </Stack>
       )}
