@@ -1,3 +1,4 @@
+from datetime import datetime
 import queue
 import json
 from typing import Union, Optional
@@ -7,6 +8,10 @@ from PlayerABC import Player
 from State import State
 
 from cpp_poker.cpp_poker import Oracle, CardCollection
+from hidden_state_model.observer import Observer
+
+time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+observer = Observer(f"hidden_state_model/data/web-player-{time_str}.parquet")
 
 
 class WebPlayer(Player):
@@ -28,6 +33,15 @@ class WebPlayer(Player):
         # Queue for outgoing messages to the client:
         self._outbox = queue.Queue()
 
+        # Keeps track of the players
+        self.players = []
+
+    @property
+    def _opponent_names(self):
+        if self.players is None:
+            return None
+        return [p.name for p in self.players if p != self]
+
     def play(self, state: State) -> int:
         """
         Called by the GameManager in a synchronous loop.
@@ -47,6 +61,14 @@ class WebPlayer(Player):
         # Now block until we get a bet from the client:
         bet = self._bet_queue.get()  # blocks this thread
         print(f"Placing bet: {bet}")
+        observer.observe_action(
+            state,
+            self.name,
+            WebPlayer.__name__,
+            bet,
+            self._opponent_names,
+            self.hand,
+        )
         return bet
 
     def set_bet_from_client(self, bet: int):
@@ -94,6 +116,7 @@ class WebPlayer(Player):
         ]
         message = {"type": "GET_TO_KNOW_EACH_OTHER", "players": info}
         self._outbox.put(message)
+        self.players = players
 
     def showdown(self, state: State, all_hands: list[Union[tuple[int, int], None]]):
         winners = Oracle.find_winner(
