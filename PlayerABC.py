@@ -55,7 +55,9 @@ class Player(ABC):
         0 is treated as check/call/fold depending on the context.
         """
 
-    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+    def observe_bet(
+        self, from_state: State, bet: int, to_state: State, was_blind=False
+    ):
         """
         This method allows the player to observe what other players are doing.
         Every time the state changes, the game manager will call this method

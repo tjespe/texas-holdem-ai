@@ -61,7 +61,9 @@ class AwareRationalPlayerWithRandomStyle(Player):
         self.player.index = self.index
         return self.player.play(state)
 
-    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+    def observe_bet(
+        self, from_state: State, bet: int, to_state: State, was_blind=False
+    ):
         return self.player.observe_bet(from_state, bet, was_blind=was_blind)
 
     def round_over(self, new_state: State, prev_state: State):

@@ -29,7 +29,9 @@ class MixedPlayer(Player):
         self.rational_player.index = self.index
         self.resolver_player.index = self.index
 
-    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+    def observe_bet(
+        self, from_state: State, bet: int, to_state: State, was_blind=False
+    ):
         if len(from_state.public_cards) < 4:
             # No need to observe this, because the neural nets for these stages
             # are not good enough.
@@ -42,7 +44,7 @@ class MixedPlayer(Player):
             # We are 3 steps away from the river card, so it's a bit
             # too early to use the resolver player.
             return
-        return self.resolver_player.observe_bet(from_state, bet, was_blind)
+        return self.resolver_player.observe_bet(from_state, bet, to_state, was_blind)
 
     def play(self, state) -> int:
         self._update_hands()

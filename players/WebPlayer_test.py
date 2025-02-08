@@ -1,6 +1,7 @@
 import unittest
 import queue
 from players.WebPlayer import WebPlayer
+from state_management import place_bet
 
 
 # Minimal placeholder for State with a to_dict method
@@ -50,7 +51,7 @@ class TestWebPlayer(unittest.TestCase):
 
     def test_observe_bet_puts_message_in_outbox(self):
         mock_state = MockState("Some updated state")
-        self.player.observe_bet(mock_state, bet=10)
+        self.player.observe_bet(mock_state, bet=10, to_state=place_bet(mock_state, 10))
 
         msg = self.player._outbox.get(timeout=1)
         self.assertEqual(msg["type"], "OBSERVE_BET")

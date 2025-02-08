@@ -30,10 +30,12 @@ class MaxEVandHumanMocker(Player):
         self.max_ev_player.get_to_know_each_other(players)
         self.human_mocker.get_to_know_each_other(players)
 
-    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+    def observe_bet(
+        self, from_state: State, bet: int, to_state: State, was_blind=False
+    ):
         self._update_hands()
-        self.max_ev_player.observe_bet(from_state, bet, was_blind)
-        self.human_mocker.observe_bet(from_state, bet, was_blind)
+        self.max_ev_player.observe_bet(from_state, bet, to_state, was_blind)
+        self.human_mocker.observe_bet(from_state, bet, to_state, was_blind)
 
     def round_over(self, state, prev_state):
         self._update_hands()

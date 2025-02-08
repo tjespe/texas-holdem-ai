@@ -73,7 +73,9 @@ class GameManager:
                 from_state = self.state
                 self.state = place_bet(from_state, blind_bet, is_blind=True)
                 for player in self.players:
-                    player.observe_bet(from_state, blind_bet, was_blind=True)
+                    player.observe_bet(
+                        from_state, blind_bet, self.state, was_blind=True
+                    )
             else:
                 bet = player.play(self.state)
                 print(f"{player.name} bets {bet}")
@@ -81,7 +83,7 @@ class GameManager:
                     from_state = self.state
                     self.state = place_bet(from_state, bet)
                     for player in self.players:
-                        player.observe_bet(from_state, bet)
+                        player.observe_bet(from_state, bet, self.state)
                 except BettingRuleViolation as e:
                     print(
                         "\n@@@@@@@@@@@@@@@@@@@@@@@@\nBetting rules violation:\n@@@@@@@@@@@@@@@@@@@@@@@@\n",

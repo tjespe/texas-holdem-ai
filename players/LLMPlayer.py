@@ -265,7 +265,7 @@ class LLMPlayer(Player):
             return opt[0]
         return bet
 
-    def observe_bet(self, from_state, bet, was_blind=False):
+    def observe_bet(self, from_state, bet, to_state: State, was_blind=False):
         player_name = self.player_names[from_state.current_player_i]
         if player_name == self.name:
             player_name = "You"

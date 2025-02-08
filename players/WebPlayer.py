@@ -79,7 +79,9 @@ class WebPlayer(Player):
         print(f"Received bet from client: {bet}")
         self._bet_queue.put(bet)
 
-    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+    def observe_bet(
+        self, from_state: State, bet: int, to_state: State, was_blind=False
+    ):
         """
         Let the client know that someone has bet.
         """
@@ -88,7 +90,7 @@ class WebPlayer(Player):
             "player_index": from_state.current_player_i,
             "bet": bet,
             "from_state": from_state.to_dict(),
-            "state": place_bet(from_state, bet).to_dict(),
+            "state": to_state.to_dict(),
             "was_blind": bool(was_blind),
         }
         self._outbox.put(message)

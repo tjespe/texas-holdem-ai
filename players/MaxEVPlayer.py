@@ -201,7 +201,9 @@ class MaxEVPlayer(Player):
         )
         self.predicted_ranks = np.zeros(len(state.player_is_active))
 
-    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+    def observe_bet(
+        self, from_state: State, bet: int, to_state: State, was_blind=False
+    ):
         # Don't do anything if we have folded
         if from_state.player_is_folded[self.index]:
             return

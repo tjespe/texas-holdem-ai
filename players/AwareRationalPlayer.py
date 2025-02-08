@@ -132,7 +132,9 @@ class AwareRationalPlayer(Player):
         debug_print(f"Bet: {bet}, pot: {state.pot}, coef: {coef}")
         return min(1.5, 0.5 + coef)
 
-    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+    def observe_bet(
+        self, from_state: State, bet: int, to_state: State, was_blind=False
+    ):
         if was_blind:
             return
         self._ensure_vars_initialized(from_state.n_players)

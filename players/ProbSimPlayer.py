@@ -98,7 +98,9 @@ class ProbSimPlayer(Player):
         )
         self.predicted_ranks = np.zeros(len(state.player_is_active))
 
-    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+    def observe_bet(
+        self, from_state: State, bet: int, to_state: State, was_blind=False
+    ):
         if was_blind:
             return
         player_i = from_state.current_player_i

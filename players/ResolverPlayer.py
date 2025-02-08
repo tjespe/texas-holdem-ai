@@ -60,7 +60,9 @@ class ResolverPlayer(Player):
                     break
         return self._hand_index
 
-    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+    def observe_bet(
+        self, from_state: State, bet: int, to_state: State, was_blind=False
+    ):
         if was_blind:
             return
         if from_state.action_required:

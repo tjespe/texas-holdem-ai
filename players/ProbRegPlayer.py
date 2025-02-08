@@ -76,7 +76,9 @@ class ProbRegPlayer(Player):
             state.player_is_active
         )
 
-    def observe_bet(self, from_state: State, bet: int, was_blind=False):
+    def observe_bet(
+        self, from_state: State, bet: int, to_state: State, was_blind=False
+    ):
         player_i = from_state.current_player_i
         if player_i == self.index:
             return

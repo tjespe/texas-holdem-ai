@@ -2,7 +2,7 @@ import unittest
 from PlayerABC import Player
 from players.HumanPlayer import HumanPlayer
 from players.ProbSimPlayer import ProbSimPlayer
-from state_management import generate_root_state
+from state_management import generate_root_state, place_bet
 
 
 class ProbSimPlayerTestCase(unittest.TestCase):
@@ -32,4 +32,5 @@ class ProbSimPlayerTestCase(unittest.TestCase):
             p.index = i
         state = generate_root_state(len(players))
         state.current_player_i = 0
-        player.observe_bet(state, 10)
+        next_state = place_bet(state, 10)
+        player.observe_bet(state, 10, next_state)
