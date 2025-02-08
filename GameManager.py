@@ -152,25 +152,15 @@ class GameManager:
             for player in self.players:
                 player.game_over(winner, self.state)
             return
-        players_are_ready = {
-            player: False for player in self.players if player not in bust_players
-        }
 
-        def ready_callback(player: Player):
-            print(f"{player.name} is ready")
-            players_are_ready[player] = True
-            if all(players_are_ready.values()):
-                print("Starting next round")
-                self.play_round(print_state=print_state, sleep=sleep)
-            else:
-                print(
-                    "Still waiting for:",
-                    ", ".join(
-                        player.name
-                        for player, ready in players_are_ready.items()
-                        if not ready
-                    ),
-                )
-
+        # Request readiness from all players
         for player in self.players:
-            player.get_ready(lambda: ready_callback(player))
+            if player not in bust_players:
+                player.get_ready()
+
+        # Wait for all players to be ready using the exposed method
+        for player in self.players:
+            player.wait_for_ready().wait()  # Wait for the event
+
+        print("Starting next round")
+        self.play_round(print_state=print_state, sleep=sleep)

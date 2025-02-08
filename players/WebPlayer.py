@@ -1,5 +1,6 @@
 from datetime import datetime
 import queue
+import threading
 from typing import Union
 
 from PlayerABC import Player
@@ -26,8 +27,8 @@ class WebPlayer(Player):
         # Queue where we block waiting for the bet:
         self._bet_queue = queue.Queue()
 
-        # Queue for receiving ready signal from the client:
-        self._ready_queue = queue.Queue()
+        # Event to signal readiness
+        self._ready_event = threading.Event()
 
         # Queue for outgoing messages to the client:
         self._outbox = queue.Queue()
@@ -146,15 +147,18 @@ class WebPlayer(Player):
         }
         self._outbox.put(message)
 
-    def get_ready(self, call_when_ready):
+    def get_ready(self):
         message = {"type": "GET_READY"}
         self._outbox.put(message)
-        # Block until the client sends a "READY" message:
-        self._ready_queue.get()
-        call_when_ready()
+
+        self._ready_event.clear()  # Reset event for WebPlayer
 
     def ready(self):
-        self._ready_queue.put("READY")
+        if hasattr(self, "_ready_event"):
+            self._ready_event.set()  # Signal readiness when WebSocket message arrives
+
+    def wait_for_ready(self):
+        return self._ready_event
 
     def game_over(self, winner: "Player", state: State):
         message = {

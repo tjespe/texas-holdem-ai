@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import random
+import threading
 from typing import Union
 
 import numpy as np
@@ -40,6 +41,8 @@ class Player(ABC):
         "Zelda",
     ]
     title = None
+    # Event to signal readiness
+    _ready_event = None
 
     @classmethod
     def get_example_name(cls):
@@ -106,14 +109,21 @@ class Player(ABC):
         # By default, do nothing
         pass
 
-    def get_ready(self, call_when_ready: callable):
+    def get_ready(self):
         """
-        This method is called before a new rounds starts, so that the player
-        has time to look at the result of the previous round and prepare for
-        the next one.
+        Default implementation: immediately signal readiness.
         """
-        # By default, call immediately
-        call_when_ready()
+        if self._ready_event is None:
+            self._ready_event = threading.Event()
+            self._ready_event.set()  # Default to always ready
+
+    def wait_for_ready(self):
+        """
+        Exposes an appropriate synchronization object for GameManager.
+        Default is an event that is always set (for bot players).
+        """
+        self.get_ready()  # Ensure event exists before returning it
+        return self._ready_event
 
     def game_over(self, winner: "Player", state: State):
         """
