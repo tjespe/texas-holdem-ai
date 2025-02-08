@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   addBot,
+  BotOption,
   joinLobby,
   leaveLobby,
   startLobby,
@@ -121,14 +122,14 @@ export function LobbyDetail() {
   }
 
   // Add a bot to the lobby
-  async function handleAddBot(botType: string) {
+  async function handleAddBot(botOpt: BotOption) {
     if (!lobbyId) {
       setError("No lobby ID provided");
       return;
     }
     try {
       setLoading(true);
-      const resp = await addBot(lobbyId, botType);
+      const resp = await addBot(lobbyId, botOpt.type, botOpt.name);
       if (resp.error) {
         setError(resp.error);
       }
@@ -222,11 +223,10 @@ export function LobbyDetail() {
               </ListItem>
             );
           } else {
-            // e.g. { type: "bot", bot_type: "random" }
             return (
               <ListItem key={idx}>
                 <ListItemText
-                  primary={p.bot_type.toUpperCase() + " Bot"}
+                  primary={p.bot_name}
                   secondary={`Type: ${p.type}`}
                 />
               </ListItem>

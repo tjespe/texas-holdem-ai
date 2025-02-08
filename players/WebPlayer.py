@@ -1,14 +1,13 @@
 from datetime import datetime
 import queue
-import json
-from typing import Union, Optional
-from abc import ABC, abstractmethod
+from typing import Union
 
 from PlayerABC import Player
 from State import State
 
 from cpp_poker.cpp_poker import Oracle, CardCollection
 from hidden_state_model.observer import Observer
+from state_management import place_bet
 
 time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 observer = Observer(f"hidden_state_model/data/web-player-{time_str}.parquet")
@@ -88,7 +87,8 @@ class WebPlayer(Player):
             "type": "OBSERVE_BET",
             "player_index": from_state.current_player_i,
             "bet": bet,
-            "state": from_state.to_dict(),
+            "from_state": from_state.to_dict(),
+            "state": place_bet(from_state, bet).to_dict(),
             "was_blind": bool(was_blind),
         }
         self._outbox.put(message)

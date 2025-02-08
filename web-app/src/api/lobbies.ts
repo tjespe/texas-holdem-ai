@@ -8,7 +8,11 @@ export const lobbySchema = z.object({
     .array(
       z.union([
         z.string(),
-        z.object({ type: z.string(), bot_type: z.string() }),
+        z.object({
+          type: z.string(),
+          bot_type: z.string(),
+          bot_name: z.string(),
+        }),
       ])
     )
     .optional(),
@@ -20,6 +24,22 @@ export const lobbiesListSchema = z.object({
 });
 
 export type LobbiesList = z.infer<typeof lobbiesListSchema>;
+
+export const botOptionSchema = z.object({
+  name: z.string(),
+  type: z.string(),
+});
+
+export type BotOption = z.infer<typeof botOptionSchema>;
+
+export async function listBotOptions(): Promise<BotOption[]> {
+  const resp = await apiClient(`/bot-options`, {
+    method: "GET",
+  });
+  const data = await resp.json();
+  const parsed = z.array(botOptionSchema).parse(data);
+  return parsed;
+}
 
 // GET /lobbies -> { "lobbies": [ { "lobby_id": "...", "started": false, "players": [...]} ] }
 export async function listLobbies(): Promise<LobbiesList> {
@@ -68,9 +88,13 @@ export async function leaveLobby(lobbyId: string) {
   return resp.json(); // might be { result: "ok", error?: string }
 }
 
-export async function addBot(lobbyId: string, botType: string) {
+export async function addBot(
+  lobbyId: string,
+  botType: string,
+  botName: string
+) {
   const resp = await apiClient(
-    `/lobbies/${lobbyId}/add_bot?bot_type=${botType}`,
+    `/lobbies/${lobbyId}/add_bot?bot_type=${botType}&bot_name=${botName}`,
     {
       method: "POST",
     }

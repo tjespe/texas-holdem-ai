@@ -14,6 +14,19 @@ import json
 import asyncio
 import threading
 import queue
+from PlayerABC import Player
+from players.ProbSimPlayer import ProbSimPlayer
+from players.AwareRationalPlayerWithRandomStyle import (
+    AwareRationalPlayerWithRandomStyle,
+)
+from players.CheatingPlayer import CheatingPlayer
+from players.HumanMocker import HumanMocker
+from players.LLMPlayer import LLMPlayer
+from players.AllInPlayer import AllInPlayer
+from players.AwareRationalPlayer import AwareRationalPlayer
+from players.MaxEVandLLMPlayer import MaxEVandLLMPlayer
+from players.ProbRegPlayer import ProbRegPlayer
+from players.RationalPlayer import RationalPlayer
 from pydantic import BaseModel
 
 
@@ -46,6 +59,22 @@ lobby_connections: Dict[str, List[WebSocket]] = defaultdict(list)
 web_players: dict[str, dict[str, WebPlayer]] = {}
 
 user_per_token = {}
+
+bots: list[type[Player]] = [
+    MaxEVandHumanMocker,
+    AwareRationalPlayerWithRandomStyle,
+    MaxEVandLLMPlayer,
+    MaxEVPlayer,
+    HumanMocker,
+    LLMPlayer,
+    ProbRegPlayer,
+    ProbSimPlayer,
+    RationalPlayer,
+    AllInPlayer,
+    AwareRationalPlayer,
+    CheatingPlayer,
+    RandomPlayer,
+]
 
 
 def find_webplayer_object(lobby_id: str, username: str) -> WebPlayer:
@@ -164,13 +193,18 @@ async def leave_lobby(lobby_id: str, user: str = Depends(get_current_user)):
     return {"result": "ok", "players": lobby["players"]}
 
 
+@app.get("/bot-options")
+def get_bot_options():
+    return [{"name": bot.get_example_name(), "type": bot.__name__} for bot in bots]
+
+
 @app.post("/lobbies/{lobby_id}/add_bot")
-async def add_bot(lobby_id: str, bot_type: str):
+async def add_bot(lobby_id: str, bot_type: str, bot_name: str):
     lobby = lobbies[lobby_id]
     if lobby["started"]:
         raise HTTPException(status_code=400, detail="Game already started")
 
-    bot = {"type": "bot", "bot_type": bot_type}
+    bot = {"type": "bot", "bot_type": bot_type, "bot_name": bot_name}
     lobby["players"].append(bot)
     await broadcast_lobby_update(lobby_id)
 
@@ -193,19 +227,20 @@ async def start_lobby(lobby_id: str):
             web_players[lobby_id][entry] = p
             players.append(p)
         elif entry.get("type") == "bot":
-            bot_type = entry["bot_type"]
-            if bot_type == "max_ev":
-                bot = MaxEVPlayer(name="MaxEV_Bot")
-            if bot_type == "max_ev_and_mocker":
-                bot = MaxEVandHumanMocker(name="MaxEVandHuman_Bot")
-            elif bot_type == "random":
-                bot = RandomPlayer(name="Random_Bot")
+            cls = next((bot for bot in bots if bot.__name__ == entry["bot_type"]), None)
+            if cls:
+                bot = cls(name=entry["bot_name"])
+                players.append(bot)
             else:
-                bot = MaxEVandHumanMocker(name="Default_Bot")
-            players.append(bot)
+                print("Warning: Bot not found:", entry["bot_type"])
+                players.append(
+                    MaxEVandHumanMocker(name=MaxEVandHumanMocker.get_example_name())
+                )
         else:
             # fallback
-            players.append(RandomPlayer(name="Fallback_Bot"))
+            players.append(
+                MaxEVandHumanMocker(name=MaxEVandHumanMocker.get_example_name())
+            )
 
     gm = GameManager(players, big_blind=4)
 

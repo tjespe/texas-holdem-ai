@@ -15,6 +15,8 @@ class MaxEVandLLMPlayer(Player):
     This players uses the LLMPlayer's strategy preflop and the MaxEVPlayer's strategy postflop.
     """
 
+    title = "Decent"
+
     def __init__(self, name: str = "Max-Lennart"):
         super().__init__()
         self.name = name

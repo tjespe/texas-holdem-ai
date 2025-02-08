@@ -3,7 +3,10 @@ from PlayerABC import Player
 from State import State
 from helpers import get_random_betting_distribution_for_state
 
+
 class RandomPlayer(Player):
+    title = "Serendipitous"
+
     def __init__(self, name: str = "Rando"):
         super().__init__()
         self.name = name

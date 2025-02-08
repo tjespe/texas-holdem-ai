@@ -32,6 +32,7 @@ class ProbSimPlayer(Player):
     Player that regresses the opponent's winning probability based on historical data.
     """
 
+    title = "Contemplator"
     bluff_prob: float
     rel_weight_player_in_reg: float
     rel_weight_opponent_in_reg: float

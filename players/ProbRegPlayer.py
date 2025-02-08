@@ -41,6 +41,7 @@ class ProbRegPlayer(Player):
     Player that regresses the opponent's winning probability based on historical data.
     """
 
+    title = "Regressor"
     bluff_prob: float
     rel_weight_player_in_reg: float
     called_bluff: bool

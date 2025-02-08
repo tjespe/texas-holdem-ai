@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import random
 from typing import Union
 
 import numpy as np
@@ -10,6 +11,42 @@ class Player(ABC):
     hand: Union[tuple[int, int], None] = None
     index: Union[int, None] = None
     name: str
+    example_names = [
+        "Alice",
+        "Bob",
+        "Charlie",
+        "David",
+        "Eve",
+        "Frank",
+        "Grace",
+        "Heidi",
+        "Ivan",
+        "Judy",
+        "Kevin",
+        "Linda",
+        "Mallory",
+        "Nancy",
+        "Oscar",
+        "Peggy",
+        "Quentin",
+        "Romeo",
+        "Sue",
+        "Trent",
+        "Ursula",
+        "Victor",
+        "Walter",
+        "Xander",
+        "Yvonne",
+        "Zelda",
+    ]
+    title = None
+
+    @classmethod
+    def get_example_name(cls):
+        name = random.choice(cls.example_names)
+        if cls.title is not None:
+            name = f"{name} the {cls.title}"
+        return name
 
     @abstractmethod
     def play(self, state: State) -> int:

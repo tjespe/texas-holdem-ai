@@ -1,23 +1,22 @@
 import { ArrowDropDown } from "@mui/icons-material";
 import { Button, ButtonGroup, Menu, MenuItem } from "@mui/material";
-import { useState } from "react";
-
-const botOptions = [
-  { label: "Default", value: "max_ev_and_mocker" },
-  { label: "Advanced (slower)", value: "max_ev" },
-  { label: "Random", value: "random" },
-];
-
-export type BotType = (typeof botOptions)[number]["value"];
+import { useEffect, useState } from "react";
+import { BotOption, listBotOptions } from "../../../../api/lobbies";
+import { randomNames } from "./names";
 
 interface Props {
-  onAddBot: (type: BotType) => void;
+  onAddBot: (bot: BotOption) => void;
 }
 
 export function AddBotButton({ onAddBot }: Props) {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [defaultBotType, setDefaultBotType] =
-    useState<BotType>("max_ev_and_mocker"); // Default bot type
+  const [botOptions, setBotOptions] = useState<BotOption[]>();
+
+  useEffect(function fetchBotOptions() {
+    listBotOptions().then((options) => {
+      setBotOptions(options);
+    });
+  }, []);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setMenuAnchor(event.currentTarget);
@@ -27,11 +26,17 @@ export function AddBotButton({ onAddBot }: Props) {
     setMenuAnchor(null);
   };
 
-  const handleSelectBot = (type: BotType) => {
-    console.log("Selected", type);
+  const handleSelectBot = (opt: BotOption | "default") => {
+    console.log("Selected", opt);
 
-    setDefaultBotType(type);
-    onAddBot(type);
+    onAddBot(
+      opt === "default"
+        ? {
+            type: "MaxEVandHumanMocker",
+            name: randomNames[Math.floor(Math.random() * randomNames.length)],
+          }
+        : opt
+    );
     handleMenuClose();
   };
 
@@ -39,7 +44,7 @@ export function AddBotButton({ onAddBot }: Props) {
     <div>
       <ButtonGroup variant="outlined">
         {/* Main "Add Bot" button (adds the currently selected bot) */}
-        <Button onClick={() => onAddBot(defaultBotType)}>Add Bot</Button>
+        <Button onClick={() => handleSelectBot("default")}>Add Bot</Button>
 
         {/* Dropdown button */}
         <Button onClick={handleMenuOpen} size="small" style={{ padding: 0 }}>
@@ -53,11 +58,11 @@ export function AddBotButton({ onAddBot }: Props) {
         open={Boolean(menuAnchor)}
         onClose={handleMenuClose}
       >
-        {botOptions.map((bot) => (
-          <MenuItem key={bot.value} onClick={() => handleSelectBot(bot.value)}>
-            {bot.label}
+        {botOptions?.map((bot) => (
+          <MenuItem key={bot.type} onClick={() => handleSelectBot(bot)}>
+            {bot.name}
           </MenuItem>
-        ))}
+        )) ?? <MenuItem disabled>Loading...</MenuItem>}
       </Menu>
     </div>
   );

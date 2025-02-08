@@ -11,6 +11,8 @@ class RationalPlayer(Player):
     assumption in practice).
     """
 
+    title = "Discerning"
+
     def __init__(self, name: str = "Rasmus"):
         super().__init__()
         self.name = name

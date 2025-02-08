@@ -21,6 +21,8 @@ def log(*args, also_print=False, **kwargs):
 
 
 class HumanMocker(Player):
+    title = "Sardonic"
+
     def __init__(self, mock: str, rel_weight_player=2):
         super().__init__()
         self.name = f"Mr. {mock}"
@@ -120,12 +122,15 @@ class HumanMocker(Player):
         )
         amount = self._play(state)
         self.observer.retrofill_action(state, amount)
-        persistent_observer.observe_action(
-            state,
-            self.name,
-            HumanMocker.__name__,
-            amount,
-            self.opponent_names,
-            self.hand,
-        )
+        # Only store observation if it's a heads-up game as this player is not
+        # designed to play in multi-player games.
+        if len(state.player_is_active) < 3:
+            persistent_observer.observe_action(
+                state,
+                self.name,
+                HumanMocker.__name__,
+                amount,
+                self.opponent_names,
+                self.hand,
+            )
         return amount

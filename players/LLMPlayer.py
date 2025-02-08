@@ -38,6 +38,7 @@ POSSIBLE_MODELS = [
 
 
 class LLMPlayer(Player):
+    title = "Eloquent"
     name: str
     allow_hints: bool
     opponent_names: list[str]

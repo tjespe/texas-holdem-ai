@@ -6,6 +6,8 @@ from cpp_poker.cpp_poker import Oracle
 
 
 class AllInPlayer(Player):
+    title = "Ballsy"
+
     def __init__(self, name: str = "Rando"):
         super().__init__()
         self.name = name

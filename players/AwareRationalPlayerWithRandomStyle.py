@@ -11,6 +11,8 @@ AGG_SENSITIVITY_BOUNDS = (0, 2.0)
 
 
 class AwareRationalPlayerWithRandomStyle(Player):
+    title = "Fickle"
+
     def __init__(self, name="Chrism", switch_freq=0.1):
         self.name = name
         self.switch_freq = switch_freq

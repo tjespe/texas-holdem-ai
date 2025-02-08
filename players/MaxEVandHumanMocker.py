@@ -11,6 +11,8 @@ class MaxEVandHumanMocker(Player):
     time, and then switches to the MaxEVPlayer's strategy.
     """
 
+    title = "Bot"
+
     def __init__(self, name: str = "Mr. Max"):
         super().__init__()
         self.name = name

@@ -123,6 +123,7 @@ class MaxEVPlayer(Player):
     player_probs: Union[np.ndarray, None]
     predicted_ranks: Union[np.ndarray, None]
     risk_aversion: float
+    title = "Tardy"
 
     def __init__(
         self,
@@ -655,14 +656,17 @@ class MaxEVPlayer(Player):
         )
         # Re-enable fitting
         self.predictor.disable_fitting = False
-        persistent_observer.observe_action(
-            state,
-            self.name,
-            MaxEVPlayer.__name__,
-            bet,
-            [n for n in self.player_names if n != self.name],
-            self.hand,
-        )
+        # Only store observation if it's a heads-up game as this player is not
+        # designed to play in multi-player games.
+        if len(state.player_is_active) < 3:
+            persistent_observer.observe_action(
+                state,
+                self.name,
+                MaxEVPlayer.__name__,
+                bet,
+                [n for n in self.player_names if n != self.name],
+                self.hand,
+            )
         return bet
 
 

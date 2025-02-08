@@ -23,6 +23,8 @@ class AwareRationalPlayer(Player):
     :param alpha: How much the card based winning probability decay as the pot grows (0-1, higher is more decay)
     """
 
+    title = "Mindful"
+
     def __init__(
         self, name: str = "Rasmus", randomness=0.1, alpha=0.3, aggression_sensitivity=1
     ):

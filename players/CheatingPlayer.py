@@ -37,6 +37,7 @@ class CheatingPlayer(Player):
     Player that looks at the other player's cards and bets accordingly.
     """
 
+    title = "Skullduggerous"
     all_hands = None
     bluff_prob = None
 
