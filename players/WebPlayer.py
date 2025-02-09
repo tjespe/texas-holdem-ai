@@ -97,6 +97,7 @@ class WebPlayer(Player):
         self._outbox.put(message)
 
     def bet_rejected(self, from_state, bet, reason):
+        print("Bet rejected:", reason, "Letting the client know")
         message = {
             "type": "BET_REJECTED",
             "from_state": from_state.to_dict(),
@@ -148,14 +149,13 @@ class WebPlayer(Player):
         self._outbox.put(message)
 
     def get_ready(self):
+        self._ready_event.clear()  # Reset event for WebPlayer
         message = {"type": "GET_READY"}
         self._outbox.put(message)
 
-        self._ready_event.clear()  # Reset event for WebPlayer
-
     def ready(self):
-        if hasattr(self, "_ready_event"):
-            self._ready_event.set()  # Signal readiness when WebSocket message arrives
+        print("Setting ready signal")
+        self._ready_event.set()  # Signal readiness when WebSocket message arrives
 
     def wait_for_ready(self):
         return self._ready_event
