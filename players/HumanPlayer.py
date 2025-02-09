@@ -168,9 +168,6 @@ class HumanPlayer(Player):
         input("Press enter to continue...")
         self._ready_event.set()
 
-    def wait_for_ready(self):
-        return self._ready_event
-
     def bet_rejected(self, from_state, bet, reason):
         print(
             "\n\nBetting rules violation:\n",

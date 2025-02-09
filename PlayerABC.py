@@ -122,7 +122,8 @@ class Player(ABC):
         Exposes an appropriate synchronization object for GameManager.
         Default is an event that is always set (for bot players).
         """
-        self.get_ready()  # Ensure event exists before returning it
+        if self._ready_event is None:
+            self._ready_event = threading.Event()
         return self._ready_event
 
     def game_over(self, winner: "Player", state: State):
