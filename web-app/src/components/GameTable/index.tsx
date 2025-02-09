@@ -1,31 +1,35 @@
 import {
   Box,
   Button,
-  Card,
-  CardContent,
-  Grid,
   Stack,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuthContext } from "../../contexts/AuthContext";
-import { ShowDownHand, useGameWebSocket } from "../../hooks/useGameWebSocket";
-import { GameState, Player } from "../../schemas/messages";
+import {
+  GameState,
+  Player,
+  ShowDownHand,
+  useGameWebSocket,
+} from "../../hooks/useGameWebSocket";
 import { PlayingCard } from "../PlayingCard";
+import { PlayerOnTable } from "./PlayerOnTable";
+import { PlayerOutsideTable } from "./PlayerOutsideTable";
+import { CoinStack } from "./CoinStack";
+import { PlayerResult } from "./PlayerResult";
 
 export const GameTable: React.FC = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [betInput, setBetInput] = useState("");
   const [ourTurn, setOurTurn] = useState(false);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [hand, setHand] = useState<number[]>([]);
-  const [turn, setTurn] = useState(0);
+  const [hand, setHand] = useState<number[] | null>(null);
   const [allHands, setAllHands] = useState<(ShowDownHand | null)[] | undefined>(
     undefined
   );
-  const [winners, setWinners] = useState<number[] | undefined>([]);
+  const [winners, setWinners] = useState<number[] | undefined>();
   const { username } = useAuthContext();
   const ourIndex = players.findIndex((player) => player.name === username);
   const [error, setError] = useState<string | null>(null);
@@ -39,28 +43,17 @@ export const GameTable: React.FC = () => {
           setGameState(msg.state);
           setHand(msg.hand);
           setOurTurn(true);
-          setTurn(msg.state.current_player_i);
           setGetReadyRequested(false);
           setAllHands(undefined);
+          setWinners(undefined);
           break;
         case "OBSERVE_BET":
           setGameState(msg.state);
           setGetReadyRequested(false);
           setOurTurn(false);
-          setTurn((prev) => {
-            const numPlayers = msg.state.player_piles.length;
-            let nextPlayer = (msg.player_index + 1) % numPlayers;
-            while (msg.state.player_is_folded[nextPlayer]) {
-              nextPlayer = (nextPlayer + 1) % numPlayers;
-            }
-            if (Number.isNaN(nextPlayer)) {
-              console.error("Next player is NaN", msg);
-              return prev;
-            }
-            return nextPlayer;
-          });
           setError(null);
           setAllHands(undefined);
+          setWinners(undefined);
           break;
         case "ROUND_OVER":
           setGameState(msg.state);
@@ -100,10 +93,7 @@ export const GameTable: React.FC = () => {
       sendMessage({ type: "USER_BET", bet: betAmount });
       setOurTurn(false);
       setBetInput("");
-      const nextPlayer = (turn + 1) % players.length;
-      if (!Number.isNaN(nextPlayer)) {
-        setTurn(nextPlayer);
-      }
+
       setGameState(
         (prev) =>
           prev && {
@@ -120,7 +110,7 @@ export const GameTable: React.FC = () => {
           }
       );
     },
-    [ourIndex, players.length, sendMessage, turn]
+    [ourIndex, sendMessage]
   );
 
   const ready = useCallback(() => {
@@ -138,6 +128,12 @@ export const GameTable: React.FC = () => {
 
   const callAmount = highestBet - ourBet;
   const minRaise = highestBet + (gameState?.big_blind || 0);
+
+  const opponents = useMemo(() => {
+    const afterUs = players.slice(ourIndex + 1);
+    const beforeUs = players.slice(0, ourIndex);
+    return [...afterUs, ...beforeUs];
+  }, [players, ourIndex]);
 
   useEffect(
     function keyListener() {
@@ -173,132 +169,130 @@ export const GameTable: React.FC = () => {
     [ourTurn, callAmount, handleBet, getReadyRequested, ready]
   );
 
+  if (!gameState) {
+    return <Typography>Loading...</Typography>;
+  }
+
   return (
     <Stack
       spacing={2}
       sx={{ maxWidth: "800px", margin: "auto", textAlign: "center", py: 2 }}
     >
-      {gameState?.is_terminal && (
-        <Typography variant="h4">Round Over!</Typography>
-      )}
       {error && <Typography color="error">{error}</Typography>}
-      {/* Players positioned around the table */}
-      <Grid container justifyContent="center" alignItems="center" spacing={2}>
-        {players.map((player) => {
-          const folded = gameState?.player_is_folded[player.index];
-          const stack = gameState?.player_piles[player.index];
-          const bet = gameState?.bet_in_stage[player.index];
-          const hand = allHands && allHands[player.index];
-          return (
-            <Grid key={player.index} item sx={{ position: "relative" }}>
-              <Card
-                sx={{
-                  border:
-                    !gameState?.is_terminal && turn === player.index
-                      ? "2px solid gold"
-                      : "",
-                  textAlign: "center",
-                  padding: "4px",
-                  position: "relative",
-                }}
-              >
-                {folded && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      backgroundColor: "rgba(0, 0, 0, 0.5)",
-                      color: "white",
-                      padding: "2px",
-                      borderRadius: "0 0 4px 0",
-                      width: "100%",
-                      height: "100%",
-                    }}
-                    justifyContent="center"
-                    alignContent="center"
-                  >
-                    <Typography
-                      sx={{
-                        transform: "rotate(-30deg)",
-                        textShadow: "1px 1px 2px black",
-                      }}
-                      variant="h5"
-                      color="error"
-                    >
-                      {stack !== undefined && stack < gameState.big_blind
-                        ? "Bust"
-                        : "Folded"}
-                    </Typography>
-                  </Box>
-                )}
-                <CardContent>
-                  <Typography fontWeight="bold">{player.name}</Typography>
-                  <Typography variant="body2">Stack: {stack} chips</Typography>
-                  <Typography variant="body2">
-                    Bet in {gameState?.stage}: {bet}
-                  </Typography>
-                  {gameState?.is_terminal && hand && (
-                    <Stack direction="column" spacing={1}>
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        justifyContent="center"
-                      >
-                        {hand.cards?.map((card) => (
-                          <PlayingCard card={card} key={card} />
-                        ))}
-                      </Stack>
-                      <Typography variant="caption">{hand.rank}</Typography>
-                      <Typography variant="h6">
-                        {winners?.includes(player.index) ? "Winner!" : "Loser"}
-                      </Typography>
-                    </Stack>
-                  )}
-                </CardContent>
-              </Card>
-            </Grid>
-          );
-        })}
-      </Grid>
-
       {/* Poker table with public cards and pot */}
-      <Stack direction="row" width="100%">
-        <Box
-          height={150}
-          maxWidth={500}
-          width="100%"
-          bgcolor="primary.main"
-          sx={{
-            borderRadius: "20px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
-            margin: "auto",
-          }}
-        >
-          <Typography variant="h6" color="white">
-            Pot: {gameState?.pot} chips
-          </Typography>
-          <Stack direction="row" spacing={1} sx={{ py: 1 }}>
-            {gameState?.public_cards.map((card) => (
-              <PlayingCard card={card} key={card} />
+      <Stack direction="row" width="100%" justifyContent="center">
+        <Stack direction="column" width="100%" maxWidth={600} spacing={1}>
+          <Stack direction="row" justifyContent="space-evenly" width="100%">
+            {opponents.map((player) => (
+              <PlayerOutsideTable
+                key={player.index}
+                player={player}
+                gameState={gameState}
+                maxWidth="100%"
+                minWidth={0}
+                width={100 / opponents.length + "%"}
+              />
             ))}
           </Stack>
-        </Box>
+          <Stack direction="row" width="100%" justifyContent="space-evenly">
+            {opponents.map((player) => (
+              <PlayerResult
+                key={player.index}
+                player={player}
+                gameState={gameState}
+                showdownWinners={winners}
+              />
+            ))}
+          </Stack>
+          <Box
+            bgcolor="primary.main"
+            width="100%"
+            sx={{
+              borderRadius: "20px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
+              margin: "auto",
+            }}
+            maxWidth="100%"
+            pt={2}
+            pb={2}
+          >
+            <Stack
+              direction="column"
+              alignItems="center"
+              spacing={2}
+              width="100%"
+            >
+              <Stack direction="row" justifyContent="space-evenly" width="100%">
+                {opponents.map((player) => (
+                  <PlayerOnTable
+                    key={player.index}
+                    player={player}
+                    gameState={gameState}
+                    hand={allHands?.[player.index]}
+                  />
+                ))}
+              </Stack>
+              <Stack direction="row" spacing={1} sx={{ py: 1 }}>
+                <Stack direction="column" pr={2}>
+                  <Typography variant="h6">Pot</Typography>
+                  <CoinStack large chips={gameState.pot} />
+                </Stack>
+                {gameState?.public_cards.map((card) => (
+                  <PlayingCard card={card} key={card} />
+                ))}
+              </Stack>
+              <Stack direction="row" justifyContent="center" width="100%">
+                <PlayerOnTable
+                  player={players[ourIndex]}
+                  gameState={gameState}
+                  // No need to display the hand here since it's shown below
+                  hand={null}
+                />
+              </Stack>
+            </Stack>
+          </Box>
+        </Stack>
       </Stack>
 
-      {/* Your hand */}
-      {ourTurn && !gameState?.is_terminal && (
-        <Stack>
-          <Typography variant="h6">Your Hand</Typography>
-          <Stack direction="row" justifyContent="center" spacing={1}>
-            {hand.map((card) => (
-              <PlayingCard card={card} key={card} />
-            ))}
+      {/* Your hand and stack */}
+      <Stack direction="row" justifyContent="center" spacing={4}>
+        {hand && (
+          <Stack>
+            <Typography variant="h6">Your Hand</Typography>
+            <Stack direction="row" justifyContent="center" spacing={1}>
+              {hand.map((card) => (
+                <PlayingCard width={30} card={card} key={card} />
+              ))}
+            </Stack>
+            {allHands?.[ourIndex] && (
+              <Typography variant="body2">{allHands[ourIndex].rank}</Typography>
+            )}
           </Stack>
+        )}
+        <Stack>
+          <Typography variant="h6">Your Stack</Typography>
+          <CoinStack large chips={gameState.player_piles[ourIndex]} />
+        </Stack>
+      </Stack>
+
+      {/* Our result */}
+      {gameState?.is_terminal && (
+        <Stack>
+          {winners ? (
+            winners.includes(ourIndex) ? (
+              <Typography variant="h6">You Won!</Typography>
+            ) : (
+              <Typography variant="h6">You Lost!</Typography>
+            )
+          ) : gameState.player_is_folded[ourIndex] ? (
+            <Typography variant="h6">You Folded</Typography>
+          ) : (
+            <Typography variant="h6">You Won!</Typography>
+          )}
         </Stack>
       )}
 
