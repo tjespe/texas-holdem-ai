@@ -85,9 +85,10 @@ class Processor:
             "relative_ev": row["relative_ev"],
             "stage": state.stage,
             "player_name": row["player_name"],
-            "human": row["player_type"] == "HumanPlayer",
+            "human": (row["player_type"] == "HumanPlayer")
+            or (row["player_type"] == "WebPlayer"),
             "opponent_name": (
-                (",".join(sorted(ops)))
+                next(iter(ops), "")
                 if isinstance(ops := row["opponent_names"], Iterable)
                 else ""
             ),

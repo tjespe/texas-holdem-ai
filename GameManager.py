@@ -40,6 +40,7 @@ class GameManager:
         """
         Play a round of poker.
         """
+        print("Starting round")
         # Get a new shuffled deck
         self.deck = Deck()
         # Give all players new cards
@@ -50,6 +51,7 @@ class GameManager:
             if sleep:
                 import time
 
+                print("Sleeping for", sleep, "seconds")
                 time.sleep(sleep)
             # Allow players to cheat
             for player in self.players:
@@ -89,6 +91,7 @@ class GameManager:
                 if max_bet == 0:
                     bet = 0
                 else:
+                    print(f"Requesting bet from {player.name}")
                     bet = player.play(self.state)
                 print(f"{player.name} bets {bet}")
                 try:

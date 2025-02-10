@@ -1,0 +1,6 @@
+- [ ] Web socket logic sometimes breaks down when a client disconnects and reconnects.
+- [ ] Previous hand is shown to player when a new round starts (before they receive a bet request)
+  - Fix: Send a new round message to the player when a new round starts, allowing to clear the state.
+- [x] Between the ROUND_OVER message and the SHOWDOWN message, wrong winners are displayed (the winners/losers based on folding/not folding)
+- [ ] New card on table not visible until the first player makes a move.
+  - Fix: Send a message to all players when a new card is added to the table.

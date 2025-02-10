@@ -173,6 +173,9 @@ export const GameTable: React.FC = () => {
     return <Typography>Loading...</Typography>;
   }
 
+  const onlyOnePlayerLeft =
+    gameState.player_is_folded.filter((folded) => !folded).length === 1;
+
   return (
     <Stack
       spacing={2}
@@ -288,7 +291,7 @@ export const GameTable: React.FC = () => {
             ) : (
               <Typography variant="h6">You Lost!</Typography>
             )
-          ) : gameState.player_is_folded[ourIndex] ? (
+          ) : onlyOnePlayerLeft && gameState.player_is_folded[ourIndex] ? (
             <Typography variant="h6">You Folded</Typography>
           ) : (
             <Typography variant="h6">You Won!</Typography>

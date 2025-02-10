@@ -13,6 +13,8 @@ export const PlayerResult: React.FC<Props> = ({
   showdownWinners,
 }) => {
   const folded = gameState.player_is_folded[player.index];
+  const onlyOnePlayerLeft =
+    gameState.player_is_folded.filter((folded) => !folded).length === 1;
 
   return (
     <Stack
@@ -38,6 +40,7 @@ export const PlayerResult: React.FC<Props> = ({
         )
       ) : null}
       {!showdownWinners &&
+        onlyOnePlayerLeft &&
         gameState.is_terminal &&
         (gameState.player_is_folded[player.index] ? (
           <Typography variant="h6">Folded</Typography>
