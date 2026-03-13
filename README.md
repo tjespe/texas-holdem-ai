@@ -7,16 +7,21 @@ Most of the project is written in Python, but some performance critical parts ar
 ## Setup
 
 0. _Recommended_: Set up a virtual environment by running `python -m virtualenv env` and activating it by running `source env/bin/activate`.
-1. Install the required packages by running `pip install -r requirements.txt`.
+1. Install the required packages by running `pip install -r requirements.lock.txt`.
 2. Install CMake and ensure that a C++ compiler is available.
-3. Compile the C++ part of the project:
+3. Initialize submodules to ensure pybind11 is available
+   ```bash
+   git submodule init
+   git submodule update
+   ```
+4. Compile the C++ part of the project:
    ```bash
    cd cpp_poker
    cmake ..
    make
    ```
-4. _Optional_: Set up the desired game structure (i.e. number of players, types of players, configuration for computer players) in `main.py`.
-5. Run the game by running `python main.py`.
+5. _Optional_: Set up the desired game structure (i.e. number of players, types of players, configuration for computer players) in `main.py`.
+6. Run the game by running `python main.py`.
 
 ## Simplifications
 

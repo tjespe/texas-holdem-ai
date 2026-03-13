@@ -6,7 +6,6 @@ from players.LLMPlayer import LLMPlayer
 from players.MaxEVPlayer import MaxEVPlayer
 from players.RandomPlayer import RandomPlayer
 from players.RationalPlayer import RationalPlayer
-from players.ResolverPlayer import ResolverPlayer
 from state_management import place_bet
 
 

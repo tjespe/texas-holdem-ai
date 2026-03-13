@@ -30,10 +30,24 @@ def log(*args, also_print=False, **kwargs):
 
 
 POSSIBLE_MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama3-70b-8192",
-    "gemma2-9b-it",
-    "mixtral-8x7b-32768",
+    'openai/gpt-oss-safeguard-20b',
+     'meta-llama/llama-prompt-guard-2-22m',
+     'moonshotai/kimi-k2-instruct',
+     'canopylabs/orpheus-v1-english',
+     'openai/gpt-oss-120b',
+     'llama-3.1-8b-instant',
+     'qwen/qwen3-32b',
+     'groq/compound',
+     'canopylabs/orpheus-arabic-saudi',
+     'allam-2-7b',
+     'moonshotai/kimi-k2-instruct-0905',
+     'meta-llama/llama-prompt-guard-2-86m',
+     'groq/compound-mini',
+     'meta-llama/llama-4-scout-17b-16e-instruct',
+     'whisper-large-v3',
+     'whisper-large-v3-turbo',
+     'llama-3.3-70b-versatile',
+     'openai/gpt-oss-20b'
 ]
 
 
@@ -50,8 +64,7 @@ class LLMPlayer(Player):
         self,
         name="Lemuel",
         allow_hints=False,
-        llm_model="llama-3.3-70b-versatile",
-        # llm_model="llama3-70b-8192",
+        llm_model="openai/gpt-oss-120b",
         behavior_prompt="Don't be too agressive on the preflop: it's okay to raise, but if the other player has raised, prefer calling rather than raising again, and obviously fold instead of calling if the bet is too high and your hand is too weak. Normally, you should only raise if you have a strong hand.",
     ):
         super().__init__()

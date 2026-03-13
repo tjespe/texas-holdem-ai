@@ -51,7 +51,6 @@ class GameManager:
             if sleep:
                 import time
 
-                print("Sleeping for", sleep, "seconds")
                 time.sleep(sleep)
             # Allow players to cheat
             for player in self.players:

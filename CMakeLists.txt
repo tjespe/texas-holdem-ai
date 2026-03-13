@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(cpp_poker)
-find_package(Python 3.9.6 EXACT COMPONENTS Interpreter Development)
+find_package(Python 3.12 COMPONENTS Interpreter Development)
 
 add_subdirectory(pybind11)
 set(CMAKE_CXX_STANDARD 17)

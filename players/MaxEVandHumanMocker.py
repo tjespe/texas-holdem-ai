@@ -17,7 +17,7 @@ class MaxEVandHumanMocker(Player):
         super().__init__()
         self.name = name
         self.max_ev_player = MaxEVPlayer(name)
-        self.human_mocker = HumanMocker("Henning")
+        self.human_mocker = HumanMocker("Tord")
 
     def _update_hands(self):
         self.max_ev_player.hand = self.hand

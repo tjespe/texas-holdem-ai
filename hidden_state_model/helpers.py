@@ -56,7 +56,8 @@ def get_observer_with_all_data() -> Observer:
 def get_observer_with_all_human_data() -> Observer:
     return Observer(
         df=combined_df[
-            (combined_df["player_type"] == "HumanPlayer") | combined_df["player_type"]
-            == "WebPlayer"
+            (combined_df["player_type"] == "HumanPlayer") | (
+                combined_df["player_type"] == "WebPlayer"
+            )
         ]
     )

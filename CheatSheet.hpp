@@ -4,6 +4,7 @@
 #include <string>
 #include <set>
 #include <vector>
+#include <cstdint>
 #include "CardCollection.hpp"
 #include <iostream>
 

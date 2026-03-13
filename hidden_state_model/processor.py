@@ -185,7 +185,7 @@ class Processor:
         if self.df is None:
             raise ValueError("No dataframe to process")
         queue = list(set(self.df.index.to_list()) - self.fully_processed)
-        if not queue:
+        if not queue and len(self.df):
             return self.processed_df
         while queue:
             state_id = queue.pop(0)

@@ -3,6 +3,7 @@
 #include "HandGroup.hpp"
 #include <stdexcept>
 #include <iostream>
+#include <algorithm>
 
 // Initialize static variables
 std::vector<std::pair<int, int>> HandGroup::UNSUITED_COMBINATIONS = []()
