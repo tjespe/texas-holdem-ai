@@ -140,18 +140,6 @@ class GameManager:
                 winner_list = []
             winner_list.append(winner.name)
             set_value("winners", winner_list)
-        if len(set(self.players) - bust_players) == 1:
-            # Only one player left, end the game
-            print("Game over!")
-            winner = list(set(self.players) - bust_players)[0]
-            print("Winner:", winner.name)
-            print("Final state:")
-            print(self.state.get_cli_repr(self.player_names))
-            winner_list = get_value("winners")
-            if winner_list is None:
-                winner_list = []
-            winner_list.append(winner.name)
-            set_value("winners", winner_list)
             for player in self.players:
                 player.game_over(winner, self.state)
             stat_file = open("stats/winners.csv", "a")
