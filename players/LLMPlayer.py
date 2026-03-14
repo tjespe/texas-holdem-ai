@@ -31,21 +31,21 @@ def log(*args, also_print=False, **kwargs):
 
 POSSIBLE_MODELS = [
     'openai/gpt-oss-safeguard-20b',
-     'meta-llama/llama-prompt-guard-2-22m',
+    # 'meta-llama/llama-prompt-guard-2-22m',
      'moonshotai/kimi-k2-instruct',
-     'canopylabs/orpheus-v1-english',
+     # 'canopylabs/orpheus-v1-english',
      'openai/gpt-oss-120b',
      'llama-3.1-8b-instant',
      'qwen/qwen3-32b',
      'groq/compound',
-     'canopylabs/orpheus-arabic-saudi',
+     # 'canopylabs/orpheus-arabic-saudi',
      'allam-2-7b',
      'moonshotai/kimi-k2-instruct-0905',
      'meta-llama/llama-prompt-guard-2-86m',
      'groq/compound-mini',
      'meta-llama/llama-4-scout-17b-16e-instruct',
-     'whisper-large-v3',
-     'whisper-large-v3-turbo',
+     # 'whisper-large-v3',
+     # 'whisper-large-v3-turbo',
      'llama-3.3-70b-versatile',
      'openai/gpt-oss-20b'
 ]

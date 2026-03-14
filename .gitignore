@@ -3,6 +3,7 @@ __pycache__
 .DS_Store
 stats/*.csv
 stats/*.log
+!stats/winners.csv
 cheat-sheet.txt
 db.sqlite
 users.txt

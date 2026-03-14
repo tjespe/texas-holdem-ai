@@ -1,3 +1,4 @@
+import time
 import os
 from Deck import Deck
 from PlayerABC import Player
@@ -49,8 +50,6 @@ class GameManager:
         # Start game loop
         while not self.state.is_terminal:
             if sleep:
-                import time
-
                 time.sleep(sleep)
             # Allow players to cheat
             for player in self.players:
@@ -118,6 +117,8 @@ class GameManager:
                         for i, player in enumerate(self.players)
                     ],
                 )
+            if sleep:
+                time.sleep(sleep)
         prev_state = self.state
         self.state = end_round(prev_state, self.players, print_result=True)
         self.round += 1
@@ -153,6 +154,11 @@ class GameManager:
             set_value("winners", winner_list)
             for player in self.players:
                 player.game_over(winner, self.state)
+            stat_file = open("stats/winners.csv", "a")
+            pd.DataFrame([
+                [datetime.now().isoformat(), self.player_names, winner]
+            ]).to_csv(stat_file, index=False, header=False)
+            stat_file.close()
             return
 
         # Request readiness from all players
