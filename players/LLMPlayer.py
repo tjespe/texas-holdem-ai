@@ -41,7 +41,7 @@ POSSIBLE_MODELS = [
      # 'canopylabs/orpheus-arabic-saudi',
      'allam-2-7b',
      'moonshotai/kimi-k2-instruct-0905',
-     'meta-llama/llama-prompt-guard-2-86m',
+     # 'meta-llama/llama-prompt-guard-2-86m',
      'groq/compound-mini',
      'meta-llama/llama-4-scout-17b-16e-instruct',
      # 'whisper-large-v3',
@@ -62,10 +62,12 @@ class LLMPlayer(Player):
 
     def __init__(
         self,
-        name="Lemuel",
+        # name="Lemuel",
+        name="Lionel",
         allow_hints=False,
         llm_model="openai/gpt-oss-120b",
-        behavior_prompt="Don't be too agressive on the preflop: it's okay to raise, but if the other player has raised, prefer calling rather than raising again, and obviously fold instead of calling if the bet is too high and your hand is too weak. Normally, you should only raise if you have a strong hand.",
+        # behavior_prompt="Don't be too agressive on the preflop: it's okay to raise, but if the other player has raised, prefer calling rather than raising again, and obviously fold instead of calling if the bet is too high and your hand is too weak. Normally, you should only raise if you have a strong hand.",
+        behavior_prompt="Make well-contemplated decisions, taking into account what you think about the other player's hand, your own hand, the table, expected responses to different moves, expected value, and risk.",
     ):
         super().__init__()
         self.name = name
@@ -347,12 +349,12 @@ class LLMPlayer(Player):
 
     @property
     def reflection_system_prompt(self):
-        prompt = f"{self.base_prompt} Reflect on how you and your opponents played this round that was just completed. Is there anything about your opponent you should remember or anything you should change about your own play?"
+        prompt = f"{self.base_prompt} Reflect on how you and your opponents played this round that was just completed. Is there anything about your opponent you should remember or anything you should change about your own play? Keep it as short as you are able to while including the most relevant information."
         if self.reflections:
             prompt += (
                 " Previously, you have made the following reflections, so keep them in mind:\n"
                 + self.reflections.strip()
-                + "\nReflect both on this round and the game as a whole and keep it short."
+                + "\nReflect both on this round and the game as a whole. If you did not learn anything specific this round, just respond with the pervious reflections."
             )
         return prompt
 

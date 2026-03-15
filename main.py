@@ -19,6 +19,7 @@ from players.ProbSimPlayer import ProbSimPlayer
 from players.MaxEVPlayer import MaxEVPlayer
 from players.HumanMocker import HumanMocker
 from players.LLMPlayer import LLMPlayer
+from players.PersistentLLMPlayer import PersistentLLMPlayer
 
 players = [
     # HumanPlayer(name=cli_login()),
@@ -37,10 +38,11 @@ players = [
     # ProbSimPlayer(),
     # MaxEVandLLMPlayer(),
     MaxEVandHumanMocker(),
-    LLMPlayer(),
+    # LLMPlayer(),
     # MaxEVPlayer(name="Adrian"),
     # HumanMocker(mock="Arin"),
     # HumanMocker(mock="Arin Bavian"),
+    PersistentLLMPlayer(),
 ]
 
 game_manager = GameManager(players, big_blind=4)
